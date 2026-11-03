@@ -15,7 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+            'owner' => \App\Http\Middleware\EnsureBusinessOwner::class,
         ]);
+        // Behind the host's proxy: read the visitor's address from X-Forwarded-For, or
+        // every rate limit would count all visitors as one.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

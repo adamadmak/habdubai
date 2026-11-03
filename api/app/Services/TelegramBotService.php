@@ -162,6 +162,28 @@ class TelegramBotService
         ], fn ($value) => $value !== null))->json('result', []);
     }
 
+    /**
+     * The bytes of a file Telegram holds (an announcement photo), for the
+     * website to show. Fetched here because the download URL contains the
+     * bot token, which must never reach a browser. Null when unavailable.
+     */
+    public function downloadFile(string $fileId, int $maxBytes = 5_242_880): ?string
+    {
+        try {
+            $path = $this->post('getFile', ['file_id' => $fileId], retry: false, timeout: 10)->json('result.file_path');
+            if (! is_string($path) || $path === '' || str_contains($path, '..')) {
+                return null;
+            }
+
+            $response = $this->http()->timeout(20)->get('https://api.telegram.org/file/bot'.$this->botToken().'/'.$path);
+            $body = $response->body();
+
+            return $response->successful() && $body !== '' && strlen($body) <= $maxBytes ? $body : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     /** Take the inline buttons off a message once they have been used, keeping its text. */
     public function clearButtons(int|string $chatId, int $messageId): bool
     {

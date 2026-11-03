@@ -3,24 +3,40 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Bot\Choices;
+use App\Directory\BusinessPublisher;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Business;
+use App\Models\BusinessClaim;
+use App\Models\BusinessPhoto;
 use App\Models\BusinessReport;
 use App\Models\DirectoryCity;
 use App\Support\MapLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
+/**
+ * The directory for moderators: suggestions from members, submissions and
+ * edits from business owners, ownership claims, reports. Every decision is
+ * carried out by BusinessPublisher, which also updates the channel and
+ * tells the owner.
+ */
 class BusinessController extends Controller
 {
+    public function __construct(private readonly BusinessPublisher $publisher) {}
+
     public function index(Request $request): JsonResponse
     {
-        $query = Business::query()->with(['city:id,name_en', 'submitter:id,display_name'])->latest('id');
+        $query = Business::query()->with(['city:id,name_en', 'submitter:id,display_name', 'owner:id,display_name,telegram_username', 'photos:id,business_id,kind,approved,updated_at'])
+            ->withCount(['claims as claims_pending' => fn ($q) => $q->where('status', 'pending')])
+            ->latest('id');
 
         $status = $request->query('status', 'pending');
-        if ($status !== 'all') {
+        if ($status === 'changes') {
+            $query->whereIn('status', ['approved', 'hidden'])->whereNotNull('changes_submitted_at')->reorder('changes_submitted_at');
+        } elseif ($status !== 'all') {
             $query->where('status', $status);
         }
         if ($cityId = $request->query('city_id')) {
@@ -29,43 +45,53 @@ class BusinessController extends Controller
         if ($category = $request->query('category')) {
             $query->where('category', $category);
         }
+        if ($request->boolean('owners')) {
+            $query->whereNotNull('owner_id');
+        }
         if ($search = trim((string) $request->query('search', ''))) {
             $query->where(fn ($q) => $q->where('name', 'like', '%'.$search.'%')->orWhere('area', 'like', '%'.$search.'%')->orWhere('phone', 'like', '%'.$search.'%'));
         }
 
         $page = $query->paginate(min(100, max(10, (int) $request->query('per_page', 25))));
 
+        $counts = Business::query()->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status');
+        $counts['changes'] = Business::query()->whereIn('status', ['approved', 'hidden'])->whereNotNull('changes_submitted_at')->count();
+        $counts['claims'] = BusinessClaim::query()->where('status', 'pending')->count();
+
         return response()->json([
             'data' => $page->getCollection()->map(fn (Business $b) => $this->payload($b))->all(),
             'meta' => ['total' => $page->total(), 'page' => $page->currentPage(), 'last_page' => $page->lastPage()],
-            'counts' => Business::query()->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status'),
+            'counts' => $counts,
             'choices' => [
                 'categories' => array_map(fn (array $l) => $l['en'], Choices::BUSINESS_CATEGORIES),
                 'cities' => DirectoryCity::query()->orderBy('sort')->get(['id', 'name_en', 'active']),
+                'languages' => array_map(fn (array $l) => $l['en'], Choices::SPOKEN_LANGUAGES),
             ],
         ]);
     }
 
     public function show(Business $business): JsonResponse
     {
-        $business->load(['city', 'submitter:id,display_name,telegram_username', 'reports.member:id,display_name']);
+        $business->load(['city', 'submitter:id,display_name,telegram_username', 'owner', 'photos:id,business_id,kind,approved,updated_at', 'reports.member:id,display_name', 'claims.owner']);
 
         return response()->json([
             'business' => $this->payload($business) + [
                 'reports' => $business->reports->map(fn (BusinessReport $r) => ['member' => $r->member?->display_name, 'reason' => $r->reason, 'at' => $r->created_at?->toIso8601String()]),
+                'claims' => $business->claims->map(fn (BusinessClaim $c) => $this->claimPayload($c))->values(),
             ],
             'audit' => AuditLog::query()->where('subject_type', 'business')->where('subject_id', $business->id)->latest('created_at')->limit(30)->get(),
         ]);
     }
 
-    /** Added by an admin: listed at once. */
+    /** Added by an admin: listed at once, and posted to the channel. */
     public function store(Request $request): JsonResponse
     {
         $data = $this->validated($request);
-        $business = Business::query()->create($data + ['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
+        $business = Business::query()->create($data + ['status' => 'pending']);
+        $this->publisher->approve($business, $request->user()->id);
         AuditLog::record($request->user()->id, 'directory.created', 'business', $business->id, null, $data);
 
-        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter']))], 201);
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))], 201);
     }
 
     public function update(Request $request, Business $business): JsonResponse
@@ -75,19 +101,14 @@ class BusinessController extends Controller
         $business->fill($data)->save();
         AuditLog::record($request->user()->id, 'directory.updated', 'business', $business->id, $before, $data);
 
-        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter']))]);
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
     }
 
-    /** Approve a suggestion, or put a hidden listing back. Clears reports that took it down. */
+    /** Approve a suggestion or a submission, or put a hidden listing back. Clears reports that took it down. */
     public function approve(Request $request, Business $business): JsonResponse
     {
         $wasHidden = $business->status === 'hidden';
-        $business->forceFill([
-            'status' => 'approved',
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-            'review_note' => null,
-        ])->save();
+        $this->publisher->approve($business, $request->user()->id);
 
         if ($wasHidden) {
             BusinessReport::query()->where('business_id', $business->id)->delete();
@@ -96,7 +117,7 @@ class BusinessController extends Controller
 
         AuditLog::record($request->user()->id, 'directory.approved', 'business', $business->id);
 
-        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter']))]);
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
     }
 
     public function reject(Request $request, Business $business): JsonResponse
@@ -109,9 +130,10 @@ class BusinessController extends Controller
             'reviewed_at' => now(),
             'review_note' => $data['note'] ?? null,
         ])->save();
+        $this->publisher->rejected($business);
         AuditLog::record($request->user()->id, 'directory.rejected', 'business', $business->id, null, $data);
 
-        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter']))]);
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
     }
 
     public function hide(Request $request, Business $business): JsonResponse
@@ -119,19 +141,99 @@ class BusinessController extends Controller
         $data = $request->validate(['note' => ['nullable', 'string', 'max:250']]);
 
         $business->forceFill(['status' => 'hidden', 'review_note' => $data['note'] ?? 'Hidden by an admin.'])->save();
+        $this->publisher->unpost($business);
         AuditLog::record($request->user()->id, 'directory.hidden', 'business', $business->id, null, $data);
 
-        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter']))]);
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
     }
 
     public function destroy(Request $request, Business $business): JsonResponse
     {
         $before = $this->payload($business);
+        $this->publisher->unpost($business);
         $business->delete();
         AuditLog::record($request->user()->id, 'directory.deleted', 'business', $before['id'], $before);
 
         return response()->json(['ok' => true]);
     }
+
+    public function approveChanges(Request $request, Business $business): JsonResponse
+    {
+        if ($business->changes_submitted_at === null) {
+            throw ValidationException::withMessages(['changes' => ['There are no changes waiting on this listing.']]);
+        }
+
+        $this->publisher->approveChanges($business->load('owner'), $request->user()->id);
+
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
+    }
+
+    public function rejectChanges(Request $request, Business $business): JsonResponse
+    {
+        $data = $request->validate(['note' => ['nullable', 'string', 'max:250']]);
+
+        if ($business->changes_submitted_at === null) {
+            throw ValidationException::withMessages(['changes' => ['There are no changes waiting on this listing.']]);
+        }
+
+        $this->publisher->rejectChanges($business->load('owner'), $request->user()->id, $data['note'] ?? null);
+
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
+    }
+
+    // ---- ownership claims -----------------------------------------------------------
+
+    public function claims(Request $request): JsonResponse
+    {
+        $status = $request->query('status', 'pending');
+
+        $claims = BusinessClaim::query()->with(['business.city', 'owner.member'])
+            ->when($status !== 'all', fn ($q) => $q->where('status', $status))
+            ->oldest('id')->limit(100)->get();
+
+        return response()->json(['data' => $claims->map(fn (BusinessClaim $c) => $this->claimPayload($c))->values()]);
+    }
+
+    public function approveClaim(Request $request, BusinessClaim $claim): JsonResponse
+    {
+        $claim->load(['business', 'owner']);
+
+        if ($claim->status !== 'pending') {
+            throw ValidationException::withMessages(['claim' => ['This claim was already decided.']]);
+        }
+        if ($claim->business->owner_id !== null && $claim->business->owner_id !== $claim->owner_id) {
+            throw ValidationException::withMessages(['claim' => ['This listing already has another owner. Reject this claim, or remove that owner first.']]);
+        }
+
+        $claim->forceFill(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()])->save();
+        $claim->business->forceFill(['owner_id' => $claim->owner_id])->save();
+
+        // One owner per listing: the other claims on it are answered too.
+        BusinessClaim::query()->where('business_id', $claim->business_id)->whereKeyNot($claim->id)->where('status', 'pending')
+            ->update(['status' => 'rejected', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'review_note' => 'Another owner was confirmed for this listing.', 'updated_at' => now()]);
+
+        AuditLog::record($request->user()->id, 'directory.claim_approved', 'business', $claim->business_id, null, ['owner_id' => $claim->owner_id]);
+        $this->publisher->claimDecided($claim);
+
+        return response()->json(['claim' => $this->claimPayload($claim->fresh(['business.city', 'owner.member']))]);
+    }
+
+    public function rejectClaim(Request $request, BusinessClaim $claim): JsonResponse
+    {
+        $data = $request->validate(['note' => ['nullable', 'string', 'max:250']]);
+
+        if ($claim->status !== 'pending') {
+            throw ValidationException::withMessages(['claim' => ['This claim was already decided.']]);
+        }
+
+        $claim->forceFill(['status' => 'rejected', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'review_note' => $data['note'] ?? null])->save();
+        AuditLog::record($request->user()->id, 'directory.claim_rejected', 'business', $claim->business_id, null, ['owner_id' => $claim->owner_id] + $data);
+        $this->publisher->claimDecided($claim->load(['business', 'owner']));
+
+        return response()->json(['claim' => $this->claimPayload($claim->fresh(['business.city', 'owner.member']))]);
+    }
+
+    // ---- helpers ------------------------------------------------------------------------
 
     private function validated(Request $request, bool $partial = false): array
     {
@@ -146,17 +248,25 @@ class BusinessController extends Controller
             'longitude' => ['sometimes', 'nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
             'maps_url' => ['sometimes', 'nullable', 'url', 'max:500'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'whatsapp' => ['sometimes', 'nullable', 'string', 'max:30'],
             'telegram' => ['sometimes', 'nullable', 'string', 'max:40', 'regex:/^@?[A-Za-z][A-Za-z0-9_]{3,31}$/'],
+            'website' => ['sometimes', 'nullable', 'url:http,https', 'max:200'],
             'description' => ['sometimes', 'nullable', 'string', 'max:300'],
+            'about' => ['sometimes', 'nullable', 'string', 'max:1500'],
+            'hours' => ['sometimes', 'nullable', 'string', 'max:160'],
+            'languages' => ['sometimes', 'nullable', 'array', 'max:6'],
+            'languages.*' => ['string', Rule::in(array_keys(Choices::SPOKEN_LANGUAGES))],
             'verified' => ['sometimes', 'boolean'],
         ], [], ['city_id' => 'city', 'maps_url' => 'map link']);
 
-        if (array_key_exists('phone', $data) && filled($data['phone'])) {
-            $phone = MapLocation::phone($data['phone']);
-            if ($phone === null) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['phone' => ['That does not look like a phone number.']]);
+        foreach (['phone', 'whatsapp'] as $field) {
+            if (array_key_exists($field, $data) && filled($data[$field])) {
+                $phone = MapLocation::phone($data[$field]);
+                if ($phone === null) {
+                    throw ValidationException::withMessages([$field => ['That does not look like a phone number.']]);
+                }
+                $data[$field] = $phone;
             }
-            $data['phone'] = $phone;
         }
 
         if (array_key_exists('telegram', $data) && filled($data['telegram'])) {
@@ -177,8 +287,13 @@ class BusinessController extends Controller
 
     private function payload(Business $b): array
     {
+        $photos = $b->relationLoaded('photos') ? $b->photos : collect();
+        $live = $photos->where('approved', true)->sortByDesc('id')->first();
+        $pending = $photos->where('approved', false)->sortByDesc('id')->first();
+
         return [
             'id' => $b->id,
+            'slug' => $b->slug,
             'name' => $b->name,
             'category' => $b->category,
             'city_id' => $b->city_id,
@@ -189,14 +304,47 @@ class BusinessController extends Controller
             'maps_url' => $b->maps_url,
             'map_link' => $b->mapLink(),
             'phone' => $b->phone,
+            'whatsapp' => $b->whatsapp,
             'telegram' => $b->telegram,
+            'website' => $b->website,
             'description' => $b->description,
+            'about' => $b->about,
+            'hours' => $b->hours,
+            'languages' => $b->languages ?? [],
             'status' => $b->status,
             'verified' => $b->verified,
             'review_note' => $b->review_note,
             'reports_count' => $b->reports_count,
+            'views' => (int) $b->views,
+            'photo' => $live instanceof BusinessPhoto ? $live->url() : null,
+            'pending_photo' => $pending instanceof BusinessPhoto ? $pending->url() : null,
+            'pending_changes' => $b->pending_changes,
+            'changes_submitted_at' => $b->changes_submitted_at?->toIso8601String(),
+            'claims_pending' => (int) ($b->claims_pending ?? 0),
+            'posted_to_channel' => $b->channel_message_id !== null,
             'submitted_by' => $b->submitter ? ['id' => $b->submitter->id, 'name' => $b->submitter->display_name] : null,
+            'owner' => $b->owner ? ['id' => $b->owner->id, 'name' => $b->owner->display_name, 'username' => $b->owner->telegram_username] : null,
+            'submitted_at' => $b->submitted_at?->toIso8601String(),
             'created_at' => $b->created_at?->toIso8601String(),
+        ];
+    }
+
+    private function claimPayload(BusinessClaim $c): array
+    {
+        return [
+            'id' => $c->id,
+            'status' => $c->status,
+            'note' => $c->note,
+            'review_note' => $c->review_note,
+            'business' => $c->business ? [
+                'id' => $c->business->id, 'name' => $c->business->name, 'area' => $c->business->area,
+                'city' => $c->business->city?->name_en, 'phone' => $c->business->phone, 'owner_id' => $c->business->owner_id,
+            ] : null,
+            'owner' => $c->owner ? [
+                'id' => $c->owner->id, 'name' => $c->owner->display_name, 'username' => $c->owner->telegram_username,
+                'member_id' => $c->owner->member_id, 'member_since' => $c->owner->member?->verified_at?->toIso8601String(),
+            ] : null,
+            'created_at' => $c->created_at?->toIso8601String(),
         ];
     }
 }

@@ -50,3 +50,29 @@ jobs:
           NEXT_PUBLIC_API_URL: https://api.example.com
           NEXTAUTH_URL: https://admin.example.com
           NEXTAUTH_SECRET: ci-only-secret-not-used-anywhere
+
+  # The public website. Its build pre-renders pages that call the API; with
+  # no API reachable those fall back at runtime, so the build only proves the
+  # code compiles and type-checks.
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Type-check
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+        env:
+          API_URL: http://127.0.0.1:9/api
+          SITE_URL: https://site.example.com

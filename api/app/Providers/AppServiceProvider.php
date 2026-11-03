@@ -29,5 +29,10 @@ class AppServiceProvider extends ServiceProvider
         // Every outgoing HTTPS call is verified against a real CA list, even on
         // a PHP build that ships without one (see App\Support\TrustedCas).
         \Illuminate\Support\Facades\Http::globalOptions(['verify' => \App\Support\TrustedCas::path()]);
+
+        // The website's server starts and polls sign-ins for every visitor, so
+        // these count per sign-in where they can, not per address.
+        \Illuminate\Support\Facades\RateLimiter::for('owner-login-start', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(30)->by($request->ip()));
+        \Illuminate\Support\Facades\RateLimiter::for('owner-login-poll', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(45)->by('poll:'.substr((string) $request->input('ref'), 0, 32).':'.$request->ip()));
     }
 }

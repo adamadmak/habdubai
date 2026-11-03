@@ -15,8 +15,16 @@ pest()->extend(TestCase::class)
         // other host must be faked by the test that calls it.
         Http::preventStrayRequests();
         TelegramFake::$results = [];
+        TelegramFake::$files = [];
         Http::fake(['api.telegram.org/*' => function ($request) {
             $method = basename((string) parse_url($request->url(), PHP_URL_PATH));
+
+            // File downloads (api.telegram.org/file/bot<token>/<path>) answer with raw bytes.
+            if (str_contains($request->url(), '/file/bot')) {
+                return isset(TelegramFake::$files[$method])
+                    ? Http::response(TelegramFake::$files[$method], 200, ['Content-Type' => 'image/jpeg'])
+                    : Http::response('Not Found', 404);
+            }
 
             return Http::response(['ok' => true, 'result' => TelegramFake::$results[$method] ?? ['message_id' => 1, 'username' => 'HabeshaDubaiBot']]);
         }]);
@@ -32,6 +40,21 @@ final class TelegramFake
 {
     /** @var array<string, mixed> */
     public static array $results = [];
+
+    /** @var array<string, string> file name => bytes served at api.telegram.org/file/bot…/<name> */
+    public static array $files = [];
+}
+
+/** A real JPEG of the given size, for upload tests. */
+function jpegBytes(int $width = 800, int $height = 600): string
+{
+    $image = imagecreatetruecolor($width, $height);
+    imagefill($image, 0, 0, imagecolorallocate($image, 30, 80, 200));
+    ob_start();
+    imagejpeg($image, null, 80);
+    imagedestroy($image);
+
+    return (string) ob_get_clean();
 }
 
 /*
@@ -108,6 +131,23 @@ function lastMessage(): array
 function lastText(): string
 {
     return lastMessage()['text'];
+}
+
+/** Every message the bot sent to one chat, as text. */
+function textsTo(int|string $chatId): array
+{
+    return collect(sentMessages())->filter(fn (array $m) => (string) $m['chat_id'] === (string) $chatId)->pluck('text')->values()->all();
+}
+
+function lastTo(int|string $chatId): array
+{
+    return collect(sentMessages())->filter(fn (array $m) => (string) $m['chat_id'] === (string) $chatId)->last() ?? ['text' => '', 'reply_markup' => null];
+}
+
+/** The callback_data (or url) of every inline button on a sent message. */
+function buttonsOf(array $message): array
+{
+    return collect($message['reply_markup']['inline_keyboard'] ?? [])->flatten(1)->map(fn (array $b) => $b['callback_data'] ?? $b['url'] ?? null)->all();
 }
 
 /** Walk a fresh user through the whole join flow; returns the member. */

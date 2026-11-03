@@ -10,7 +10,8 @@ import PageTitle from "@/components/page-title";
 import { useApiQuery, useApiMutation, formatDateTime, type SettingsPayload } from "@/lib/api";
 
 const FIELDS: { key: string; label: string; hint: string; placeholder?: string }[] = [
-  { key: "public_url", label: "Public URL of the API", hint: "Where Telegram reaches the webhook. Must be https and not localhost.", placeholder: "https://api.habesha-dubai.com" },
+  { key: "public_url", label: "Public URL of the API", hint: "Where Telegram reaches the webhook, and the address of listing photos. Must be https and not localhost.", placeholder: "https://api.habesha-dubai.com" },
+  { key: "site_url", label: "Public website address", hint: "The website members and visitors use. Channel posts and bot messages link to it.", placeholder: "https://habesha-dubai.com" },
   { key: "support_telegram_username", label: "Support Telegram username", hint: "Shown to a member whose number is already taken, and in the ban message.", placeholder: "habesha_admin" },
   { key: "allowed_phone_countries", label: "Allowed phone country codes", hint: "Comma separated. A member outside these is accepted but marked for review.", placeholder: "971,251" },
   { key: "telegram_channel_link", label: "Public channel invite link", hint: "Sent at the end of joining.", placeholder: "https://t.me/habesha_dubai" },

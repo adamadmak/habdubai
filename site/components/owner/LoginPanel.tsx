@@ -1,0 +1,158 @@
+"use client";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
+import { CircleAlert, CircleCheck, Send, ShieldCheck, Smartphone } from "lucide-react";
+
+type Phase = "starting" | "waiting" | "approved" | "expired" | "declined" | "unavailable";
+
+type Labels = {
+  phone: string;
+  desktop: string;
+  codeLabel: string;
+  open: string;
+  waiting: string;
+  expired: string;
+  declined: string;
+  retry: string;
+  done: string;
+  unavailable: string;
+  privacy: string;
+};
+
+/**
+ * "Continue with Telegram": a QR code on a computer, a big button on a phone,
+ * and the four-digit code to compare in Telegram. The page asks every two
+ * seconds whether the person confirmed, and right away when they come back
+ * from the Telegram app.
+ */
+export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
+  const router = useRouter();
+  const [phase, setPhase] = useState<Phase>("starting");
+  const [link, setLink] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [qr, setQr] = useState<string | null>(null);
+  const expires = useRef<number>(0);
+  const busy = useRef(false);
+
+  const start = useCallback(async () => {
+    setPhase("starting");
+    setQr(null);
+    try {
+      const response = await fetch("/api/auth/start", { method: "POST" });
+      if (!response.ok) throw new Error("unavailable");
+      const data: { link: string; code: string; expires_at: string } = await response.json();
+      setLink(data.link);
+      setCode(data.code);
+      expires.current = new Date(data.expires_at).getTime();
+      setQr(await QRCode.toDataURL(data.link, { margin: 1, width: 440, errorCorrectionLevel: "M", color: { dark: "#111418", light: "#ffffff" } }));
+      setPhase("waiting");
+    } catch {
+      setPhase("unavailable");
+    }
+  }, []);
+
+  const poll = useCallback(async () => {
+    if (busy.current) return;
+    if (expires.current && Date.now() > expires.current) {
+      setPhase("expired");
+      return;
+    }
+    busy.current = true;
+    try {
+      const response = await fetch("/api/auth/poll", { method: "POST" });
+      const data: { status: string } = await response.json();
+      if (data.status === "approved") {
+        setPhase("approved");
+        router.replace(next);
+        router.refresh();
+      } else if (data.status === "declined" || data.status === "expired") {
+        setPhase(data.status);
+      }
+    } catch {
+      // A dropped request: the next tick asks again.
+    } finally {
+      busy.current = false;
+    }
+  }, [next, router]);
+
+  useEffect(() => {
+    void start();
+  }, [start]);
+
+  useEffect(() => {
+    if (phase !== "waiting") return;
+    const timer = window.setInterval(poll, 2000);
+    const back = () => document.visibilityState === "visible" && void poll();
+    document.addEventListener("visibilitychange", back);
+    window.addEventListener("focus", back);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", back);
+      window.removeEventListener("focus", back);
+    };
+  }, [phase, poll]);
+
+  if (phase === "unavailable" || phase === "expired" || phase === "declined") {
+    return (
+      <div className="card p-6 text-center">
+        <CircleAlert className="mx-auto size-8 text-warning" aria-hidden="true" />
+        <p className="mt-3 font-semibold">{labels[phase]}</p>
+        <button type="button" onClick={() => void start()} className="btn btn-primary mt-5">{labels.retry}</button>
+      </div>
+    );
+  }
+
+  if (phase === "approved") {
+    return (
+      <div className="card p-6 text-center" role="status">
+        <CircleCheck className="mx-auto size-8 text-success" aria-hidden="true" />
+        <p className="mt-3 font-semibold">{labels.done}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card overflow-hidden">
+      <div className="grid gap-6 p-6 md:grid-cols-[auto_1fr] md:items-center">
+        {/* On a computer: scan with the phone. On a phone: the button below does it. */}
+        <div className="mx-auto hidden size-[13.75rem] place-items-center rounded-2xl border border-line bg-white p-2 md:grid">
+          {qr ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={qr} alt="" className="size-full" />
+          ) : (
+            <div className="waiting size-full rounded-xl bg-surface" />
+          )}
+        </div>
+        <div>
+          <p className="flex items-start gap-2 text-sm text-muted md:hidden">
+            <Smartphone className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {labels.phone}
+          </p>
+          <p className="hidden text-sm text-muted md:block">{labels.desktop}</p>
+
+          <a
+            href={link ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled={!link}
+            className="btn btn-primary mt-4 w-full md:w-auto"
+          >
+            <Send className="size-4" aria-hidden="true" /> {labels.open}
+          </a>
+
+          <div className="mt-5">
+            <p className="text-xs text-muted">{labels.codeLabel}</p>
+            <p className="mt-1 font-mono text-3xl font-bold tracking-[0.3em] tabular" aria-live="polite">{code || "····"}</p>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 border-t border-line bg-surface px-6 py-3 text-sm text-muted" role="status">
+        <span className="waiting inline-block size-2 rounded-full bg-primary" aria-hidden="true" />
+        {labels.waiting}
+      </div>
+      <p className="flex items-center gap-2 px-6 py-3 text-xs text-faint">
+        <ShieldCheck className="size-3.5 shrink-0" aria-hidden="true" /> {labels.privacy}
+      </p>
+    </div>
+  );
+}

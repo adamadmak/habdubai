@@ -80,8 +80,11 @@ const DashboardPage = () => {
       <h2 className="text-lg font-semibold text-default-900 mt-8 mb-3">Business directory</h2>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Stat label="Listed businesses" value={data.directory.listed} href="/directory?status=approved" />
-        <Stat label="Suggestions waiting" value={data.directory.pending} href="/directory?status=pending" tone={data.directory.pending > 0 ? "warning" : undefined} />
+        <Stat label="Waiting for review" value={data.directory.pending} href="/directory?status=pending" tone={data.directory.pending > 0 ? "warning" : undefined} />
+        <Stat label="Owner edits waiting" value={data.directory.owner_edits} href="/directory?status=changes" tone={data.directory.owner_edits > 0 ? "warning" : undefined} />
+        <Stat label="Ownership claims" value={data.directory.claims} href="/directory?status=claims" tone={data.directory.claims > 0 ? "warning" : undefined} />
         <Stat label="Hidden after reports" value={data.directory.hidden} href="/directory?status=hidden" tone={data.directory.hidden > 0 ? "destructive" : undefined} />
+        <Stat label="Business owners signed up" value={data.directory.owners} />
       </div>
 
       {(!data.jobs.channel || !data.tick) && (

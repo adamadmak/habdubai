@@ -32,6 +32,7 @@ class Router
         private readonly AnnouncementsFlow $announcements,
         private readonly GroupModerator $moderator,
         private readonly GoodsFlow $goods,
+        private readonly \App\Directory\OwnerLogin $ownerLogin,
     ) {}
 
     public function handle(TelegramUpdate $update): void
@@ -95,6 +96,12 @@ class Router
 
         switch ($in->command()) {
             case 'start':
+                // "Continue with Telegram" on the website: anyone may sign in, member or not.
+                if (str_starts_with($in->commandArgument(), 'login_')) {
+                    $this->ownerLogin->prompt($in->userId, $in->chatId, substr($in->commandArgument(), 6), $language);
+
+                    return;
+                }
                 if ($in->commandArgument() === 'jobs' && $member?->isActive()) {
                     $this->jobs->menu($member);
 
@@ -386,6 +393,12 @@ class Router
 
         if ($member?->isBanned()) {
             $this->telegram->answerCallback($cb->id);
+
+            return;
+        }
+
+        if ($parts[0] === 'lg' && in_array($parts[1] ?? '', ['ok', 'no'], true) && $cb->inPrivateChat()) {
+            $this->ownerLogin->answer($cb, $parts[1] === 'ok', (int) ($parts[2] ?? 0));
 
             return;
         }

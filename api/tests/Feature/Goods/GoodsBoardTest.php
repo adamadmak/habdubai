@@ -53,23 +53,6 @@ function postParcel(int $userId, string $date = '21/11/2026', string $kilos = '5
     return GoodsPost::query()->where('kind', 'sender')->latest('id')->firstOrFail();
 }
 
-/** Every message the bot sent to one chat, as text. */
-function textsTo(int|string $chatId): array
-{
-    return collect(sentMessages())->filter(fn (array $m) => (string) $m['chat_id'] === (string) $chatId)->pluck('text')->values()->all();
-}
-
-function lastTo(int|string $chatId): array
-{
-    return collect(sentMessages())->filter(fn (array $m) => (string) $m['chat_id'] === (string) $chatId)->last() ?? ['text' => '', 'reply_markup' => null];
-}
-
-/** The callback_data of every inline button on a sent message. */
-function buttonsOf(array $message): array
-{
-    return collect($message['reply_markup']['inline_keyboard'] ?? [])->flatten(1)->map(fn (array $b) => $b['callback_data'] ?? $b['url'] ?? null)->all();
-}
-
 /** A traveller (801) and a sender (802), introduced and agreed on 5 kg; returns the match. */
 function agreedMatch(): GoodsMatch
 {

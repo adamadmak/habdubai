@@ -87,6 +87,16 @@ final class Choices
         'other' => ['am' => '📌 ሌላ', 'ti' => '📌 ካልእ', 'en' => '📌 Other'],
     ];
 
+    /** Languages a business serves customers in, shown on its page. */
+    public const SPOKEN_LANGUAGES = [
+        'am' => ['am' => 'አማርኛ', 'ti' => 'ኣምሓርኛ', 'en' => 'Amharic'],
+        'ti' => ['am' => 'ትግርኛ', 'ti' => 'ትግርኛ', 'en' => 'Tigrinya'],
+        'om' => ['am' => 'ኦሮምኛ', 'ti' => 'ኦሮምኛ', 'en' => 'Afaan Oromo'],
+        'so' => ['am' => 'ሶማሊኛ', 'ti' => 'ሶማልኛ', 'en' => 'Somali'],
+        'ar' => ['am' => 'ዓረብኛ', 'ti' => 'ዓረብ', 'en' => 'Arabic'],
+        'en' => ['am' => 'እንግሊዝኛ', 'ti' => 'እንግሊዝኛ', 'en' => 'English'],
+    ];
+
     /** Goods board: which way a trip or a parcel goes. */
     public const GOODS_DIRECTIONS = [
         'to_et' => ['am' => '🇦🇪 → 🇪🇹 ወደ ኢትዮጵያ', 'ti' => '🇦🇪 → 🇪🇹 ናብ ኢትዮጵያ', 'en' => '🇦🇪 → 🇪🇹 To Ethiopia'],

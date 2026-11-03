@@ -20,6 +20,7 @@ class SettingController extends Controller
     /** @var array<string, array<int, string>> key => validation rules */
     private const FIELDS = [
         'public_url' => ['nullable', 'url', 'max:200'],
+        'site_url' => ['nullable', 'url:http,https', 'max:200'],
         'support_telegram_username' => ['nullable', 'string', 'max:40'],
         'allowed_phone_countries' => ['nullable', 'string', 'max:100'],
         'telegram_channel_link' => ['nullable', 'url', 'max:200'],

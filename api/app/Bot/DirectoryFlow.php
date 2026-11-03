@@ -118,10 +118,13 @@ class DirectoryFlow
         $l = $member->language;
         $business->loadMissing('city');
 
-        $keyboard = ['inline_keyboard' => [
+        $site = $business->slug ? \App\Support\PublicUrls::site($l.'/directory/'.$business->slug) : '';
+        $keyboard = ['inline_keyboard' => array_values(array_filter([
             [['text' => $this->messages->button('btn_dir_map', $l), 'url' => $business->mapLink()]],
+            // The full page: photo, hours, languages and every way to reach them.
+            $site !== '' ? [['text' => $this->messages->button('btn_dir_open_site', $l), 'url' => $site]] : null,
             [$this->btn('btn_dir_report', $l, 'd:rep:'.$business->id)],
-        ]];
+        ]))];
 
         if ($business->hasPin()) {
             try {

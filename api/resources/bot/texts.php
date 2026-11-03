@@ -1539,4 +1539,87 @@ return [
         'ti' => 'ገና ደረጃ የለን',
         'en' => 'no ratings yet',
     ],
+
+    // ---- website sign-in and business owners ------------------------------------
+
+    'login_prompt' => [
+        'am' => "🔐 <b>ወደ ሐበሻ ዱባይ ድረ-ገጽ ይግቡ?</b>\n\nድረ-ገጹ ይህን ኮድ ያሳያል፡ <b>{code}</b>\n\nአሁን እርስዎ ራስዎ በ{site} ላይ “በቴሌግራም ይቀጥሉ” ከተጫኑና ኮዱ ከተመሳሰለ ብቻ ያረጋግጡ። መግባት የንግድ ዝርዝሮችን ለመጨመርና ለማስተዳደር ያስችላል፤ የቴሌግራም ስምዎ ብቻ ይጋራል፣ ስልክ ቁጥርዎ አይጋራም።",
+        'ti' => "🔐 <b>ናብ መርበብ ሓበሻ ዱባይ ክትኣትዉ?</b>\n\nእቲ መርበብ ነዚ ኮድ የርኢ፡ <b>{code}</b>\n\nሕጂ ባዕልኹም ኣብ {site} “ብቴሌግራም ቀጽሉ” እንተጠዊቕኩምን እቲ ኮድ እንተተሰማሚዑን ጥራይ ኣረጋግጹ። ምእታው ዝርዝራት ንግዲ ንምውሳኽን ንምምሕዳርን የኽእል፤ ስም ቴሌግራምኩም ጥራይ ይካፈል፣ ቁጽሪ ስልክኹም ኣይካፈልን።",
+        'en' => "🔐 <b>Sign in to the Habesha Dubai website?</b>\n\nThe website shows this code: <b>{code}</b>\n\nConfirm only if you just pressed “Continue with Telegram” on {site} yourself and the code matches. Signing in lets you add and manage business listings. It shares your Telegram name, never your phone number.",
+    ],
+    'login_site_fallback' => [
+        'am' => 'ድረ-ገጹ',
+        'ti' => 'እቲ መርበብ',
+        'en' => 'the website',
+    ],
+    'btn_login_yes' => [
+        'am' => '✅ አዎ፣ አስገባኝ',
+        'ti' => '✅ እወ፣ ኣእትወኒ',
+        'en' => '✅ Yes, sign me in',
+    ],
+    'btn_login_no' => [
+        'am' => '✖️ እኔ አይደለሁም',
+        'ti' => '✖️ ኣነ ኣይኮንኩን',
+        'en' => '✖️ It was not me',
+    ],
+    'login_expired' => [
+        'am' => 'ይህ የመግቢያ ሊንክ ጊዜው አልፏል። በድረ-ገጹ ላይ እንደገና ይጀምሩ።',
+        'ti' => 'እዚ ናይ ምእታው ሊንክ ግዜኡ ሓሊፉ። ኣብቲ መርበብ እንደገና ጀምሩ።',
+        'en' => 'This sign-in link has expired. Start again on the website.',
+    ],
+    'login_done' => [
+        'am' => '✅ ገብተዋል። ወደ ድረ-ገጹ ይመለሱ፤ በራሱ ይቀጥላል።',
+        'ti' => '✅ ኣቲኹም። ናብቲ መርበብ ተመለሱ፤ ባዕሉ ክቕጽል እዩ።',
+        'en' => '✅ You are signed in. Go back to the website; it continues by itself.',
+    ],
+    'login_declined' => [
+        'am' => 'እሺ፣ ማንም አልገባም። ይህን ያልጀመሩት እርስዎ ከሆኑ ሊንኩን ለማንም አያጋሩ።',
+        'ti' => 'ሕራይ፣ ዋላ ሓደ ኣይኣተወን። እዚ ዘይጀመርኩምዎ እንተኾይኑ ሊንኩ ንማንም ኣይተካፍሉ።',
+        'en' => 'OK, nobody was signed in. If you did not start this, do not share such links with anyone.',
+    ],
+    'dir_channel_new' => [
+        'am' => '🏪 በንግድ ማውጫው አዲስ',
+        'ti' => '🏪 ኣብ መምርሒ ንግዲ ሓድሽ',
+        'en' => '🏪 New in the business directory',
+    ],
+    'btn_job_on_site' => [
+        'am' => '🌐 በሦስት ቋንቋ',
+        'ti' => '🌐 ብሰለስተ ቋንቋ',
+        'en' => '🌐 In three languages',
+    ],
+    'btn_dir_open_site' => [
+        'am' => '🌐 በድረ-ገጹ ይክፈቱ',
+        'ti' => '🌐 ኣብ መርበብ ክፈቱ',
+        'en' => '🌐 Open on the website',
+    ],
+    'owner_listing_live' => [
+        'am' => '✅ <b>{name}</b> ጸድቋል፤ አሁን በድረ-ገጹና በቻናሉ ላይ ይታያል።{link}',
+        'ti' => '✅ <b>{name}</b> ጸዲቑ፤ ሕጂ ኣብ መርበብን ቻነልን ይርአ።{link}',
+        'en' => '✅ <b>{name}</b> is approved and now live on the website and the channel.{link}',
+    ],
+    'owner_listing_rejected' => [
+        'am' => "<b>{name}</b> አልጸደቀም። ምክንያት፡ {note}\n\nበድረ-ገጹ ላይ አስተካክለው እንደገና መላክ ይችላሉ።",
+        'ti' => "<b>{name}</b> ኣይጸደቐን። ምኽንያት፡ {note}\n\nኣብ መርበብ ኣዐሪኹም እንደገና ክትሰዱ ትኽእሉ።",
+        'en' => "<b>{name}</b> was not approved. Reason: {note}\n\nYou can fix it on the website and send it again.",
+    ],
+    'owner_changes_live' => [
+        'am' => '✅ በ<b>{name}</b> ላይ ያደረጓቸው ለውጦች ጸድቀው ቀጥታ ወጥተዋል።{link}',
+        'ti' => '✅ ኣብ <b>{name}</b> ዝገበርኩምዎም ለውጥታት ጸዲቖም ወጺኦም።{link}',
+        'en' => '✅ Your changes to <b>{name}</b> are approved and live.{link}',
+    ],
+    'owner_changes_rejected' => [
+        'am' => "በ<b>{name}</b> ላይ ያደረጓቸው ለውጦች አልጸደቁም። ምክንያት፡ {note}\nዝርዝሩ እንደነበረው ይቀጥላል።",
+        'ti' => "ኣብ <b>{name}</b> ዝገበርኩምዎም ለውጥታት ኣይጸደቑን። ምኽንያት፡ {note}\nእቲ ዝርዝር ከም ዝነበሮ ይቕጽል።",
+        'en' => "Your changes to <b>{name}</b> were not approved. Reason: {note}\nThe listing stays as it was.",
+    ],
+    'owner_claim_approved' => [
+        'am' => "✅ <b>{name}</b> አሁን የእርስዎ ነው፤ በድረ-ገጹ ላይ ማስተዳደር ይችላሉ።\n{link}",
+        'ti' => "✅ <b>{name}</b> ሕጂ ናትኩም እዩ፤ ኣብ መርበብ ከተመሓድርዎ ትኽእሉ።\n{link}",
+        'en' => "✅ <b>{name}</b> is now yours to manage on the website.\n{link}",
+    ],
+    'owner_claim_rejected' => [
+        'am' => 'የ<b>{name}</b> ባለቤትነት ጥያቄዎ አልጸደቀም። ምክንያት፡ {note}',
+        'ti' => 'ናይ <b>{name}</b> ወናንነት ሕቶኹም ኣይጸደቐን። ምኽንያት፡ {note}',
+        'en' => 'Your claim to <b>{name}</b> was not approved. Reason: {note}',
+    ],
 ];

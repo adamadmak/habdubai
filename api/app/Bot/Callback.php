@@ -13,6 +13,8 @@ final class Callback
         public readonly ?string $chatType,
         public readonly ?int $messageId,
         public readonly ?string $languageCode,
+        /** Telegram's `from` object: first_name, last_name, username. */
+        public readonly array $from = [],
     ) {}
 
     public static function fromUpdate(array $update): ?self
@@ -31,6 +33,7 @@ final class Callback
             chatType: $query['message']['chat']['type'] ?? null,
             messageId: isset($query['message']['message_id']) ? (int) $query['message']['message_id'] : null,
             languageCode: $query['from']['language_code'] ?? null,
+            from: (array) $query['from'],
         );
     }
 

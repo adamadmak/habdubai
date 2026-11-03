@@ -58,6 +58,12 @@ class DashboardController extends Controller
                 'listed' => \App\Models\Business::query()->where('status', 'approved')->count(),
                 'pending' => \App\Models\Business::query()->where('status', 'pending')->count(),
                 'hidden' => \App\Models\Business::query()->where('status', 'hidden')->count(),
+                // Zero until an administrator applies the website migration.
+                'owner_edits' => \Illuminate\Support\Facades\Schema::hasColumn('businesses', 'changes_submitted_at')
+                    ? \App\Models\Business::query()->whereIn('status', ['approved', 'hidden'])->whereNotNull('changes_submitted_at')->count() : 0,
+                'claims' => \Illuminate\Support\Facades\Schema::hasTable('business_claims')
+                    ? \App\Models\BusinessClaim::query()->where('status', 'pending')->count() : 0,
+                'owners' => \Illuminate\Support\Facades\Schema::hasTable('business_owners') ? \App\Models\BusinessOwner::query()->count() : 0,
             ],
             'community' => [
                 'questions_open' => \App\Models\Question::query()->where('status', 'open')->count(),

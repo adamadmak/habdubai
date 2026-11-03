@@ -155,7 +155,7 @@ export interface DashboardPayload {
   bot: { configured: boolean; username: string };
   jobs: { published_today: number; open: number; review: number; duplicates_today: number; alerts_queued: number; classifier: "claude" | "rules"; channel: boolean };
   sources: { active: number; paused: number; failing: number };
-  directory: { listed: number; pending: number; hidden: number };
+  directory: { listed: number; pending: number; hidden: number; owner_edits: number; claims: number; owners: number };
   community: { questions_open: number; questions_today: number; announcements_pending: number; safety_open: number; faq_live: number; reports_open: number };
   goods: { open_posts: number; live_matches: number; disputes: number; completed: number };
   tick: { at: string; seconds: number } | null;
@@ -323,15 +323,41 @@ export interface Business {
   maps_url: string | null;
   map_link: string;
   phone: string | null;
+  whatsapp: string | null;
   telegram: string | null;
+  website: string | null;
   description: string | null;
+  about: string | null;
+  hours: string | null;
+  languages: string[];
+  slug: string | null;
   status: BusinessStatus;
   verified: boolean;
   review_note: string | null;
   reports_count: number;
+  views: number;
+  photo: string | null;
+  pending_photo: string | null;
+  pending_changes: Record<string, unknown> | null;
+  changes_submitted_at: string | null;
+  claims_pending: number;
+  posted_to_channel: boolean;
   submitted_by: { id: number; name: string } | null;
+  owner: { id: number; name: string; username: string | null } | null;
+  submitted_at: string | null;
   created_at: string;
   reports?: { member: string | null; reason: string; at: string }[];
+  claims?: BusinessClaimRow[];
+}
+
+export interface BusinessClaimRow {
+  id: number;
+  status: "pending" | "approved" | "rejected";
+  note: string | null;
+  review_note: string | null;
+  business: { id: number; name: string; area: string; city: string | null; phone: string | null; owner_id: number | null } | null;
+  owner: { id: number; name: string; username: string | null; member_id: number | null; member_since: string | null } | null;
+  created_at: string;
 }
 
 export interface DirectoryCity {
@@ -350,8 +376,8 @@ export interface DirectoryCity {
 export interface BusinessesPage {
   data: Business[];
   meta: { total: number; page: number; last_page: number };
-  counts: Partial<Record<BusinessStatus, number>>;
-  choices: { categories: Record<string, string>; cities: { id: number; name_en: string; active: boolean }[] };
+  counts: Partial<Record<BusinessStatus | "changes" | "claims", number>>;
+  choices: { categories: Record<string, string>; cities: { id: number; name_en: string; active: boolean }[]; languages: Record<string, string> };
 }
 
 export interface QuestionRow {

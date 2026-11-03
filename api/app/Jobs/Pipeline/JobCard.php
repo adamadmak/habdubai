@@ -78,7 +78,13 @@ class JobCard
         $rows = [];
 
         if ($job->url && $job->status !== 'closed') {
-            $rows[] = [['text' => $this->messages->button('btn_job_open', $label), 'url' => $job->url]];
+            $row = [['text' => $this->messages->button('btn_job_open', $label), 'url' => $job->url]];
+            // The website's page has the summary in all three languages and the safety notes.
+            $site = \App\Support\PublicUrls::site($label.'/jobs/'.$job->id);
+            if ($site !== '') {
+                $row[] = ['text' => $this->messages->button('btn_job_on_site', $label), 'url' => $site];
+            }
+            $rows[] = $row;
         }
 
         if ($job->status !== 'closed') {

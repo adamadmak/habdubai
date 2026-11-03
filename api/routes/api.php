@@ -17,6 +17,13 @@ use App\Http\Controllers\Admin\JobSourceController;
 use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Owner\AuthController as OwnerAuth;
+use App\Http\Controllers\Owner\BusinessController as OwnerBusinesses;
+use App\Http\Controllers\Public\AnnouncementController as PublicAnnouncements;
+use App\Http\Controllers\Public\DirectoryController as PublicDirectory;
+use App\Http\Controllers\Public\HomeController as PublicHome;
+use App\Http\Controllers\Public\JobController as PublicJobs;
+use App\Http\Controllers\Public\MediaController as PublicMedia;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SystemTickController;
 use App\Http\Controllers\TelegramWebhookController;
@@ -30,6 +37,42 @@ Route::match(['get', 'post'], 'system/tick', SystemTickController::class)->middl
 // First run on a host with no shell: see SetupController.
 Route::post('setup/migrate', [SetupController::class, 'migrate'])->middleware('throttle:10,1')->name('setup.migrate');
 Route::post('setup/admin', [SetupController::class, 'admin'])->middleware('throttle:10,1')->name('setup.admin');
+
+// The public website reads these. Its server makes most of the calls, so the limit is generous.
+Route::prefix('public')->name('public.')->middleware('throttle:600,1')->group(function (): void {
+    Route::get('home', [PublicHome::class, 'home'])->name('home');
+    Route::get('meta', [PublicHome::class, 'meta'])->name('meta');
+    Route::get('jobs', [PublicJobs::class, 'index'])->name('jobs');
+    Route::get('jobs/{job}', [PublicJobs::class, 'show'])->whereNumber('job')->name('jobs.show');
+    Route::get('jobs/{job}/apply', [PublicJobs::class, 'apply'])->whereNumber('job')->name('jobs.apply');
+    Route::get('directory', [PublicDirectory::class, 'facets'])->name('directory');
+    Route::get('businesses', [PublicDirectory::class, 'index'])->name('businesses');
+    Route::get('businesses/{slug}', [PublicDirectory::class, 'show'])->where('slug', '[a-z0-9-]{1,170}')->name('businesses.show');
+    Route::get('announcements', [PublicAnnouncements::class, 'index'])->name('announcements');
+    Route::get('announcements/{announcement}', [PublicAnnouncements::class, 'show'])->whereNumber('announcement')->name('announcements.show');
+    Route::get('announcements/{announcement}/photo', [PublicMedia::class, 'announcement'])->whereNumber('announcement')->name('announcements.photo');
+    Route::get('photos/{photo}', [PublicMedia::class, 'photo'])->whereNumber('photo')->name('photo');
+    Route::get('photos/{photo}/preview', [PublicMedia::class, 'preview'])->whereNumber('photo')->middleware('signed:relative')->name('photo.preview');
+});
+
+// Business owners: "Continue with Telegram", then their own listings.
+Route::prefix('owner')->name('owner.')->group(function (): void {
+    Route::post('login/start', [OwnerAuth::class, 'start'])->middleware('throttle:owner-login-start')->name('login.start');
+    Route::post('login/poll', [OwnerAuth::class, 'poll'])->middleware('throttle:owner-login-poll')->name('login.poll');
+
+    Route::middleware(['auth:sanctum', 'abilities:owner', 'owner', 'throttle:120,1'])->group(function (): void {
+        Route::get('me', [OwnerAuth::class, 'me'])->name('me');
+        Route::post('logout', [OwnerAuth::class, 'logout'])->name('logout');
+        Route::get('choices', [OwnerBusinesses::class, 'choices'])->name('choices');
+        Route::get('businesses', [OwnerBusinesses::class, 'index'])->name('businesses.index');
+        Route::post('businesses', [OwnerBusinesses::class, 'store'])->name('businesses.store');
+        Route::get('businesses/{business}', [OwnerBusinesses::class, 'show'])->name('businesses.show');
+        Route::put('businesses/{business}', [OwnerBusinesses::class, 'update'])->name('businesses.update');
+        Route::delete('businesses/{business}', [OwnerBusinesses::class, 'destroy'])->name('businesses.destroy');
+        Route::post('businesses/{business}/photo', [OwnerBusinesses::class, 'photo'])->name('businesses.photo');
+        Route::post('businesses/{business}/claim', [OwnerBusinesses::class, 'claim'])->name('businesses.claim');
+    });
+});
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:6,1')->name('login');
@@ -77,6 +120,11 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('businesses/{business}/approve', [BusinessController::class, 'approve'])->name('businesses.approve');
         Route::post('businesses/{business}/reject', [BusinessController::class, 'reject'])->name('businesses.reject');
         Route::post('businesses/{business}/hide', [BusinessController::class, 'hide'])->name('businesses.hide');
+        Route::post('businesses/{business}/changes/approve', [BusinessController::class, 'approveChanges'])->name('businesses.changes.approve');
+        Route::post('businesses/{business}/changes/reject', [BusinessController::class, 'rejectChanges'])->name('businesses.changes.reject');
+        Route::get('business-claims', [BusinessController::class, 'claims'])->name('business-claims.index');
+        Route::post('business-claims/{claim}/approve', [BusinessController::class, 'approveClaim'])->name('business-claims.approve');
+        Route::post('business-claims/{claim}/reject', [BusinessController::class, 'rejectClaim'])->name('business-claims.reject');
 
         Route::get('directory-cities', [DirectoryCityController::class, 'index'])->name('directory-cities.index');
         Route::post('directory-cities', [DirectoryCityController::class, 'store'])->name('directory-cities.store');

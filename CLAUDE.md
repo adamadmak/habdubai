@@ -132,6 +132,46 @@ phase one. Rules that are easy to break:
 - Banned items are `GroupModerator::BANNED_ITEMS`, shared by the group
   filter and every goods post a member writes.
 
+## The public website (`site/`) and business owners
+
+Next.js 15 (App Router, React 19, Tailwind 4), rendered per request with the
+API's answers cached for a minute; nothing is pre-rendered at build time, so
+a build never needs the API. Every page lives under `/am`, `/ti` or `/en`
+(`middleware.ts`); copy is in `site/i18n/*.ts`, one typed shape for all
+three. The fixed lists (kinds of work, emirates, business kinds, languages)
+come from the API's `/public/meta`, i.e. from `Choices`, so the site and the
+bot never word them differently.
+
+- **Design.** It follows the apple-design skill (in the Addis game repo,
+  `.claude/skills/apple-design/`) and Anthropic's frontend-design skill:
+  system font for Latin, Noto Sans Ethiopic for Ge'ez, semantic colour tokens
+  in `site/app/globals.css` with a dark set, press feedback by `scale` on
+  `:active`, one entrance animation (the front page), and fallbacks for
+  reduced motion, reduced transparency and more contrast. The only ornament
+  is the tibeb band (diamonds, no crosses: it is for everyone). Event dates
+  also show the Ethiopian calendar (`lib/format.ts`).
+- **Owners sign in with Telegram** (`App\Directory\OwnerLogin`): the site
+  shows a QR code / button and a 4-digit code; the bot asks the person who
+  opened `/start login_<ref>` to confirm; the site's server polls with a
+  secret the browser never sees and puts the owner token in an httpOnly
+  cookie. Owner tokens carry only the `owner` ability (`EnsureBusinessOwner`),
+  admin tokens only `admin`. Owners need not be members; a member's account
+  is linked.
+- **Listings.** An owner's new listing waits for review. An edit to a live
+  listing waits in `businesses.pending_changes` while the live version stays
+  up; photos (base64 in `business_photos`, re-encoded by `PhotoStore`) are
+  always reviewed. Approval goes through `App\Directory\BusinessPublisher`,
+  which posts the listing to the channel once and tells the owner in the bot.
+  Claims let an owner take over a listing the community added.
+- **Links out** are built with `App\Support\PublicUrls`: `public_url` is the
+  API (photo links), `site_url` the website (channel and bot buttons). Both
+  are on the admin's Settings page.
+- **The scheduler tick** comes from the website's server
+  (`site/instrumentation.ts`) when `TICK_URL` and `TICK_TOKEN` are set on it.
+- **Caching:** anything cached with `Cache::remember` in the API must be
+  plain arrays; the cache refuses to restore objects it does not know, and
+  the in-memory store in tests hides that.
+
 ## Phone numbers are never stored
 
 A member is keyed on `phone_hash` (HMAC of the digits with the app key) plus
