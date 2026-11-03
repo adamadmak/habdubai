@@ -33,7 +33,27 @@ so nothing reaches the network.
 
 ## Deploy
 
-Two AletCloud apps, pushed one at a time. The API's bot token and other
-secrets live in `platform_settings` and are set on the admin's Settings page,
-never in environment variables (the host builds the config cache without the
-runtime environment).
+Two AletCloud apps from this one GitHub repository, pushed one at a time (two
+builds at once leave both stuck):
+
+| App | Root | Framework | Env it needs |
+| --- | --- | --- | --- |
+| `habesha-api` | `api` | Laravel | `APP_KEY`, `APP_URL`, `APP_ENV=production`, `APP_DEBUG=false`, `LOG_CHANNEL=stderr`, `TRUSTED_PROXIES=*`, `QUEUE_CONNECTION=sync`, `CACHE_STORE=database`, `SESSION_DRIVER=array`, `SETUP_TOKEN`, plus the database variables the host injects |
+| `habesha` (web) | `web` | Next.js | `NEXT_PUBLIC_API_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` |
+
+The host has no shell, so the first run goes through two token-guarded
+routes (`SetupController`), with `X-Setup-Token: <SETUP_TOKEN>`:
+
+```bash
+curl -X POST https://<api>/api/setup/migrate -H "X-Setup-Token: $SETUP_TOKEN"
+```
+
+```bash
+curl -X POST https://<api>/api/setup/admin -H "X-Setup-Token: $SETUP_TOKEN" -H "Content-Type: application/json" -d '{"email":"you@example.com","password":"a-long-password"}'
+```
+
+The admin route works only while there is no administrator; migrations can
+be re-run after every deploy that adds one. The bot token and the other
+operator values live in `platform_settings` and are set on the admin's
+Settings page, never in environment variables (the host builds the config
+cache without the runtime environment).

@@ -6,10 +6,15 @@ use App\Http\Controllers\Admin\BotTextController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\SetupController;
 use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('telegram/webhook/{secret}', TelegramWebhookController::class)->name('telegram.webhook');
+
+// First run on a host with no shell: see SetupController.
+Route::post('setup/migrate', [SetupController::class, 'migrate'])->middleware('throttle:10,1')->name('setup.migrate');
+Route::post('setup/admin', [SetupController::class, 'admin'])->middleware('throttle:10,1')->name('setup.admin');
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:6,1')->name('login');
