@@ -1,0 +1,113 @@
+"use client";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import PageTitle from "@/components/page-title";
+import { useApiQuery, useApiMutation, formatDateTime, type SettingsPayload } from "@/lib/api";
+
+const FIELDS: { key: string; label: string; hint: string; placeholder?: string }[] = [
+  { key: "public_url", label: "Public URL of the API", hint: "Where Telegram reaches the webhook. Must be https and not localhost.", placeholder: "https://api.habesha-dubai.com" },
+  { key: "support_telegram_username", label: "Support Telegram username", hint: "Shown to a member whose number is already taken, and in the ban message.", placeholder: "habesha_admin" },
+  { key: "allowed_phone_countries", label: "Allowed phone country codes", hint: "Comma separated. A member outside these is accepted but marked for review.", placeholder: "971,251" },
+  { key: "telegram_channel_link", label: "Public channel invite link", hint: "Sent at the end of joining.", placeholder: "https://t.me/habesha_dubai" },
+  { key: "telegram_questions_group_link", label: "Questions group invite link", hint: "Sent at the end of joining.", placeholder: "https://t.me/+…" },
+  { key: "telegram_goods_group_link", label: "Goods board group invite link", hint: "Sent at the end of joining.", placeholder: "https://t.me/+…" },
+  { key: "telegram_questions_group_id", label: "Questions group chat id", hint: "Numeric id (starts with -100). Needed to remove a member who leaves or is banned.", placeholder: "-1001234567890" },
+  { key: "telegram_goods_group_id", label: "Goods board group chat id", hint: "Same, for the goods group.", placeholder: "-1001234567890" },
+];
+
+const SettingsPage = () => {
+  const { data, isLoading, error } = useApiQuery<SettingsPayload>(["settings"], "/admin/settings");
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    if (data) setForm(data.settings);
+  }, [data]);
+
+  const save = useApiMutation<SettingsPayload, Record<string, string>>((request, body) => request("/admin/settings", "PUT", body), [["settings"], ["dashboard"]]);
+  const saveToken = useApiMutation<{ bot: { username?: string } }, string>((request, t) => request("/admin/settings/telegram", "POST", { token: t }), [["settings"], ["dashboard"]]);
+  const setWebhook = useApiMutation<unknown>((request) => request("/admin/settings/webhook", "POST"), [["settings"]]);
+
+  if (error) return <div className="text-destructive">{error.message}</div>;
+  if (isLoading || !data) return <div className="text-default-600">Loading…</div>;
+
+  const telegram = data.telegram;
+
+  return (
+    <div>
+      <PageTitle title="Settings" description="Operator values live in the database, so they survive a deploy and never depend on environment variables." />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">Community</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="space-y-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                save.mutateAsync(form).then(() => toast.success("Settings saved.")).catch((err) => toast.error(err.message));
+              }}
+            >
+              {FIELDS.map((f) => (
+                <div key={f.key}>
+                  <Label htmlFor={f.key} className="mb-2 block">{f.label}</Label>
+                  <Input id={f.key} value={form[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+                  <p className="mt-1 text-xs text-default-500">{f.hint}</p>
+                  {save.error?.errors?.[f.key] && <p className="mt-1 text-xs text-destructive">{save.error.errors[f.key][0]}</p>}
+                </div>
+              ))}
+              <Button type="submit" disabled={save.isPending}>Save settings</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center justify-between">
+                Telegram bot
+                {telegram.configured ? <Badge color="success" variant="soft">@{telegram.username || "set"}</Badge> : <Badge color="destructive" variant="soft">not set</Badge>}
+              </CardTitle>
+              <CardDescription>The token from BotFather. It is checked with Telegram, stored encrypted, and never shown again.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form
+                className="space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  saveToken
+                    .mutateAsync(token)
+                    .then((r) => { setToken(""); toast.success(`Token saved for @${r.bot.username ?? "bot"} and the webhook registered.`); })
+                    .catch((err) => toast.error(err.message));
+                }}
+              >
+                <Input type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="123456789:ABC…" autoComplete="off" />
+                <Button type="submit" className="w-full" disabled={saveToken.isPending || token.trim() === ""}>Save token and register webhook</Button>
+              </form>
+
+              <div className="text-sm space-y-1">
+                <div className="flex justify-between"><span className="text-default-500">Webhook</span><span className="font-mono text-xs text-right break-all">{telegram.webhook?.url || "not registered"}</span></div>
+                {telegram.webhook?.pending_update_count !== undefined && <div className="flex justify-between"><span className="text-default-500">Pending updates</span><span>{telegram.webhook.pending_update_count}</span></div>}
+                {telegram.webhook?.last_error_message && <div className="text-destructive">Last error: {telegram.webhook.last_error_message} ({formatDateTime(telegram.webhook.last_error_date)})</div>}
+                {telegram.webhook?.error && <div className="text-destructive">{telegram.webhook.error}</div>}
+              </div>
+
+              <Button variant="outline" className="w-full" disabled={!telegram.configured || setWebhook.isPending} onClick={() => setWebhook.mutateAsync().then(() => toast.success("Webhook registered.")).catch((err) => toast.error(err.message))}>
+                Register the webhook again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPage;

@@ -1,0 +1,288 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\PlatformSetting;
+use App\Support\RuntimeEnv;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
+
+/**
+ * The one door to Telegram's Bot API. The token comes from config, then the
+ * value the admin saved (encrypted in platform_settings), then the process
+ * environment; anything not shaped like a token is skipped, never sent.
+ */
+class TelegramBotService
+{
+    public const STORED_TOKEN_KEY = 'telegram_bot_token_encrypted';
+
+    public const STORED_USERNAME_KEY = 'telegram_bot_username';
+
+    public const TOKEN_PATTERN = '/^\d{6,}:[A-Za-z0-9_-]{20,}$/';
+
+    public const USERNAME_PATTERN = '/^[A-Za-z][A-Za-z0-9_]{4,31}$/';
+
+    public const WEBHOOK_SECRET_PATTERN = '/^[A-Za-z0-9_-]{16,256}$/';
+
+    public function configured(): bool
+    {
+        return $this->botToken() !== '';
+    }
+
+    public function botUsername(): string
+    {
+        foreach ([
+            PlatformSetting::valueFor(self::STORED_USERNAME_KEY, ''),
+            config('services.telegram.bot_username'),
+        ] as $candidate) {
+            $candidate = ltrim(trim((string) $candidate), '@');
+            if (preg_match(self::USERNAME_PATTERN, $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return '';
+    }
+
+    public static function isToken(string $value): bool
+    {
+        return (bool) preg_match(self::TOKEN_PATTERN, trim($value));
+    }
+
+    /** Verify a token with getMe, then keep it (encrypted) and the bot's username. */
+    public function configureToken(string $token): array
+    {
+        $token = trim($token);
+
+        if (! self::isToken($token)) {
+            throw new RuntimeException('Enter a valid Telegram bot token from BotFather.');
+        }
+
+        try {
+            $response = $this->http()->asJson()->timeout(10)->post('https://api.telegram.org/bot'.$token.'/getMe');
+        } catch (ConnectionException) {
+            throw new RuntimeException('Telegram could not be reached to verify the bot token. Try again shortly.');
+        }
+
+        $bot = $this->validated($response)->json('result', []);
+
+        PlatformSetting::put(self::STORED_TOKEN_KEY, Crypt::encryptString($token));
+
+        if (filled($bot['username'] ?? null)) {
+            PlatformSetting::put(self::STORED_USERNAME_KEY, ltrim((string) $bot['username'], '@'));
+        }
+
+        return $bot;
+    }
+
+    public function getMe(): array
+    {
+        return $this->post('getMe')->json('result', []);
+    }
+
+    public function getWebhookInfo(): array
+    {
+        return $this->post('getWebhookInfo')->json('result', []);
+    }
+
+    public function setWebhook(string $url): array
+    {
+        return $this->post('setWebhook', [
+            'url' => $url,
+            'secret_token' => $this->webhookSecret(),
+            'allowed_updates' => ['message', 'callback_query', 'my_chat_member', 'chat_member'],
+        ], retry: false)->json();
+    }
+
+    /** The secret Telegram sends back in every webhook call; derived from the token unless the operator set one. */
+    public function webhookSecret(): string
+    {
+        $configured = trim(RuntimeEnv::get('services.telegram.webhook_secret', 'telegram_webhook_secret', 'TELEGRAM_WEBHOOK_SECRET'));
+
+        if (preg_match(self::WEBHOOK_SECRET_PATTERN, $configured)) {
+            return $configured;
+        }
+
+        $token = $this->botToken();
+
+        if ($token === '') {
+            throw new RuntimeException('The Telegram bot token is not configured.');
+        }
+
+        return hash('sha256', 'habesha-dubai-webhook|'.$token);
+    }
+
+    public function validWebhookSecret(string $provided): bool
+    {
+        if (! preg_match(self::WEBHOOK_SECRET_PATTERN, $provided)) {
+            return false;
+        }
+
+        try {
+            return hash_equals($this->webhookSecret(), $provided);
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    public function sendText(int|string $chatId, string $text, ?array $replyMarkup = null): array
+    {
+        return $this->post('sendMessage', array_filter([
+            'chat_id' => $chatId,
+            'text' => $text,
+            'parse_mode' => 'HTML',
+            'link_preview_options' => ['is_disabled' => true],
+            'reply_markup' => $replyMarkup,
+        ], fn ($value) => $value !== null))->json('result', []);
+    }
+
+    /** One attempt, five seconds: for a notice sent inside somebody else's request. */
+    public function notify(int|string $chatId, string $text): void
+    {
+        $this->post('sendMessage', [
+            'chat_id' => $chatId,
+            'text' => $text,
+            'parse_mode' => 'HTML',
+        ], retry: false, timeout: 5);
+    }
+
+    public function deleteMessage(int|string $chatId, int $messageId): bool
+    {
+        try {
+            return (bool) $this->post('deleteMessage', ['chat_id' => $chatId, 'message_id' => $messageId], retry: false)->json('result', false);
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    /** Remove a user from a group without a lasting ban (ban, then unban). */
+    public function kickFromChat(int|string $chatId, int $userId): bool
+    {
+        try {
+            $this->post('banChatMember', ['chat_id' => $chatId, 'user_id' => $userId], retry: false);
+            $this->post('unbanChatMember', ['chat_id' => $chatId, 'user_id' => $userId, 'only_if_banned' => true], retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    public function banFromChat(int|string $chatId, int $userId): bool
+    {
+        try {
+            $this->post('banChatMember', ['chat_id' => $chatId, 'user_id' => $userId], retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    public function contactKeyboard(string $label): array
+    {
+        return [
+            'keyboard' => [[['text' => $label, 'request_contact' => true]]],
+            'resize_keyboard' => true,
+            'is_persistent' => true,
+            'one_time_keyboard' => false,
+        ];
+    }
+
+    /** @param array<int, array<int, string>> $rows */
+    public function replyKeyboard(array $rows, bool $oneTime = true): array
+    {
+        return [
+            'keyboard' => array_map(fn (array $row) => array_map(fn (string $label) => ['text' => $label], $row), $rows),
+            'resize_keyboard' => true,
+            'one_time_keyboard' => $oneTime,
+        ];
+    }
+
+    public function removeKeyboard(): array
+    {
+        return ['remove_keyboard' => true];
+    }
+
+    private function post(string $method, array $payload = [], bool $retry = true, ?int $timeout = null): Response
+    {
+        try {
+            $request = $this->http()->asJson()->timeout($timeout ?? (int) config('services.telegram.timeout', 20));
+
+            if ($retry) {
+                $request = $request->retry(2, 300, throw: false);
+            }
+
+            $response = $request->post($this->endpoint($method), $payload);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Telegram API could not be reached. Try again shortly.');
+        }
+
+        return $this->validated($response);
+    }
+
+    private function validated(Response $response): Response
+    {
+        if (! $response->successful() || ! $response->json('ok', false)) {
+            $description = (string) $response->json('description', 'Telegram request failed.');
+
+            throw new RuntimeException(str($description)->limit(300)->toString());
+        }
+
+        return $response;
+    }
+
+    private function endpoint(string $method): string
+    {
+        $token = $this->botToken();
+
+        if ($token === '') {
+            throw new RuntimeException('The Telegram bot token is not configured.');
+        }
+
+        return 'https://api.telegram.org/bot'.$token.'/'.$method;
+    }
+
+    private function botToken(): string
+    {
+        foreach ([
+            fn () => (string) config('services.telegram.bot_token'),
+            fn () => $this->storedToken(),
+            fn () => (string) (getenv('TELEGRAM_BOT_TOKEN') ?: ''),
+            fn () => RuntimeEnv::fromEnvFile('TELEGRAM_BOT_TOKEN'),
+        ] as $source) {
+            $candidate = trim($source());
+            if (self::isToken($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return '';
+    }
+
+    private function storedToken(): string
+    {
+        $encrypted = trim((string) PlatformSetting::valueFor(self::STORED_TOKEN_KEY, ''));
+
+        if ($encrypted === '') {
+            return '';
+        }
+
+        try {
+            return trim(Crypt::decryptString($encrypted));
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    private function http(): PendingRequest
+    {
+        $caBundle = trim((string) config('services.telegram.ca_bundle'));
+
+        return Http::withOptions(['verify' => $caBundle !== '' ? $caBundle : true])->connectTimeout(5);
+    }
+}

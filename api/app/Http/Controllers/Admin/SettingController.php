@@ -1,0 +1,122 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\PlatformSetting;
+use App\Services\TelegramBotService;
+use App\Support\RuntimeEnv;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use RuntimeException;
+
+/**
+ * Operator settings. The bot token is write-only: it is verified with
+ * Telegram, stored encrypted, and never read back to the page.
+ */
+class SettingController extends Controller
+{
+    /** @var array<string, array<int, string>> key => validation rules */
+    private const FIELDS = [
+        'public_url' => ['nullable', 'url', 'max:200'],
+        'support_telegram_username' => ['nullable', 'string', 'max:40'],
+        'allowed_phone_countries' => ['nullable', 'string', 'max:100'],
+        'telegram_channel_link' => ['nullable', 'url', 'max:200'],
+        'telegram_questions_group_link' => ['nullable', 'url', 'max:200'],
+        'telegram_goods_group_link' => ['nullable', 'url', 'max:200'],
+        'telegram_questions_group_id' => ['nullable', 'string', 'max:32'],
+        'telegram_goods_group_id' => ['nullable', 'string', 'max:32'],
+    ];
+
+    public function show(TelegramBotService $telegram): JsonResponse
+    {
+        $settings = [];
+        foreach (array_keys(self::FIELDS) as $key) {
+            $settings[$key] = RuntimeEnv::get(null, $key, null, $key === 'allowed_phone_countries' ? '971,251' : '');
+        }
+
+        return response()->json([
+            'settings' => $settings,
+            'telegram' => $this->telegramState($telegram),
+        ]);
+    }
+
+    public function update(Request $request): JsonResponse
+    {
+        $data = $request->validate(self::FIELDS);
+
+        $before = [];
+        foreach ($data as $key => $value) {
+            $before[$key] = RuntimeEnv::get(null, $key, null);
+            PlatformSetting::put($key, trim((string) $value));
+        }
+
+        AuditLog::record($request->user()->id, 'settings.updated', 'settings', null, $before, $data);
+
+        return $this->show(app(TelegramBotService::class));
+    }
+
+    /** Save a new bot token (verified with getMe) and register the webhook with it. */
+    public function telegram(Request $request, TelegramBotService $telegram): JsonResponse
+    {
+        $data = $request->validate(['token' => ['required', 'string']]);
+
+        try {
+            $bot = $telegram->configureToken($data['token']);
+            $webhook = $this->registerWebhook($telegram);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        AuditLog::record($request->user()->id, 'telegram.token_set', 'settings', null, null, ['username' => $bot['username'] ?? null]);
+
+        return response()->json(['bot' => $bot, 'webhook' => $webhook, 'telegram' => $this->telegramState($telegram)]);
+    }
+
+    public function webhook(Request $request, TelegramBotService $telegram): JsonResponse
+    {
+        try {
+            $webhook = $this->registerWebhook($telegram);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        AuditLog::record($request->user()->id, 'telegram.webhook_set');
+
+        return response()->json(['webhook' => $webhook, 'telegram' => $this->telegramState($telegram)]);
+    }
+
+    private function registerWebhook(TelegramBotService $telegram): array
+    {
+        // The admin's value first: APP_URL on the host is whatever the build had.
+        $publicUrl = rtrim(RuntimeEnv::get(null, 'public_url', 'APP_URL', (string) config('app.url')), '/');
+
+        if ($publicUrl === '' || str_contains($publicUrl, 'localhost')) {
+            throw new RuntimeException('Set the public URL first; Telegram cannot reach localhost.');
+        }
+
+        return $telegram->setWebhook($publicUrl.'/api/telegram/webhook/'.$telegram->webhookSecret());
+    }
+
+    private function telegramState(TelegramBotService $telegram): array
+    {
+        $state = ['configured' => $telegram->configured(), 'username' => $telegram->botUsername(), 'webhook' => null];
+
+        if ($state['configured']) {
+            try {
+                $info = $telegram->getWebhookInfo();
+                $state['webhook'] = [
+                    'url' => preg_replace('#/webhook/[^/]+$#', '/webhook/…', (string) ($info['url'] ?? '')),
+                    'pending_update_count' => $info['pending_update_count'] ?? 0,
+                    'last_error_message' => $info['last_error_message'] ?? null,
+                    'last_error_date' => isset($info['last_error_date']) ? date('c', (int) $info['last_error_date']) : null,
+                ];
+            } catch (\Throwable $e) {
+                $state['webhook'] = ['error' => $e->getMessage()];
+            }
+        }
+
+        return $state;
+    }
+}
