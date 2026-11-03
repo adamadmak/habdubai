@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Business;
 use App\Models\BusinessClaim;
+use App\Directory\PhotoStore;
 use App\Models\BusinessPhoto;
 use App\Models\BusinessReport;
 use App\Models\DirectoryCity;
@@ -121,11 +122,51 @@ class BusinessController extends Controller
         return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
     }
 
+    /**
+     * A photo from a moderator goes live at once: re-encoded like an owner's,
+     * replacing the cover, and the channel post is refreshed with it.
+     */
+    public function photo(Request $request, Business $business, PhotoStore $photos): JsonResponse
+    {
+        $request->validate([
+            'photo' => ['required', 'file', 'max:'.PhotoStore::MAX_UPLOAD_KB, 'mimetypes:image/jpeg,image/png,image/webp'],
+        ], ['photo.max' => 'The photo is larger than '.intdiv(PhotoStore::MAX_UPLOAD_KB, 1024).' MB.', 'photo.mimetypes' => 'Send a JPEG, PNG or WebP photo.']);
+
+        $photos->store($business, (string) file_get_contents($request->file('photo')->getRealPath()));
+        $photos->approvePending($business);
+
+        if ($business->status === 'approved') {
+            $this->publisher->refresh($business);
+        }
+        AuditLog::record($request->user()->id, 'directory.photo_set', 'business', $business->id);
+
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
+    }
+
+    /** Takes the cover photo down (and any photo waiting for review); the listing keeps its monogram. */
+    public function removePhoto(Request $request, Business $business): JsonResponse
+    {
+        $business->photos()->where('kind', 'cover')->delete();
+
+        if ($business->status === 'approved') {
+            $this->publisher->refresh($business);
+        }
+        AuditLog::record($request->user()->id, 'directory.photo_removed', 'business', $business->id);
+
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
+    }
+
     /** Approve a suggestion or a submission, or put a hidden listing back. Clears reports that took it down. */
-    public function approve(Request $request, Business $business): JsonResponse
+    public function approve(Request $request, Business $business, PhotoStore $photos): JsonResponse
     {
         $wasHidden = $business->status === 'hidden';
+        $wasPending = $business->status === 'pending';
         $this->publisher->approve($business, $request->user()->id);
+
+        // A suggestion's photo (from the bot) was seen in the review; it goes live with the listing.
+        if ($wasPending) {
+            $photos->approvePending($business);
+        }
 
         if ($wasHidden) {
             BusinessReport::query()->where('business_id', $business->id)->delete();

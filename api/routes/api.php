@@ -153,6 +153,8 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('businesses/{business}', [BusinessController::class, 'show'])->name('businesses.show');
         Route::put('businesses/{business}', [BusinessController::class, 'update'])->name('businesses.update');
         Route::delete('businesses/{business}', [BusinessController::class, 'destroy'])->name('businesses.destroy');
+        Route::post('businesses/{business}/photo', [BusinessController::class, 'photo'])->name('businesses.photo');
+        Route::delete('businesses/{business}/photo', [BusinessController::class, 'removePhoto'])->name('businesses.photo.remove');
         Route::post('businesses/{business}/approve', [BusinessController::class, 'approve'])->name('businesses.approve');
         Route::post('businesses/{business}/reject', [BusinessController::class, 'reject'])->name('businesses.reject');
         Route::post('businesses/{business}/hide', [BusinessController::class, 'hide'])->name('businesses.hide');

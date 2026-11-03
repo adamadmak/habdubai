@@ -26,11 +26,12 @@ class DirectoryFlow
 {
     public const PER_PAGE = 8;
 
-    public const STATES = ['biz_name', 'biz_city', 'biz_category', 'biz_area', 'biz_pin', 'biz_phone', 'biz_description', 'biz_confirm'];
+    public const STATES = ['biz_name', 'biz_city', 'biz_category', 'biz_area', 'biz_pin', 'biz_phone', 'biz_description', 'biz_photo', 'biz_confirm'];
 
     public function __construct(
         private readonly TelegramBotService $telegram,
         private readonly BotMessages $messages,
+        private readonly \App\Directory\PhotoStore $photos,
     ) {}
 
     // ---- browsing -----------------------------------------------------------
@@ -372,7 +373,19 @@ class DirectoryFlow
                     }
                     $conversation->remember('description', $text);
                 }
-                $conversation->moveTo('biz_confirm');
+                $conversation->moveTo('biz_photo');
+                $this->telegram->sendText($member->chat_id, $this->messages->text('biz_ask_photo', $l), $this->skipKeyboard($l));
+
+                return;
+
+            case 'biz_photo':
+                $photo = $in->photoFileId();
+                if ($photo === null && ! $skip) {
+                    $this->telegram->sendText($member->chat_id, $this->messages->text('biz_ask_photo', $l), $this->skipKeyboard($l));
+
+                    return;
+                }
+                $conversation->moveTo('biz_confirm', ['photo_file_id' => $photo]);
                 $preview = $this->draft($conversation);
                 $this->telegram->sendText($member->chat_id, $this->messages->text('biz_confirm', $l, ['card' => $this->cardText($preview, $l)]),
                     $this->telegram->replyKeyboard([[$this->messages->button('btn_send', $l), $this->messages->button('btn_cancel', $l)]]));
@@ -388,6 +401,7 @@ class DirectoryFlow
                 }
                 $business = $this->draft($conversation);
                 $business->forceFill(['status' => 'pending', 'submitted_by' => $member->id])->save();
+                $this->attachPhoto($business, (string) ($conversation->data['photo_file_id'] ?? ''));
                 AuditLog::record(null, 'directory.suggested', 'business', $business->id, null, ['member_id' => $member->id, 'name' => $business->name]);
                 $conversation->reset();
                 $this->say($member, 'biz_submitted', [], $this->messages->menuKeyboard($member->language));
@@ -493,6 +507,27 @@ class DirectoryFlow
     private function cancelOnly(string $l): array
     {
         return $this->telegram->replyKeyboard([[$this->messages->button('btn_cancel', $l)]], oneTime: false);
+    }
+
+    /**
+     * The photo sent during the flow: fetched from Telegram and kept with the
+     * suggestion, in review like the listing, for the moderator to see and
+     * approve with it. The suggestion stands without it if Telegram is slow.
+     */
+    private function attachPhoto(Business $business, string $fileId): void
+    {
+        if ($fileId === '') {
+            return;
+        }
+
+        try {
+            $bytes = $this->telegram->downloadFile($fileId);
+            if ($bytes !== null) {
+                $this->photos->store($business, $bytes);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     private function skipKeyboard(string $l): array

@@ -130,6 +130,14 @@ test('a member suggests a business with a map pin; it waits for a moderator', fu
     sharePin(304, 25.2995, 55.3712);
     say(304, '050 123 4567');
     say(304, 'Berbere, shiro, teff and coffee from home.');
+    expect(lastText())->toContain('Send a photo of the place');
+
+    // A sticker is not a photo; the question stands. Then the photo, which the bot fetches from Telegram.
+    say(304, 'no photo, sorry');
+    expect(lastText())->toContain('Send a photo of the place');
+    TelegramFake::$results['getFile'] = ['file_id' => 'big-shop-photo', 'file_path' => 'photos/shop.jpg'];
+    TelegramFake::$files['shop.jpg'] = jpegBytes(900, 600);
+    sendBusinessPhoto(304, 'big-shop-photo');
 
     expect(lastText())->toContain('Please check')->toContain('Abyssinia Spices')->toContain('Al Nahda, near Sahara Centre, Sharjah')->toContain('+971501234567');
 
@@ -143,7 +151,38 @@ test('a member suggests a business with a map pin; it waits for a moderator', fu
         ->and($b->latitude)->toBe(25.2995)
         ->and($b->description)->toContain('Berbere')
         ->and(lastText())->toContain('once a moderator has checked it')
-        ->and(Conversation::query()->where('telegram_user_id', 304)->value('state'))->toBe('idle');
+        ->and(Conversation::query()->where('telegram_user_id', 304)->value('state'))->toBe('idle')
+        // The photo waits with the suggestion, and goes live with it.
+        ->and($b->photos()->count())->toBe(1)
+        ->and($b->photos()->first()->approved)->toBeFalse();
+
+    Sanctum::actingAs(admin(), ['admin']);
+    $this->postJson("/api/admin/businesses/{$b->id}/approve")->assertOk()->assertJsonPath('business.status', 'approved');
+    expect($b->photos()->where('approved', true)->count())->toBe(1);
+});
+
+/** A photo message from this user, as Telegram sends it: two sizes, the bot takes the largest. */
+function sendBusinessPhoto(int $userId, string $fileId): void
+{
+    test()->postJson('/api/telegram/webhook/'.webhookSecret(), telegramMessage($userId, [
+        'photo' => [['file_id' => 'small-'.$fileId, 'width' => 90, 'height' => 60], ['file_id' => $fileId, 'width' => 900, 'height' => 600]],
+    ]))->assertOk();
+}
+
+test('a moderator sets a listing photo from the admin, live at once, and can take it down', function (): void {
+    Sanctum::actingAs(admin(), ['admin']);
+    $b = business(['status' => 'approved']);
+
+    $this->post("/api/admin/businesses/{$b->id}/photo", ['photo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('front.jpg', jpegBytes(1200, 800))])
+        ->assertOk()->assertJsonPath('business.pending_photo', null);
+    expect($b->photos()->where('approved', true)->count())->toBe(1)
+        ->and($this->getJson("/api/admin/businesses/{$b->id}")->json('business.photo'))->toContain('/api/public/photos/');
+
+    $this->post("/api/admin/businesses/{$b->id}/photo", ['photo' => \Illuminate\Http\UploadedFile::fake()->create('notes.pdf', 10, 'application/pdf')])
+        ->assertStatus(422);
+
+    $this->deleteJson("/api/admin/businesses/{$b->id}/photo")->assertOk()->assertJsonPath('business.photo', null);
+    expect($b->photos()->count())->toBe(0);
 });
 
 test('a Google Maps link is accepted in place of a pin, and phone and description can be skipped', function (): void {
@@ -158,6 +197,8 @@ test('a Google Maps link is accepted in place of a pin, and phone and descriptio
     expect(lastText())->toContain('not a map pin');
     say(305, 'https://www.google.com/maps/place/Satwa/@25.2224,55.2774,17z');
     say(305, '⏭ Skip');
+    say(305, '⏭ Skip');
+    // The photo may be skipped too.
     say(305, '⏭ Skip');
     say(305, '✅ Send');
 

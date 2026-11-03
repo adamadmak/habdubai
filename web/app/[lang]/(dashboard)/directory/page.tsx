@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Store } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
@@ -19,7 +19,7 @@ import ConfirmButton from "@/components/confirm-button";
 import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
 import { toastResult } from "@/lib/toast";
 import {
-  useApiQuery, useApiMutation, formatDateTime, ApiError, errorText,
+  useApi, useApiQuery, useApiMutation, formatDateTime, ApiError, errorText,
   type Business, type BusinessClaimRow, type BusinessesPage, type BusinessStatus,
 } from "@/lib/api";
 
@@ -62,18 +62,21 @@ type Form = {
   hours: string;
   languages: string[];
   verified: boolean;
+  // The photo picked in the dialog, sent after the listing is saved; or the live one taken down.
+  photo: File | null;
+  removePhoto: boolean;
 };
 
 const EMPTY: Form = {
   name: "", city_id: "", category: "restaurant", area: "", maps_url: "", latitude: "", longitude: "", phone: "", whatsapp: "",
-  telegram: "", website: "", description: "", about: "", hours: "", languages: [], verified: false,
+  telegram: "", website: "", description: "", about: "", hours: "", languages: [], verified: false, photo: null, removePhoto: false,
 };
 
 const toForm = (b: Business): Form => ({
   id: b.id, name: b.name, city_id: String(b.city_id), category: b.category, area: b.area, maps_url: b.maps_url ?? "",
   latitude: b.latitude?.toString() ?? "", longitude: b.longitude?.toString() ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "",
   telegram: b.telegram ?? "", website: b.website ?? "", description: b.description ?? "", about: b.about ?? "", hours: b.hours ?? "",
-  languages: b.languages ?? [], verified: b.verified,
+  languages: b.languages ?? [], verified: b.verified, photo: null, removePhoto: false,
 });
 
 const orNull = (s: string) => s.trim() || null;
@@ -201,6 +204,9 @@ const DirectoryInner = () => {
   useEffect(() => setSearchInput(search), [search]);
   const [form, setForm] = useState<Form | null>(null);
   const [current, setCurrent] = useState<Business | null>(null);
+  // The picked photo as the browser shows it before upload; the object URL is released when it changes.
+  const photoPreview = useMemo(() => (form?.photo ? URL.createObjectURL(form.photo) : null), [form?.photo]);
+  useEffect(() => () => { if (photoPreview) URL.revokeObjectURL(photoPreview); }, [photoPreview]);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [note, setNote] = useState("");
 
@@ -217,7 +223,23 @@ const DirectoryInner = () => {
   const reports = detail.data?.business.reports ?? [];
 
   const invalidate = [["businesses"], ["dashboard"], ["directory-cities"]];
-  const save = useApiMutation<{ business: Business }, Form>((req, f) => (f.id ? req(`/admin/businesses/${f.id}`, "PUT", changedBody(f, current)) : req("/admin/businesses", "POST", toBody(f))), invalidate);
+  const { upload } = useApi();
+  // The fields first (only the changed ones on an edit), then the photo against the saved listing's id.
+  const save = useApiMutation<{ business: Business }, Form>(async (req, f) => {
+    const changes = f.id ? changedBody(f, current) : toBody(f);
+    let result: { business: Business } | null = null;
+    if (!f.id || Object.keys(changes).length > 0) {
+      result = f.id ? await req(`/admin/businesses/${f.id}`, "PUT", changes) : await req("/admin/businesses", "POST", changes);
+    }
+    const id = result?.business.id ?? f.id;
+    if (id && f.removePhoto && !f.photo) result = await req(`/admin/businesses/${id}/photo`, "DELETE");
+    if (id && f.photo) {
+      const body = new FormData();
+      body.append("photo", f.photo);
+      result = await upload(`/admin/businesses/${id}/photo`, body);
+    }
+    return result ?? { business: current as Business };
+  }, invalidate);
   const act = useApiMutation<{ business?: Business }, { id: number; action: string; note?: string }>(
     (req, { id, action, note }) => (action === "delete" ? req(`/admin/businesses/${id}`, "DELETE") : req(`/admin/businesses/${id}/${action}`, "POST", { note })),
     invalidate
@@ -240,7 +262,7 @@ const DirectoryInner = () => {
   const submit = () => {
     if (!form) return;
     setErrors({});
-    if (form.id && Object.keys(changedBody(form, current)).length === 0) {
+    if (form.id && Object.keys(changedBody(form, current)).length === 0 && !form.photo && !form.removePhoto) {
       toast("Nothing changed.");
       return;
     }
@@ -511,6 +533,31 @@ const DirectoryInner = () => {
                   <Label className="mb-1.5 block">Website</Label>
                   <Input value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} placeholder="https://…" />
                   {err("website")}
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="mb-1.5 block">Photo</Label>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {(photoPreview || (current?.photo && !form.removePhoto)) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photoPreview ?? (current?.photo as string)} alt="" className={cn("h-20 w-28 rounded-md object-cover", photoPreview && "ring-2 ring-primary")} />
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="max-w-xs"
+                      aria-label="Photo of the place"
+                      onChange={(e) => setForm({ ...form, photo: e.target.files?.[0] ?? null, removePhoto: false })}
+                    />
+                    {current?.photo && !form.photo && (
+                      <Button type="button" variant="outline" color={form.removePhoto ? "secondary" : "destructive"} size="sm" onClick={() => setForm({ ...form, removePhoto: !form.removePhoto })}>
+                        {form.removePhoto ? "Keep the photo" : "Remove the photo"}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-default-500 mt-1">
+                    JPEG, PNG or WebP, up to 8 MB. A photo you add here is live at once{form.id ? "" : ", with the listing"}; it replaces the monogram on the website, the bot and the channel post.
+                  </p>
+                  {err("photo")}
                 </div>
                 <div className="md:col-span-2">
                   <Label className="mb-1.5 block">One line about it</Label>

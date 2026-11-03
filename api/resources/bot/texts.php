@@ -748,6 +748,12 @@ return [
         'en' => 'The description is at most 250 letters, with no links.',
         'om' => 'Ibsi qubee 250 hin caalu, liinkii malee.',
     ],
+    'biz_ask_photo' => [
+        'am' => 'የቦታው ፎቶ ይላኩ (የፊት ለፊት ገጽታ ወይም ውስጥ)። ከሌለዎት «ዝለል» ይጫኑ።',
+        'ti' => 'ናይቲ ቦታ ስእሊ ስደዱ (ቅድሚት ወይ ውሽጢ)። እንተዘይብልኩም «ዝለል» ጠውቑ።',
+        'en' => 'Send a photo of the place (the front or the inside). If you have none, tap Skip.',
+        'om' => 'Suuraa bakkichaa ergaa (fuuldura ykn keessa). Yoo hin qabaanne "Darbi" tuqaa.',
+    ],
     'biz_confirm' => [
         'am' => "እባክዎ ያረጋግጡ፡\n\n{card}\n\nትክክል ከሆነ «ላክ» ይጫኑ።",
         'ti' => "በጃኹም ኣረጋግጹ፡\n\n{card}\n\nቅኑዕ እንተኾይኑ «ስደድ» ጠውቑ።",

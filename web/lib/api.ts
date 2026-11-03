@@ -105,6 +105,32 @@ export async function apiRequest<T>(path: string, token: string | undefined, met
   return data as T;
 }
 
+/** A file to the API (a listing's photo): multipart, so the browser sets the content type and the boundary. */
+export async function apiUpload<T>(path: string, token: string | undefined, form: FormData): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl()}/api${path}`, {
+      method: "POST",
+      headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: form,
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiError(0, "Could not reach the API. Check the connection and try again.");
+  }
+
+  const text = await response.text();
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  if (!response.ok) throw new ApiError(response.status, readableError(response.status, data), data?.errors ?? {});
+
+  return data as T;
+}
+
 /** The sentence to put in a toast for any thrown value. */
 export function errorText(error: unknown): string {
   if (error instanceof ApiError) return error.message;
@@ -121,8 +147,9 @@ export function useApi() {
     <T,>(path: string, method: Method = "GET", body?: unknown) => apiRequest<T>(path, token, method, body),
     [token]
   );
+  const upload = useCallback(<T,>(path: string, form: FormData) => apiUpload<T>(path, token, form), [token]);
 
-  return { request, ready: Boolean(token) };
+  return { request, upload, ready: Boolean(token) };
 }
 
 export function useApiQuery<T>(key: unknown[], path: string, options?: Omit<UseQueryOptions<T>, "queryKey" | "queryFn">) {
