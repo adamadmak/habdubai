@@ -27,6 +27,46 @@ jobs:
       - name: Run the suite
         run: php vendor/bin/pest --ci
 
+  # The same suite on Postgres 16, the production database: case-sensitive
+  # `like`, real row locks, strict types. phpunit.xml's SQLite settings give
+  # way to the environment set here. Reported, not yet required, until it has
+  # been green for a while.
+  api-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: habesha_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_DATABASE: habesha_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, pdo_pgsql, pgsql, intl, gd
+          coverage: none
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Run the suite on Postgres
+        run: php vendor/bin/pest --ci
+
   web:
     runs-on: ubuntu-latest
     timeout-minutes: 15

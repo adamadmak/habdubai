@@ -11,6 +11,7 @@ import { StatusPill } from "@/components/owner/StatusPill";
 import { removeListing } from "@/lib/actions";
 import type { Owner, OwnerBusiness, OwnerClaim } from "@/lib/api";
 import { number } from "@/lib/format";
+import { photoSrcSet } from "@/lib/photos";
 import { dict, fill, isLocale, pick, type Dictionary, type Locale } from "@/lib/i18n";
 import { currentOwner, ownerApi } from "@/lib/owner";
 
@@ -27,7 +28,7 @@ export default async function BusinessHome({ params }: { params: Promise<{ lang:
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const d = dict(lang);
-  const owner = await currentOwner();
+  const owner = await currentOwner(lang);
 
   return owner ? <Dashboard lang={lang} d={d} owner={owner} /> : <Landing lang={lang} d={d} />;
 }
@@ -86,7 +87,7 @@ function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
 }
 
 async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owner: Owner }) {
-  const data = await ownerApi<{ businesses: OwnerBusiness[]; claims: OwnerClaim[] }>("/businesses");
+  const data = await ownerApi<{ businesses: OwnerBusiness[]; claims: OwnerClaim[] }>("/businesses", { locale: lang });
   const b = d.business;
 
   return (
@@ -114,8 +115,9 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
               <div className="flex gap-4 p-4">
                 <div className="size-20 shrink-0 overflow-hidden rounded-2xl">
                   {x.photo || x.pending_photo ? (
+                    // An 80px thumbnail: the 480px copy when the photo is public (a photo in review is a signed link, left alone).
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={(x.photo ?? x.pending_photo) as string} alt="" className="size-full object-cover" />
+                    <img src={(x.photo ?? x.pending_photo) as string} srcSet={photoSrcSet(x.photo ?? x.pending_photo)} sizes="80px" alt="" className="size-full object-cover" />
                   ) : (
                     <Cover category={x.category} name={x.name} seed={x.id} className="size-full [&_.monogram]:text-[2rem] [&>span:first-child]:hidden" />
                   )}

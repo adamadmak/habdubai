@@ -25,7 +25,8 @@
   --color-elevated: #ffffff;
   --color-fg: #10142b;
   --color-muted: #586078;
-  --color-faint: #878ca2;
+  /* The quietest text still reads at 4.5:1: on white, on the ivory page and on the surface. */
+  --color-faint: #666b83;
   --color-line: #e6dece;
   --color-primary: #1b4ddb;
   --color-primary-strong: #143aa8;
@@ -73,7 +74,7 @@
       --color-elevated: #111a3b;
       --color-fg: #edf0fa;
       --color-muted: #a6adc8;
-      --color-faint: #7c84a3;
+      --color-faint: #858dab;
       --color-line: #1f2a52;
       --color-primary: #8aa4ff;
       --color-primary-strong: #b3c3ff;
@@ -96,6 +97,16 @@
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
     scroll-padding-top: calc(var(--header-space) + 1rem);
+  }
+  /*
+   * On phones the tab bar floats over the bottom of the page, and a job's apply
+   * bar or a listing's save bar sticks above it: a field that takes focus, or a
+   * link scrolled to, stops above both.
+   */
+  @media (max-width: 767px) {
+    html {
+      scroll-padding-bottom: calc(var(--tabbar-space) + 6.5rem);
+    }
   }
 
   body {
@@ -121,6 +132,10 @@
   .night :focus-visible,
   .chrome :focus-visible {
     outline-color: var(--color-accent);
+  }
+  /* The search bar is white even on night, so the ring inside it stays blue. */
+  .night .searchbar :focus-visible {
+    outline-color: var(--color-primary);
   }
 
   ::selection {
@@ -471,6 +486,22 @@
   }
   .pb-tabbar {
     padding-bottom: calc(var(--tabbar-space) + 1.5rem);
+  }
+  /*
+   * A compact control that is still a full fingertip tall on a touch screen:
+   * the hit area reaches 2.75rem (44px) while the visible pill stays small.
+   */
+  @media (pointer: coarse) {
+    .hit {
+      position: relative;
+    }
+    .hit::before {
+      content: "";
+      position: absolute;
+      inset-inline: 0;
+      top: calc(50% - 1.375rem);
+      bottom: calc(50% - 1.375rem);
+    }
   }
   @media (min-width: 768px) {
     .pb-tabbar {

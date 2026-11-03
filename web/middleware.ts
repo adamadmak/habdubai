@@ -23,16 +23,19 @@ export async function middleware(request: NextRequest) {
 
   const path = pathname.slice(locale.length + 1) || "/";
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET });
+  // A session whose API token has run out is no session (the cookie itself rolls forward).
+  const signedIn = Boolean(token) && !(typeof token?.expiresAt === "number" && token.expiresAt <= Date.now());
   const isAuthPage = path.startsWith("/auth/");
 
-  if (!token && !isAuthPage) {
+  if (!signedIn && !isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/auth/login`;
-    url.search = path === "/" ? "" : `?next=${encodeURIComponent(path + search)}`;
+    // Only a plain path on this site: "//host" or "/\host" would lead off it.
+    url.search = path === "/" || /^\/[\/\\]/.test(path) ? "" : `?next=${encodeURIComponent(path + search)}`;
     return NextResponse.redirect(url);
   }
 
-  if (token && (isAuthPage || path === "/")) {
+  if (signedIn && (isAuthPage || path === "/")) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/dashboard`;
     url.search = "";

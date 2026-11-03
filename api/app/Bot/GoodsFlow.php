@@ -513,9 +513,26 @@ class GoodsFlow
             return;
         }
 
+        // Both may press at the same moment: each records its own press on the locked row
+        // and then reads the other's, so one of the two always sees both and finalises.
         $column = $match->isOwner($member) ? 'agreed_owner_at' : 'agreed_requester_at';
-        if ($match->{$column} === null) {
-            $match->forceFill([$column => now()])->save();
+        $open = DB::transaction(function () use ($match, $column): bool {
+            $fresh = GoodsMatch::query()->lockForUpdate()->find($match->id);
+            if (! $fresh || $fresh->status !== 'introduced') {
+                return false;
+            }
+            if ($fresh->{$column} === null) {
+                $fresh->forceFill([$column => now()])->save();
+            }
+            $match->setRawAttributes($fresh->getAttributes(), true);
+
+            return true;
+        });
+
+        if (! $open) {
+            $this->say($member, 'goods_match_closed');
+
+            return;
         }
 
         if ($match->agreed_owner_at !== null && $match->agreed_requester_at !== null) {
@@ -621,11 +638,18 @@ class GoodsFlow
             return;
         }
 
-        DB::transaction(function () use ($match, $was): void {
-            $match->forceFill(['status' => 'cancelled', 'closed_at' => now()])->save();
+        // Re-checked on the locked row: if both press "Not going ahead" together, only the
+        // first gives the kilos back.
+        $dropped = DB::transaction(function () use ($match, $was): bool {
+            $fresh = GoodsMatch::query()->lockForUpdate()->find($match->id);
+            if (! $fresh || $fresh->status !== $was) {
+                return false;
+            }
+            $fresh->forceFill(['status' => 'cancelled', 'closed_at' => now()])->save();
+            $match->setRawAttributes($fresh->getAttributes(), true);
 
             if ($was !== 'agreed') {
-                return;
+                return true;
             }
 
             // Give the kilos back, and reopen what the agreement closed if its time has not passed.
@@ -638,7 +662,15 @@ class GoodsFlow
                 }
                 $post->save();
             }
+
+            return true;
         });
+
+        if (! $dropped) {
+            $this->say($member, 'goods_match_closed');
+
+            return;
+        }
 
         AuditLog::record(null, 'goods.dropped', 'goods_match', $match->id, ['status' => $was], ['by' => $member->id]);
         $this->say($member, 'goods_dropped');
@@ -673,7 +705,25 @@ class GoodsFlow
             return;
         }
 
-        $match->forceFill([$match->isOwner($member) ? 'checkin_owner' : 'checkin_requester' => $answer])->save();
+        // Recorded on the locked row and read back, so two answers at the same moment
+        // still see each other.
+        $column = $match->isOwner($member) ? 'checkin_owner' : 'checkin_requester';
+        $open = DB::transaction(function () use ($match, $column, $answer): bool {
+            $fresh = GoodsMatch::query()->lockForUpdate()->find($match->id);
+            if (! $fresh || $fresh->status !== 'agreed') {
+                return false;
+            }
+            $fresh->forceFill([$column => $answer])->save();
+            $match->setRawAttributes($fresh->getAttributes(), true);
+
+            return true;
+        });
+
+        if (! $open) {
+            $this->say($member, 'goods_match_closed');
+
+            return;
+        }
 
         if ($answer === 'no') {
             $this->dispute($match);

@@ -42,16 +42,10 @@ class TelegramWebhookController extends Controller
             return response('OK', 200);
         }
 
-        // Ordering key: a person's own updates run one at a time. Button presses
-        // key on who pressed (a channel card is pressed by many people at once).
-        $orderKey = (int) (data_get($payload, 'callback_query.from.id')
-            ?? data_get($payload, 'message.chat.id')
-            ?? data_get($payload, 'channel_post.chat.id')
-            ?? 0);
-
         // After the response, in this process: replies stay instant without a
-        // queue worker, and Telegram is never kept waiting on a handler.
-        HandleTelegramUpdate::dispatchAfterResponse($update->id, $orderKey);
+        // queue worker, and Telegram is never kept waiting on a handler. If this
+        // process dies first, `bot:updates-chores` runs the update again.
+        HandleTelegramUpdate::dispatchAfterResponse($update->id, TelegramUpdate::orderKey($payload));
 
         return response('OK', 200);
     }

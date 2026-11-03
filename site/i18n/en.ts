@@ -7,6 +7,8 @@ export const en = {
   tabs: { home: "Home", jobs: "Jobs", directory: "Places", news: "News", business: "Business" },
   join: "Join on Telegram",
   language: "Language",
+  // The name of the main navigation, for screen readers.
+  navLabel: "Main",
 
   common: {
     seeAll: "See all",
@@ -33,6 +35,8 @@ export const en = {
     errorText: "We could not load this page. Try again in a moment.",
     retry: "Try again",
     loading: "Loading…",
+    // A heading screen readers announce above a list of cards.
+    results: "Results",
   },
 
   footer: {
@@ -50,6 +54,7 @@ export const en = {
     lead: "Jobs checked for scam signs, Habesha places near you, and the news that matters to us. Free, in Amharic, Tigrinya and English.",
     searchPlaceholder: "Search jobs, places and news",
     scopes: { jobs: "Jobs", directory: "Places", news: "News" },
+    searchIn: "Search in",
     stats: { members: "verified members", jobs: "open jobs", businesses: "Habesha places", goods: "trips and parcels on the goods board" },
     jobsTitle: "New jobs",
     jobsLead: "Every listing is checked for scam signs before it appears.",
@@ -82,6 +87,12 @@ export const en = {
       eventsTitle: "Coming up",
       eventsEmpty: "Announcements from the consulate, associations and the community, in three languages.",
       ownerText: "List it free, on this website and in the Telegram channel. A moderator checks it within a day.",
+      // The jobs and places tiles before anything is published.
+      jobsWelcome: "Jobs are on their way",
+      jobsWelcomeText: "We are checking the first listings now. Get them on Telegram the moment they are published.",
+      jobsAlerts: "Get job alerts",
+      placesFirst: "Be the first place listed",
+      placesFirstText: "Run a Habesha business in the Emirates? List it free and the community will find you here.",
       ownerSample: "Your business",
       ownerSampleKind: "Café and restaurant",
       ownerSamplePlace: "Al Karama, Dubai",
@@ -160,6 +171,8 @@ export const en = {
     all: "Everything",
     events: "Upcoming events",
     empty: "Nothing posted here yet.",
+    searchPlaceholder: "Search news and events",
+    noMatch: "Nothing matches your search. Try other words.",
     event: "Event",
     when: "When",
     where: "Where",
@@ -201,6 +214,14 @@ export const en = {
     done: "Signed in. Opening your listings…",
     unavailable: "Sign-in is not available right now. Try again later.",
     privacy: "We receive your Telegram name only, never your phone number.",
+
+    // Owner forms: what went wrong, beside the button that was pressed.
+    checkFields: "Some details need a fix. Check the marked fields.",
+    sessionExpired: "You have been signed out.",
+    draftKept: "What you typed will be here when you come back.",
+    signInAgain: "Sign in again",
+    network: "Could not reach the server. Check your connection and try again.",
+    serverError: "Something went wrong on our side. Try again in a moment.",
 
     hello: "Selam, {name}",
     yourListings: "Your listings",
@@ -260,6 +281,8 @@ export const en = {
       sent: "Photo sent for review.",
       saveFirst: "Save the listing first, then add a photo.",
       tooBig: "That photo is larger than 8 MB.",
+      choose: "Choose a photo.",
+      noListing: "That listing was not found.",
     },
     submitNew: "Send for review",
     save: "Save changes",
@@ -297,6 +320,133 @@ export const en = {
     ],
     contactTitle: "Talk to us",
     contactText: "Moderators answer in the bot. For a business listing, use the owners’ page.",
+  },
+
+  // Links to the privacy notice and the terms, and the date both were last changed.
+  legal: {
+    privacyLink: "Privacy",
+    termsLink: "Terms of use",
+    updated: "Last updated {date}",
+    beforeSignIn: "What signing in shares with us, and the rules for listings:",
+  },
+
+  privacy: {
+    title: "Privacy",
+    lead: "What Habesha Dubai keeps about you, why, and for how long. In plain words.",
+    sections: [
+      {
+        title: "In short",
+        body: [
+          "Habesha Dubai is free. No money moves through it and there are no adverts. We do not sell anything about you.",
+          "We keep only what the community needs to work: who is a real member, what members post, and the listings people search.",
+        ],
+      },
+      {
+        title: "Visiting this website",
+        body: [
+          "You can read everything without an account. We use no analytics or advertising services and no tracking cookies.",
+          "Page views are counted per day and per page address only. No internet address, cookie or identifier is stored with them, and nothing is counted when your browser sends Do Not Track or Global Privacy Control.",
+          "A visit to a business page adds one to that listing’s view count, at most once every six hours per visitor. To tell visitors apart, a one-way hash of your internet address is held in temporary memory for six hours and then forgotten. Opening a job’s original listing adds one to that job’s click count; nothing about you is stored with it.",
+          "Our server passes your internet address and browser name to our API so that limits apply per visitor. They are used in short-lived counters against abuse and are not stored with what you read.",
+          "Cookies: one remembers your language for a year. Business owners who sign in get a session cookie for 60 days and, while signing in, one that lasts 25 minutes. All belong to this website, and scripts on the page cannot read the sign-in ones.",
+        ],
+      },
+      {
+        title: "Members of the Telegram bot",
+        body: [
+          "When you join we keep your Telegram id, your name and username as Telegram shows them, your language and, if you give them, your emirate and the kinds of work you want alerts for.",
+          "Messages the bot receives are stored in full only until it has handled them, usually within seconds. After that only their id and kind remain, and they are deleted after 7 days. That includes the contact card you share once to prove you are a real person.",
+          "On your member record we keep a one-way hash of your phone number, its last 4 digits and the country code. Never the number itself.",
+          "What you post (questions, answers, announcements, goods-board posts, ratings and reports) is kept so it can be shown, answered and moderated. So are your conversations with the assistant, and moderation records such as warnings and bans.",
+        ],
+      },
+      {
+        title: "Business owners",
+        body: [
+          "Signing in with Telegram gives us your Telegram id, name, username and language, never your phone number. If you are also a member, the two are linked.",
+          "While a sign-in is in progress we keep the internet address and browser name that started it, so the bot can show you which device is asking. The request is deleted a day after it expires.",
+          "Everything you enter in a listing is public once a moderator approves it, on this website and in the Telegram channel. Photos are stored in our database and re-encoded, which strips hidden camera data such as location. A claim note is read only by moderators. You see your listing’s view count.",
+        ],
+      },
+      {
+        title: "Claude, our AI helper",
+        body: [
+          "Claude, made by Anthropic, reads job listings to summarise them and check them for scam signs, answers members’ questions to the assistant, translates announcements, and turns solved questions into FAQ entries. It never receives the phone number you verified with.",
+        ],
+      },
+      {
+        title: "Who else handles it",
+        body: [
+          "Telegram carries every message between you and the bot, under its own privacy policy. Our servers and database run on AletCloud. Moderators and administrators see what they need to review posts, listings and reports.",
+        ],
+      },
+      {
+        title: "How long, and backups",
+        body: [
+          "The database is backed up every day and each backup is kept for 7 days, so anything deleted is gone from the backups within 7 days.",
+          "Membership, posts and listings are kept while they are in use. A live listing you take down is hidden; one still in review is deleted. To have your membership, a post or a listing removed entirely, ask the moderators in the bot.",
+        ],
+      },
+      {
+        title: "Questions",
+        body: ["Ask the moderators in the bot. This notice changes when the platform does; the date at the top is the latest version."],
+      },
+    ],
+  },
+
+  terms: {
+    title: "Terms of use",
+    lead: "The few rules for using Habesha Dubai: this website, the Telegram bot, its groups and its channel.",
+    sections: [
+      {
+        title: "What this is",
+        body: [
+          "A free community platform for Ethiopians and Eritreans in the United Arab Emirates. No money moves through it. We are not a recruitment agency, a cargo company or a legal adviser, and nothing here is professional advice.",
+        ],
+      },
+      {
+        title: "Jobs",
+        body: [
+          "Jobs are gathered from public websites and community channels, summarised automatically and checked for scam signs. The checks lower the risk; they cannot remove it. You apply on the original site, and the employer is responsible for the job. Never pay anyone for a job, a visa or a medical.",
+        ],
+      },
+      {
+        title: "Places and announcements",
+        body: [
+          "Listings come from members and owners, and a moderator checks each one before it appears. “Verified” means our team has checked that the business is real, not that we vouch for its work. Whoever posts an announcement is responsible for it.",
+        ],
+      },
+      {
+        title: "The goods board",
+        body: [
+          "We only introduce members to each other; we carry nothing and hold nothing. You agree directly with the other member, you are responsible for what you send or carry, and banned items are never allowed. Rate each other honestly.",
+        ],
+      },
+      {
+        title: "Listing your business",
+        body: [
+          "List only a business you run or may speak for, and keep its details true and current. Upload only photos you have the right to use; you allow us to show them with your listing on this website and in our Telegram channel. Moderators may decline, hide or remove a listing, and three reports hide an unverified one until a moderator looks.",
+        ],
+      },
+      {
+        title: "Behaviour",
+        body: [
+          "The community rules on the About page apply everywhere on the platform. Breaking them can mean a removed post, a mute or a ban. One account per person.",
+        ],
+      },
+      {
+        title: "No guarantees",
+        body: [
+          "The platform is offered free and as it is. We do our best to keep it accurate and safe, but we are not responsible for jobs, businesses, deals or trips between members and others. Check before you pay, sign or travel.",
+        ],
+      },
+      {
+        title: "Changes",
+        body: [
+          "We may update these terms; the date at the top shows the current version. Using the platform after a change means you accept it. Questions go to the moderators in the bot.",
+        ],
+      },
+    ],
   },
 };
 

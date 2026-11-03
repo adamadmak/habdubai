@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LoginPanel } from "@/components/owner/LoginPanel";
 import { PageHead } from "@/components/Bits";
@@ -22,8 +23,9 @@ export default async function Login({ params, searchParams }: { params: Promise<
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const next = safeNext((await searchParams).next, lang);
-  if (await currentOwner()) redirect(next);
-  const b = dict(lang).business;
+  if (await currentOwner(lang)) redirect(next);
+  const d = dict(lang);
+  const b = d.business;
 
   return (
     <>
@@ -31,6 +33,7 @@ export default async function Login({ params, searchParams }: { params: Promise<
     <div className="mx-auto max-w-2xl px-4">
       <div className="mt-8">
         <LoginPanel
+          lang={lang}
           next={next}
           labels={{
             phone: b.loginPhone,
@@ -49,9 +52,16 @@ export default async function Login({ params, searchParams }: { params: Promise<
             done: b.done,
             unavailable: b.unavailable,
             privacy: b.privacy,
+            network: b.network,
           }}
         />
       </div>
+      <p className="mt-6 text-sm text-muted">
+        {d.legal.beforeSignIn}{" "}
+        <Link href={`/${lang}/terms`} className="font-semibold text-primary">{d.legal.termsLink}</Link>
+        <span aria-hidden="true"> · </span>
+        <Link href={`/${lang}/privacy`} className="font-semibold text-primary">{d.legal.privacyLink}</Link>
+      </p>
     </div>
     </>
   );

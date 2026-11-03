@@ -17,6 +17,8 @@ use App\Models\PlatformSetting;
  */
 final class RuntimeEnv
 {
+    private const ENCRYPTED = 'enc:';
+
     /** @var array<string, string>|null */
     private static ?array $envFile = null;
 
@@ -26,7 +28,7 @@ final class RuntimeEnv
 
         if ($value === '' && $settingKey !== null) {
             try {
-                $value = trim((string) PlatformSetting::valueFor($settingKey, ''));
+                $value = self::reveal(trim((string) PlatformSetting::valueFor($settingKey, '')));
             } catch (\Throwable) {
                 $value = '';
             }
@@ -41,6 +43,26 @@ final class RuntimeEnv
         }
 
         return $value !== '' ? $value : $default;
+    }
+
+    /** A secret saved from Settings, encrypted with the app key; a plain value as it is. */
+    public static function conceal(string $value): string
+    {
+        return self::ENCRYPTED.\Illuminate\Support\Facades\Crypt::encryptString($value);
+    }
+
+    private static function reveal(string $value): string
+    {
+        if (! str_starts_with($value, self::ENCRYPTED)) {
+            return $value;
+        }
+
+        try {
+            return trim(\Illuminate\Support\Facades\Crypt::decryptString(substr($value, strlen(self::ENCRYPTED))));
+        } catch (\Throwable) {
+            // Encrypted under another app key: as good as unset.
+            return '';
+        }
     }
 
     public static function fromEnvFile(string $key): string

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,13 +29,12 @@ const FIELDS: { key: string; label: string; hint: string; placeholder?: string; 
 ];
 
 const SettingsPage = () => {
-  const { data, isLoading, error } = useApiQuery<SettingsPayload>(["settings"], "/admin/settings");
-  const [form, setForm] = useState<Record<string, string>>({});
+  // No refetch on focus: coming back to the tab must not disturb a half-typed form.
+  const { data, isLoading, error } = useApiQuery<SettingsPayload>(["settings"], "/admin/settings", { refetchOnWindowFocus: false });
+  // null until the admin types: until then the form shows what the server has, and after
+  // that a refetch never overwrites the draft.
+  const [form, setForm] = useState<Record<string, string> | null>(null);
   const [token, setToken] = useState("");
-
-  useEffect(() => {
-    if (data) setForm(data.settings);
-  }, [data]);
 
   const save = useApiMutation<SettingsPayload, Record<string, string>>((request, body) => request("/admin/settings", "PUT", body), [["settings"], ["dashboard"]]);
   const saveToken = useApiMutation<{ bot: { username?: string }; webhook_error: string | null }, string>((request, t) => request("/admin/settings/telegram", "POST", { token: t }), [["settings"], ["dashboard"]]);
@@ -45,6 +44,8 @@ const SettingsPage = () => {
   if (isLoading || !data) return <div className="text-default-600">Loading…</div>;
 
   const telegram = data.telegram;
+  const values = form ?? data.settings;
+  const edit = (key: string, value: string) => setForm((current) => ({ ...(current ?? data.settings), [key]: value }));
 
   return (
     <div>
@@ -60,19 +61,29 @@ const SettingsPage = () => {
               className="space-y-5"
               onSubmit={(e) => {
                 e.preventDefault();
-                save.mutateAsync(form).then(() => toast.success("Settings saved.")).catch((err) => toast.error(err.message));
+                save
+                  .mutateAsync(values)
+                  .then((saved) => {
+                    // What the server now holds; the write-only boxes come back empty.
+                    setForm(saved.settings);
+                    toast.success("Settings saved.");
+                  })
+                  .catch((err) => toast.error(err.message));
               }}
             >
               {FIELDS.map((f) => (
                 <div key={f.key}>
                   <Label htmlFor={f.key} className="mb-2 block">{f.label}</Label>
+                  {/* "off" is ignored for passwords; "new-password" and the manager hints keep the admin's own login out of write-only boxes. */}
                   <Input
                     id={f.key}
                     type={f.secret ? "password" : "text"}
-                    autoComplete={f.secret ? "off" : undefined}
-                    value={form[f.key] ?? ""}
+                    autoComplete={f.secret ? "new-password" : undefined}
+                    data-1p-ignore={f.secret ? true : undefined}
+                    data-lpignore={f.secret ? "true" : undefined}
+                    value={values[f.key] ?? ""}
                     placeholder={f.secret ? (data.secrets?.[f.key] ? "Saved. Type a new value to replace it." : "Not set") : f.placeholder}
-                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                    onChange={(e) => edit(f.key, e.target.value)}
                   />
                   <p className="mt-1 text-xs text-default-500">{f.hint}</p>
                   {save.error?.errors?.[f.key] && <p className="mt-1 text-xs text-destructive">{save.error.errors[f.key][0]}</p>}
@@ -110,7 +121,7 @@ const SettingsPage = () => {
                     .catch((err) => toast.error(err.message));
                 }}
               >
-                <Input type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="123456789:ABC…" autoComplete="off" />
+                <Input type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="123456789:ABC…" autoComplete="new-password" data-1p-ignore data-lpignore="true" />
                 <Button type="submit" className="w-full" disabled={saveToken.isPending || token.trim() === ""}>Save token and register webhook</Button>
               </form>
 
@@ -149,8 +160,8 @@ const SettingsPage = () => {
                   <div className="font-mono text-xs text-default-600">{c.chat_id}{c.username && ` · @${c.username}`}</div>
                   {c.type !== "channel" ? (
                     <div className="flex flex-wrap gap-2">
-                      <Button size="xs" variant="outline" onClick={() => { setForm({ ...form, telegram_questions_group_id: String(c.chat_id) }); toast.success("Set as the questions group; press Save settings."); }}>Use for questions</Button>
-                      <Button size="xs" variant="outline" onClick={() => { setForm({ ...form, telegram_goods_group_id: String(c.chat_id) }); toast.success("Set as the goods group; press Save settings."); }}>Use for goods</Button>
+                      <Button size="xs" variant="outline" onClick={() => { edit("telegram_questions_group_id", String(c.chat_id)); toast.success("Set as the questions group; press Save settings."); }}>Use for questions</Button>
+                      <Button size="xs" variant="outline" onClick={() => { edit("telegram_goods_group_id", String(c.chat_id)); toast.success("Set as the goods group; press Save settings."); }}>Use for goods</Button>
                     </div>
                   ) : (
                     <div className="text-xs text-default-500">A channel: set it as the jobs channel on Job settings{c.username ? ` (@${c.username})` : ` (${c.chat_id})`}.</div>

@@ -21,11 +21,11 @@ function isActive(pathname: string, href: string, lang: Locale): boolean {
 }
 
 /** The header's links on wide screens; the current one sits on a lit pill with a gold thread under it. */
-export function NavLinks({ lang, labels }: { lang: Locale; labels: Record<"home" | "jobs" | "directory" | "news" | "business", string> }) {
+export function NavLinks({ lang, labels, label }: { lang: Locale; labels: Record<"home" | "jobs" | "directory" | "news" | "business", string>; label: string }) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Main" className="hidden items-center gap-0.5 md:flex">
+    <nav aria-label={label} className="hidden items-center gap-0.5 md:flex">
       {items(lang, labels).slice(1).map((item) => {
         const active = isActive(pathname, item.href, lang);
         return (
@@ -45,11 +45,11 @@ export function NavLinks({ lang, labels }: { lang: Locale; labels: Record<"home"
 }
 
 /** The phone's tab bar: a floating island of night within the thumb's reach. */
-export function TabBar({ lang, labels }: { lang: Locale; labels: Record<"home" | "jobs" | "directory" | "news" | "business", string> }) {
+export function TabBar({ lang, labels, label }: { lang: Locale; labels: Record<"home" | "jobs" | "directory" | "news" | "business", string>; label: string }) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Main" className="chrome fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-[1.75rem] md:hidden">
+    <nav aria-label={label} className="chrome fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-[1.75rem] md:hidden">
       <ul className="mx-auto grid h-[var(--tabbar-h)] max-w-lg grid-cols-5 px-1.5">
         {items(lang, labels).map((item) => {
           const active = isActive(pathname, item.href, lang);

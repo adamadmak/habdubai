@@ -1,11 +1,13 @@
 "use client";
 import Link from "next/link";
-import { startTransition, useActionState, type FormEvent, type ReactNode } from "react";
-import { CircleCheck } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { startTransition, useActionState, useEffect, useRef, type FormEvent, type ReactNode } from "react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { saveListing, type FormState } from "@/lib/actions";
 import type { OwnerBusiness, OwnerChoices } from "@/lib/api";
 import type { Dictionary } from "@/lib/i18n";
 import type { Locale } from "@/lib/locales";
+import { clearDraft, keepDraft, restoreDraft } from "./draft";
 
 type Values = Partial<OwnerBusiness>;
 
@@ -46,13 +48,30 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
   live: boolean;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveListing, { ok: false });
+  const form = useRef<HTMLFormElement>(null);
+  const pathname = usePathname();
   const errors = state.errors ?? {};
   const v = values ?? {};
   const f = b.fields;
+  const draftKey = `listing:${v.id ?? "new"}`;
 
   const err = (key: string) => errors[key]?.[0];
   const invalid = (key: string) => (errors[key] ? { "aria-invalid": true as const, "aria-describedby": `${key}-error` } : {});
   const common_ = { optionalText: f.optional };
+  const fieldErrors = Object.keys(errors).length > 0;
+
+  // Back from signing in again: what was typed before the session ran out.
+  useEffect(() => {
+    if (form.current) restoreDraft(draftKey, form.current);
+  }, [draftKey]);
+
+  // After each answer: keep the form for a sign-in, forget it on success, or take the owner to the first field to fix.
+  useEffect(() => {
+    if (!form.current) return;
+    if (state.ok) clearDraft(draftKey);
+    else if (state.message === "signin") keepDraft(draftKey, form.current);
+    else if (fieldErrors) form.current.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [state, draftKey, fieldErrors]);
 
   // Submitted by hand rather than through the form's action, so a refused save keeps what was typed.
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -61,19 +80,13 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
     startTransition(() => action(data));
   };
 
+  // What went wrong as a whole, said beside the button that was pressed.
+  const general = state.ok || state.message === "signin" ? null : fieldErrors ? b.checkFields : state.message === "error" ? common.errorText : state.message;
+
   return (
-    <form onSubmit={submit} className="flex flex-col gap-8" noValidate>
+    <form ref={form} onSubmit={submit} className="flex flex-col gap-8" noValidate>
       <input type="hidden" name="lang" value={lang} />
       {v.id && <input type="hidden" name="id" value={v.id} />}
-
-      {state.message === "signin" && (
-        <p className="rounded-xl bg-warning-soft p-3 text-sm">
-          <Link href={`/${lang}/business/login`} className="font-semibold text-primary">{b.cta}</Link>
-        </p>
-      )}
-      {state.message && state.message !== "signin" && !state.ok && Object.keys(errors).length === 0 && (
-        <p className="rounded-xl bg-danger-soft p-3 text-sm">{state.message === "error" ? common.errorText : state.message}</p>
-      )}
 
       <fieldset className="flex flex-col gap-5">
         <legend className="title mb-4 text-lg">{b.sections.basics}</legend>
@@ -133,30 +146,46 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
         <Field name="hours" title={f.hours} hint={f.hoursHint} optional error={err("hours")} {...common_}>
           <input id="hours" name="hours" className="field" defaultValue={v.hours ?? ""} maxLength={160} {...invalid("hours")} />
         </Field>
-        <div>
-          <p className="mb-2 text-sm font-semibold">{f.languages}</p>
+        <div role="group" aria-labelledby="languages-label">
+          <p id="languages-label" className="mb-2 text-sm font-semibold">{f.languages}</p>
           <div className="flex flex-wrap gap-2">
             {Object.entries(choices.languages).map(([code, labels]) => (
               <label key={code} className="chip cursor-pointer has-[:checked]:border-fg has-[:checked]:bg-fg has-[:checked]:text-bg has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary">
-                <input type="checkbox" name="languages" value={code} defaultChecked={(v.languages ?? []).includes(code)} className="sr-only" />
+                <input type="checkbox" name="languages" value={code} defaultChecked={(v.languages ?? []).includes(code)} className="sr-only" {...invalid("languages")} />
                 {labels[lang] || labels.en}
               </label>
             ))}
           </div>
-          {err("languages") && <p className="mt-1.5 text-sm text-danger">{err("languages")}</p>}
+          {err("languages") && <p id="languages-error" className="mt-1.5 text-sm text-danger">{err("languages")}</p>}
         </div>
       </fieldset>
 
-      <div className="sticky bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+0.75rem)] z-30 md:bottom-4">
+      <div className="sticky bottom-[calc(var(--tabbar-space)+0.75rem)] z-30 md:bottom-4">
         <div className="material rounded-2xl border border-line p-3">
           <div className="flex flex-wrap items-center gap-3">
             <button type="submit" className="btn btn-primary" disabled={pending}>{pending ? b.saving : v.id ? b.save : b.submitNew}</button>
             <Link href={`/${lang}/business`} className="btn btn-quiet">{b.cancel}</Link>
-            {state.ok && !pending && (
-              <span className="flex items-center gap-1.5 text-sm text-success" role="status">
-                <CircleCheck className="size-4" aria-hidden="true" /> {live ? b.savedChanges : b.savedNew}
-              </span>
-            )}
+            {/* Always in the page, so a screen reader hears each new answer. */}
+            <div className="min-w-[12rem] flex-1 text-sm" aria-live="polite">
+              {!pending && state.ok && (
+                <p className="flex items-center gap-1.5 text-success">
+                  <CircleCheck className="size-4 shrink-0" aria-hidden="true" /> {live ? b.savedChanges : b.savedNew}
+                </p>
+              )}
+              {!pending && state.message === "signin" && (
+                <p className="text-danger">
+                  {b.sessionExpired} {b.draftKept}{" "}
+                  <Link href={`/${lang}/business/login?next=${encodeURIComponent(pathname)}`} className="font-semibold text-primary underline underline-offset-2">
+                    {b.signInAgain}
+                  </Link>
+                </p>
+              )}
+              {!pending && general && (
+                <p className="flex items-start gap-1.5 text-danger">
+                  <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {general}
+                </p>
+              )}
+            </div>
           </div>
           <p className="mt-2 hidden text-xs text-muted sm:block">{live ? b.liveNote : b.pendingNote}</p>
         </div>

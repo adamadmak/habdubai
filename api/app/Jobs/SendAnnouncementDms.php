@@ -35,8 +35,10 @@ class SendAnnouncementDms implements ShouldQueue
         }
 
         $sent = 0;
+        $tried = 0;
+        $failedInRow = 0;
 
-        $a->topic->subscribers()->orderBy('id')->chunkById(200, function ($members) use ($a, $telegram, $publisher, $messages, &$sent): void {
+        $a->topic->subscribers()->orderBy('id')->chunkById(200, function ($members) use ($a, $telegram, $publisher, $messages, &$sent, &$tried, &$failedInRow): bool {
             foreach ($members as $member) {
                 /** @var Member $member */
                 if ($a->member_id === $member->id && ! $this->reminder) {
@@ -48,21 +50,41 @@ class SendAnnouncementDms implements ShouldQueue
                     $text = $messages->text('ann_reminder', $member->language, ['card' => $text]);
                 }
 
+                $send = fn () => $a->photo_file_id && ! $this->reminder && mb_strlen($text) <= 1024
+                    ? $telegram->sendPhotoById($member->chat_id, $a->photo_file_id, $text)
+                    : $telegram->sendText($member->chat_id, $text);
+
                 try {
-                    if ($a->photo_file_id && ! $this->reminder && mb_strlen($text) <= 1024) {
-                        $telegram->sendPhotoById($member->chat_id, $a->photo_file_id, $text);
-                    } else {
-                        $telegram->sendText($member->chat_id, $text);
+                    try {
+                        $send();
+                    } catch (\RuntimeException $e) {
+                        // Telegram asked us to slow down: wait as long as it says, once.
+                        if (! preg_match('/retry after (\d+)/i', $e->getMessage(), $m)) {
+                            throw $e;
+                        }
+                        sleep(min(30, (int) $m[1]));
+                        $send();
                     }
                     $sent++;
-                } catch (\Throwable) {
-                    // A member who blocked the bot; carry on with the rest.
+                    $failedInRow = 0;
+                } catch (\Throwable $e) {
+                    // No token, or a revoked one: nobody will receive anything, so stop now.
+                    if (preg_match('/not configured|unauthorized/i', $e->getMessage())) {
+                        return false;
+                    }
+                    // A member who blocked the bot is normal; fifty failures in a row means Telegram is down.
+                    if (++$failedInRow >= 50) {
+                        return false;
+                    }
                 }
 
-                if ($sent % 25 === 0) {
+                // About thirty messages a second is Telegram's limit; count every try, not only successes.
+                if (++$tried % 25 === 0) {
                     usleep(1_000_000);
                 }
             }
+
+            return true;
         });
 
         if (! $this->reminder) {

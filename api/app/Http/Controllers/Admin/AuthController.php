@@ -25,7 +25,8 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['email' => ['These credentials do not match our records.']]);
         }
 
-        $token = $user->createToken('admin', ['admin'], now()->addDays(30));
+        // As long as the admin's own session (14 days); signing out revokes it sooner.
+        $token = $user->createToken('admin', ['admin'], now()->addDays(14));
         AuditLog::record($user->id, 'admin.login');
 
         return response()->json([

@@ -7,7 +7,7 @@ import { Mark, Tibeb } from "./Logo";
 
 /** The page ends where it began: at night, under the thread. */
 export function Footer({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: Meta | null }) {
-  const link = "text-white/70 transition-colors hover:text-white";
+  const link = "text-white/75 transition-colors hover:text-white";
 
   return (
     <footer className="night mt-20 md:mt-28">
@@ -19,11 +19,11 @@ export function Footer({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
             <Mark className="size-9" />
             <span className="flex flex-col leading-none">
               <span className="font-bold">{d.brand}</span>
-              <span className="mt-1 text-xs text-white/55">{d.brandNative}</span>
+              <span lang={lang === "en" ? "am" : "en"} className="mt-1 text-xs text-white/70">{d.brandNative}</span>
             </span>
           </div>
           <p className="mt-5 text-sm text-white/75">{d.footer.tagline}</p>
-          <p className="mt-3 text-xs text-white/50">{d.footer.caution}</p>
+          <p className="mt-3 text-xs text-white/75">{d.footer.caution}</p>
           {meta?.bot.link && (
             <a href={meta.bot.link} target="_blank" rel="noopener noreferrer" className="btn btn-gold mt-6 rounded-full">
               <Send className="size-4" aria-hidden="true" /> {d.join}
@@ -43,8 +43,11 @@ export function Footer({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
           {meta?.channel && <a className={link} href={meta.channel} target="_blank" rel="noopener noreferrer">{d.footer.channel}</a>}
         </div>
       </div>
-      <div className="relative mx-auto max-w-6xl border-t border-white/10 px-4 pb-[calc(var(--tabbar-space)+1.5rem)] pt-6 text-xs text-white/50 md:pb-10">
-        © {new Date().getFullYear()} {d.brand}
+      {/* At least 4.5:1 even where the dusk glow lightens the band. */}
+      <div className="relative mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 px-4 pb-[calc(var(--tabbar-space)+1.5rem)] pt-6 text-xs text-white/75 md:pb-10">
+        <span>© {new Date().getFullYear()} {d.brand}</span>
+        <Link className="transition-colors hover:text-white" href={`/${lang}/privacy`}>{d.legal.privacyLink}</Link>
+        <Link className="transition-colors hover:text-white" href={`/${lang}/terms`}>{d.legal.termsLink}</Link>
       </div>
     </footer>
   );

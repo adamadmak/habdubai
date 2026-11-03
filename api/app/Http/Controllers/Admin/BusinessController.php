@@ -112,6 +112,9 @@ class BusinessController extends Controller
         }
 
         $business->save();
+        if ($business->status === 'approved') {
+            $this->publisher->refresh($business);
+        }
         AuditLog::record($request->user()->id, 'directory.updated', 'business', $business->id, $before, $data);
 
         return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
@@ -143,6 +146,8 @@ class BusinessController extends Controller
             'reviewed_at' => now(),
             'review_note' => $data['note'] ?? null,
         ])->save();
+        // A listing that was live leaves the channel too.
+        $this->publisher->unpost($business);
         $this->publisher->rejected($business);
         AuditLog::record($request->user()->id, 'directory.rejected', 'business', $business->id, null, $data);
 
@@ -164,6 +169,15 @@ class BusinessController extends Controller
     {
         $before = $this->payload($business);
         $this->publisher->unpost($business);
+
+        // Telegram refused to remove the channel post: deleting now would leave it up with
+        // nothing pointing at it. Hide the listing and let the admin try again.
+        if ($business->channel_message_id && \App\Support\JobSettings::channel() !== '') {
+            $business->forceFill(['status' => 'hidden'])->save();
+
+            return response()->json(['message' => 'The channel post could not be removed, so the listing is hidden instead. Delete the post in Telegram, then delete the listing again.'], 409);
+        }
+
         $business->delete();
         AuditLog::record($request->user()->id, 'directory.deleted', 'business', $before['id'], $before);
 

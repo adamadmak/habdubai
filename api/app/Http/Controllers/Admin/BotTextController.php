@@ -7,9 +7,11 @@ use App\Bot\Choices;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\BotText;
+use App\Support\TelegramHtml;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class BotTextController extends Controller
 {
@@ -43,6 +45,10 @@ class BotTextController extends Controller
             'language' => ['required', Rule::in(Choices::LANGUAGES)],
             'text' => ['nullable', 'string', 'max:4000'],
         ]);
+
+        if (($problem = TelegramHtml::problem((string) ($data['text'] ?? ''))) !== null) {
+            throw ValidationException::withMessages(['text' => [$problem]]);
+        }
 
         $before = BotText::query()->where('key', $key)->where('language', $data['language'])->value('text');
 

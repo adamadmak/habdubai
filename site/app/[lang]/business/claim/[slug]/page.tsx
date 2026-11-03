@@ -24,7 +24,7 @@ export default async function Claim({ params }: { params: Promise<Params> }) {
   const data = await apiOrNull<{ business: Business }>(`/public/businesses/${slug}`, { revalidate: 30 });
   if (!data) notFound();
   const b = data.business;
-  const owner = await currentOwner();
+  const owner = await currentOwner(lang);
 
   return (
     <div className="mx-auto max-w-2xl px-4 pt-6 md:pt-10">
@@ -39,7 +39,19 @@ export default async function Claim({ params }: { params: Promise<Params> }) {
         {b.owner_managed ? (
           <p className="text-muted">{d.common.ownerManaged}</p>
         ) : owner ? (
-          <ClaimForm businessId={b.id} labels={{ label: d.business.claimLabel, submit: d.business.claimSubmit, sent: d.business.claimSent, error: d.common.errorText }} />
+          <ClaimForm
+            businessId={b.id}
+            lang={lang}
+            labels={{
+              label: d.business.claimLabel,
+              submit: d.business.claimSubmit,
+              sent: d.business.claimSent,
+              error: d.common.errorText,
+              sessionExpired: d.business.sessionExpired,
+              draftKept: d.business.draftKept,
+              signInAgain: d.business.signInAgain,
+            }}
+          />
         ) : (
           <div>
             <p className="text-muted">{d.business.claimLogin}</p>

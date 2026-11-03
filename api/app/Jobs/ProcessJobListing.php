@@ -15,6 +15,7 @@ use App\Models\JobRaw;
 use App\Support\JobSettings;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -29,6 +30,9 @@ class ProcessJobListing implements ShouldQueue
 
     public int $tries = 3;
 
+    /** Under the queue's retry_after (300 s): a stuck run is stopped before anyone else takes it. */
+    public int $timeout = 240;
+
     /** @var array<int, int> */
     public array $backoff = [30, 120];
 
@@ -36,9 +40,26 @@ class ProcessJobListing implements ShouldQueue
 
     public function handle(Deduper $deduper, JobClassifier $classifier, ScamScorer $scorer, JobPublisher $publisher): void
     {
+        // One run per listing at a time: a second worker that picks up the same listing
+        // (a retry while the first still waits on Claude) leaves it alone.
+        $lock = Cache::lock('job-raw:'.$this->rawId, $this->timeout + 30);
+        if (! $lock->get()) {
+            return;
+        }
+
+        try {
+            $this->process($deduper, $classifier, $scorer, $publisher);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function process(Deduper $deduper, JobClassifier $classifier, ScamScorer $scorer, JobPublisher $publisher): void
+    {
         $raw = JobRaw::query()->with('source')->find($this->rawId);
 
-        if (! $raw || $raw->processed_at !== null) {
+        // Already done, or a job row already made from it: never twice.
+        if (! $raw || $raw->processed_at !== null || Job::query()->where('raw_id', $raw->id)->exists()) {
             return;
         }
 

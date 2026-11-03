@@ -5,6 +5,7 @@ import { Empty, PageHead, Pager } from "@/components/Bits";
 import { countLabel, JobCard } from "@/components/Cards";
 import { Chip, ChipRow, hrefWith, SearchBox } from "@/components/Filters";
 import { api, query, type Job, type Meta, type Page } from "@/lib/api";
+import { currentClient } from "@/lib/client";
 import { dict, fill, isLocale, label } from "@/lib/i18n";
 
 type JobsPage = Page<Job> & { counts: { categories: Record<string, number>; emirates: Record<string, number> } };
@@ -24,9 +25,12 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
   const sp = await searchParams;
   const current = { q: sp.q?.slice(0, 80), category: sp.category, emirate: sp.emirate };
   const page = Math.max(1, Number(sp.page) || 1);
+  // A search, a filter or a later page is asked for as this visitor, uncached, so
+  // searching spends the visitor's own allowance at the API, not the whole site's.
+  const searched = Object.values(current).some(Boolean) || page > 1;
 
   const [jobs, meta] = await Promise.all([
-    api<JobsPage>(`/public/jobs${query({ ...current, page })}`),
+    api<JobsPage>(`/public/jobs${query({ ...current, page })}`, searched ? { client: await currentClient() } : {}),
     api<Meta>("/public/meta", { revalidate: 300 }),
   ]);
 
@@ -61,6 +65,7 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
       </div>
 
       <div className="mx-auto mt-6 max-w-6xl px-4">
+        <h2 className="sr-only">{d.common.results}</h2>
         <p className="mb-3 text-sm text-muted" aria-live="polite">{countLabel(jobs.meta.total, d.jobs.countOne, d.jobs.count, lang)}</p>
         {jobs.data.length === 0 ? (
           <Empty>{d.jobs.empty}</Empty>

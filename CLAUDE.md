@@ -15,7 +15,10 @@ environment, so `env()` and `config()` are empty for anything set only in the
 dashboard. Resolve operator values with `App\Support\RuntimeEnv::get()`
 (config → `platform_settings` → process env → `.env` on disk) and edit them on
 the admin's Settings page. The bot token is stored encrypted by
-`TelegramBotService::configureToken()` and never returned to a page.
+`TelegramBotService::configureToken()` and never returned to a page. Other
+write-only secrets on Settings (`SettingController::SECRETS`) are stored as
+`enc:` + `Crypt`, written with `RuntimeEnv::conceal()` and decrypted by
+`RuntimeEnv::get()`.
 
 ## Every bot message goes through `BotMessages`
 
@@ -30,8 +33,12 @@ written without a native reviewer; it is on the launch checklist.
 
 `TelegramWebhookController` checks the secret, stores the raw update
 (`telegram_updates`, unique `update_id`, so a redelivery is harmless) and
-dispatches `HandleTelegramUpdate`, which runs `App\Bot\Router` with
-`WithoutOverlapping` per chat so a flow's steps stay in order. Multi-step
+dispatches `HandleTelegramUpdate`, which runs `App\Bot\Router` under a lock
+per chat so a flow's steps stay in order. A handled update is reduced to its
+id and kind at once (a contact card carries a phone number);
+`bot:updates-chores` re-runs one whose handler died and deletes every update
+after `TelegramUpdate::KEEP_DAYS`. Edited messages are judged again by
+`GroupModerator` in the community groups and ignored everywhere else. Multi-step
 flows keep their place in `conversations` (`state` + `data`); `idle` means
 nothing is running. Add a new flow as a class like `App\Bot\Onboarding` and a
 branch in the router, not as more cases inside the router.
@@ -199,6 +206,19 @@ bot never word them differently.
 - **Caching:** anything cached with `Cache::remember` in the API must be
   plain arrays; the cache refuses to restore objects it does not know, and
   the in-memory store in tests hides that.
+- **Owners read the API in their language.** The site sends `X-Locale`; the
+  `locale` middleware on `/api/owner/*` sets it, and messages come from
+  `api/lang/{en,am,ti}/owner.php` and `lang/{am,ti}/validation.php`. A new
+  owner-facing message goes there in all three, never as a literal.
+- **Website visits** are counted per day and path (`page_views`, via
+  `POST /api/public/pageview` from the site's server), with no address,
+  cookie or identifier; the admin dashboard reads `GET /api/admin/analytics`.
+- **Photos** are stored once at 1600 px; `?w=480|960` on a public photo URL
+  gives a cached narrower copy for cards (`PhotoStore::thumbnail`).
+- **Scheduled tasks are never pinned to one minute.** A tick that arrives while
+  the last still runs is refused, and the scheduler does not catch up, so
+  each task runs often and does only what is due (reminders go out in the
+  first run after 09:00 Dubai, guarded by `reminder_sent_at`).
 
 ## Phone numbers are never stored
 
@@ -215,6 +235,11 @@ Sanctum token in next-auth's JWT cookie; `web/lib/api.ts` adds it to every
 request and signs out on a 401. Admin routes need `auth:sanctum` and the
 `abilities:admin` middleware. Administrators are created with
 `php artisan admin:create`; community members never sign in to the admin.
+Tokens last 14 days, the same as the session, and signing out revokes the
+token (`events.signOut`). Admin sign-in is limited per email (`admin-login`),
+because every attempt arrives from the admin's own server. On a fresh host,
+`/api/setup/*` accepts the database password only until the first
+administrator exists.
 
 ## Tests before a push
 
@@ -225,8 +250,11 @@ cd api && php vendor/bin/pest
 Pest with in-memory SQLite; Telegram is faked with `Http::fake()`. Helpers in
 `tests/Pest.php`: `say()`, `shareContact()`, `joinMember()`, `sentMessages()`,
 `lastText()`. A new bot step or admin route gets a test beside the existing
-ones. For the web app, `npx next build` is the check; there are no web tests
-yet.
+ones. Test headers persist between requests in one test (`withHeader`); call
+`flushHeaders()` before a request that must go without them. CI also runs the
+suite on Postgres 16 (`api-postgres`, reported, not yet required). For the web
+app and the site, `tsc --noEmit` and `next build` are the checks; there are
+no browser tests yet.
 
 ## Deploy one app at a time
 

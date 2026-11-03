@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { fill, type Dictionary, type Locale } from "@/lib/i18n";
+// fill on its own and the rest as types only: nothing here pulls the dictionaries into the browser.
+import { fill } from "@/lib/fill";
+import type { Dictionary } from "@/lib/i18n";
+import type { Locale } from "@/lib/locales";
 import { ethiopianDate, formatDate } from "@/lib/format";
 
 const TAG: Record<Locale, string> = { am: "am-ET", ti: "ti-ER", en: "en-GB" };

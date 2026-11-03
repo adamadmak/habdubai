@@ -1,21 +1,25 @@
 import { NextResponse } from "next/server";
-import { isLocale } from "@/lib/locales";
-import { OWNER_COOKIE, ownerApi } from "@/lib/owner";
-import { siteUrl } from "@/lib/site";
+import { refuseCrossSite, requestLocale } from "@/lib/guard";
+import { clearCookie, OWNER_COOKIE, ownerApi } from "@/lib/owner";
 
 /** Sign out: the token is revoked at the API, then the cookie goes. */
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
+
+  const form = await request.formData().catch(() => null);
+  const lang = requestLocale(request, form?.get("lang"));
+
   try {
-    await ownerApi("/logout", { method: "POST" });
+    await ownerApi("/logout", { method: "POST", locale: lang });
   } catch {
     // Already invalid: clearing the cookie is all that is left.
   }
 
-  const form = await request.formData().catch(() => null);
-  const lang = form?.get("lang");
-  // The public address, not request.url: behind the host's proxy that is the container's own.
-  const response = NextResponse.redirect(siteUrl(`${isLocale(lang) ? lang : "en"}/business`), 303);
-  response.cookies.delete(OWNER_COOKIE);
+  // A relative Location: the browser resolves it against the address it used,
+  // whatever the container behind the host's proxy thinks its own address is.
+  const response = new NextResponse(null, { status: 303, headers: { Location: `/${lang}/business` } });
+  clearCookie(response, OWNER_COOKIE);
 
   return response;
 }

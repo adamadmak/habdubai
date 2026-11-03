@@ -19,6 +19,25 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
+/** Thrown by `authorize` in lib/auth.ts when the API answers 429. */
+const RATE_LIMITED = "RATE_LIMITED";
+
+/**
+ * Where to go after signing in: a page on this site, never another origin.
+ * `//evil.example` and `/\evil.example` both start with "/" but leave the
+ * site, so the value is resolved against our origin and must stay on it.
+ */
+function afterSignIn(next: string | null): string {
+  const fallback = "/dashboard";
+  if (!next || !next.startsWith("/")) return fallback;
+  try {
+    const url = new URL(next, window.location.origin);
+    return url.origin === window.location.origin ? url.pathname + url.search + url.hash : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 const LogInForm = () => {
   const [isPending, startTransition] = React.useTransition();
   const [showPassword, setShowPassword] = React.useState(false);
@@ -36,8 +55,9 @@ const LogInForm = () => {
     startTransition(async () => {
       const response = await signIn("credentials", { email: data.email, password: data.password, redirect: false });
       if (response?.ok) {
-        const next = params.get("next");
-        window.location.assign(next && next.startsWith("/") ? next : "/dashboard");
+        window.location.assign(afterSignIn(params.get("next")));
+      } else if (response?.error === RATE_LIMITED) {
+        setError("Too many sign-in attempts. Wait a minute and try again.");
       } else {
         setError("That email and password do not match an admin account.");
       }

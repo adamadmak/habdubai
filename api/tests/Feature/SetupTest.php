@@ -46,9 +46,28 @@ test('on a host where our environment never arrives, the database password opens
     $this->withHeader('X-Setup-Token', 'db-password-from-the-dashboard-123456')->postJson('/api/setup/migrate')
         ->assertOk()->assertJsonPath('driver', 'sqlite');
 
+    // A 24-character password works too: one length rule, not two.
+    config(["database.connections.{$connection}.password" => 'twenty-four-characters!!']);
+    $this->withHeader('X-Setup-Token', 'twenty-four-characters!!')->postJson('/api/setup/migrate')->assertOk();
+
     // A short database password is no key at all.
     config(["database.connections.{$connection}.password" => 'short']);
     $this->withHeader('X-Setup-Token', 'short')->postJson('/api/setup/migrate')->assertStatus(404);
+});
+
+test('the database password stops opening setup once the first administrator exists', function (): void {
+    putenv('SETUP_TOKEN');
+    $connection = config('database.default');
+    $password = 'db-password-from-the-dashboard-123456';
+    config(["database.connections.{$connection}.password" => $password]);
+
+    $this->withHeader('X-Setup-Token', $password)->postJson('/api/setup/admin', ['email' => 'first@example.com', 'password' => 'first-admin-password'])
+        ->assertCreated();
+
+    // The private database's password is no longer a key to the public API.
+    $this->withHeader('X-Setup-Token', $password)->postJson('/api/setup/migrate')->assertStatus(404);
+    $this->withHeader('X-Setup-Token', $password)->postJson('/api/setup/admin', ['email' => 'second@example.com', 'password' => 'another-long-password'])
+        ->assertStatus(404);
 });
 
 test('the status page says what the app can see, in yes and no only', function (): void {

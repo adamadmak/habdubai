@@ -223,7 +223,9 @@ test('the tick token and the website key are write-only settings: never shown, b
         ->assertJsonPath('settings.site_api_key', '')->assertJsonPath('secrets.site_api_key', true)->assertJsonPath('secrets.tick_token', true);
     $this->putJson('/api/admin/settings', ['site_api_key' => '', 'community_language' => 'en'])->assertOk();
 
-    expect(PlatformSetting::valueFor('site_api_key'))->toBe($key)
+    // Stored encrypted, read back whole.
+    expect(\App\Support\RuntimeEnv::get(null, 'site_api_key', null))->toBe($key)
+        ->and((string) PlatformSetting::valueFor('site_api_key'))->toStartWith('enc:')->not->toContain($key)
         ->and(json_encode(\App\Models\AuditLog::query()->get()))->not->toContain($key);
 
     // And the API now believes the website's forwarded visitor address.

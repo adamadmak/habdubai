@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
             'owner' => \App\Http\Middleware\EnsureBusinessOwner::class,
+            'locale' => \App\Http\Middleware\UseRequestLocale::class,
         ]);
         // Behind the host's proxy: read the visitor's address and the scheme from it, or
         // every rate limit would count all visitors as one. Not X-Forwarded-Host: a

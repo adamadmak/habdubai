@@ -85,7 +85,8 @@ class SettingController extends Controller
             }
             $before[$key] = $secret ? '(hidden)' : RuntimeEnv::get(null, $key, null);
             $after[$key] = $secret ? '(changed)' : $value;
-            PlatformSetting::put($key, trim((string) $value));
+            // Secrets are stored encrypted, like the bot token: a copy of the database alone does not hold them.
+            PlatformSetting::put($key, $secret ? RuntimeEnv::conceal(trim((string) $value)) : trim((string) $value));
         }
 
         AuditLog::record($request->user()->id, 'settings.updated', 'settings', null, $before, $after);

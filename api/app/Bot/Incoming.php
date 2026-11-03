@@ -56,7 +56,7 @@ final class Incoming
 
     public static function fromUpdate(array $update): ?self
     {
-        $message = $update['message'] ?? $update['edited_message'] ?? null;
+        $message = $update['message'] ?? null;
 
         if (! is_array($message) || ! isset($message['chat']['id'], $message['from']['id'])) {
             return null;

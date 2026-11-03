@@ -22,8 +22,11 @@ class PhotoStore
 
     public const QUALITY = 82;
 
-    /** Decoding needs about 4 bytes a pixel: a small file can claim a huge picture, so the size is read first. */
-    public const MAX_PIXELS = 40_000_000;
+    /**
+     * Decoding needs about 4 bytes a pixel, more with a copy: a small file can claim a huge
+     * picture, so the size is read first. 24 MP stays well inside a 256 MB worker.
+     */
+    public const MAX_PIXELS = 24_000_000;
 
     public const MAX_DECODE_SIDE = 12_000;
 
@@ -31,16 +34,16 @@ class PhotoStore
     {
         $size = $raw !== '' ? @getimagesizefromstring($raw) : false;
         if ($size === false || ! in_array($size[2] ?? null, [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
-            throw ValidationException::withMessages(['photo' => 'That file is not a photo we can read. Use a JPEG, PNG or WebP image.']);
+            throw ValidationException::withMessages(['photo' => __('owner.photo_unreadable')]);
         }
         if ($size[0] * $size[1] > self::MAX_PIXELS || max($size[0], $size[1]) > self::MAX_DECODE_SIDE) {
-            throw ValidationException::withMessages(['photo' => 'The photo is too large. Use one under 40 megapixels.']);
+            throw ValidationException::withMessages(['photo' => __('owner.photo_too_large', ['mp' => intdiv(self::MAX_PIXELS, 1_000_000)])]);
         }
 
         $image = @imagecreatefromstring($raw);
 
         if ($image === false) {
-            throw ValidationException::withMessages(['photo' => 'That file is not a photo we can read. Use a JPEG, PNG or WebP image.']);
+            throw ValidationException::withMessages(['photo' => __('owner.photo_unreadable')]);
         }
 
         $width = imagesx($image);
@@ -49,7 +52,7 @@ class PhotoStore
         if ($width < self::MIN_WIDTH || $height < 200) {
             imagedestroy($image);
 
-            throw ValidationException::withMessages(['photo' => 'The photo is too small. Use one at least '.self::MIN_WIDTH.' pixels wide.']);
+            throw ValidationException::withMessages(['photo' => __('owner.photo_too_small', ['width' => self::MIN_WIDTH])]);
         }
 
         $scale = min(1, self::MAX_SIDE / max($width, $height));
@@ -80,6 +83,29 @@ class PhotoStore
             'size' => strlen($jpeg),
             'data' => base64_encode($jpeg),
         ]);
+    }
+
+    /** Widths the website may ask for (`?w=`): a card needs far less than the stored 1600. */
+    public const THUMB_WIDTHS = [480, 960];
+
+    /** A stored JPEG made narrower for a card; the original when it is already that small. */
+    public static function thumbnail(string $jpeg, int $width): string
+    {
+        $image = @imagecreatefromstring($jpeg);
+        if ($image === false || imagesx($image) <= $width) {
+            return $jpeg;
+        }
+
+        $height = max(1, (int) round(imagesy($image) * $width / imagesx($image)));
+        $canvas = imagecreatetruecolor($width, $height);
+        imagecopyresampled($canvas, $image, 0, 0, 0, 0, $width, $height, imagesx($image), imagesy($image));
+        imagedestroy($image);
+
+        ob_start();
+        imagejpeg($canvas, null, self::QUALITY);
+        imagedestroy($canvas);
+
+        return (string) ob_get_clean();
     }
 
     /** On approval the newest photo in review becomes the cover and older ones go. */

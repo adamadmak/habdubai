@@ -43,9 +43,25 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
   const place = [job.area, label(meta.labels.emirates[job.emirate], lang)].filter(Boolean).join(", ");
   const summary = job.summary[lang] || job.summary.en;
   const source = job.source ?? "";
+  const emirate = job.emirate !== "unknown" ? label(meta.labels.emirates[job.emirate], "en") : "";
+
+  // Search engines read an open job as a posting: what, who, where and since when. You apply on the source's site.
+  const jsonLd = job.open
+    ? {
+        "@context": "https://schema.org",
+        "@type": "JobPosting",
+        title: job.title,
+        description: summary || undefined,
+        datePosted: job.published_at ?? undefined,
+        hiringOrganization: job.company ? { "@type": "Organization", name: job.company } : undefined,
+        jobLocation: { "@type": "Place", address: { "@type": "PostalAddress", addressRegion: emirate || undefined, addressCountry: "AE" } },
+        directApply: false,
+      }
+    : null;
 
   return (
     <article className="mx-auto max-w-3xl px-4 pt-6 md:pt-10">
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />}
       <Link href={`/${lang}/jobs`} className="press inline-flex items-center gap-1 text-sm font-semibold text-primary">
         <ChevronLeft className="size-4" aria-hidden="true" /> {d.jobs.back}
       </Link>

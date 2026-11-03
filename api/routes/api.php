@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BotTextController;
@@ -24,10 +25,18 @@ use App\Http\Controllers\Public\DirectoryController as PublicDirectory;
 use App\Http\Controllers\Public\HomeController as PublicHome;
 use App\Http\Controllers\Public\JobController as PublicJobs;
 use App\Http\Controllers\Public\MediaController as PublicMedia;
+use App\Http\Controllers\Public\PageViewController as PublicPageViews;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SystemTickController;
 use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Support\Facades\Route;
+
+/*
+ * Numeric ids are 1 to 18 digits: a longer one is a 404 here, not an
+ * out-of-range error from the database (a 500). Route model bindings follow
+ * the same rule.
+ */
+Route::patterns(array_fill_keys(['job', 'announcement', 'photo', 'business', 'member', 'source', 'city', 'question', 'faq', 'article', 'topic', 'post', 'match', 'report', 'claim'], '[0-9]{1,18}'));
 
 Route::post('telegram/webhook/{secret}', TelegramWebhookController::class)->name('telegram.webhook');
 
@@ -46,21 +55,23 @@ Route::prefix('public')->name('public.')->middleware('throttle:public')->group(f
     Route::get('home', [PublicHome::class, 'home'])->name('home');
     Route::get('meta', [PublicHome::class, 'meta'])->name('meta');
     Route::get('jobs', [PublicJobs::class, 'index'])->name('jobs');
-    Route::get('jobs/{job}', [PublicJobs::class, 'show'])->whereNumber('job')->name('jobs.show');
-    Route::get('jobs/{job}/apply', [PublicJobs::class, 'apply'])->whereNumber('job')->name('jobs.apply');
+    Route::get('jobs/{job}', [PublicJobs::class, 'show'])->name('jobs.show');
+    Route::get('jobs/{job}/apply', [PublicJobs::class, 'apply'])->name('jobs.apply');
     Route::get('directory', [PublicDirectory::class, 'facets'])->name('directory');
     Route::get('businesses', [PublicDirectory::class, 'index'])->name('businesses');
     Route::post('businesses/{slug}/view', [PublicDirectory::class, 'view'])->where('slug', '[a-z0-9-]{1,170}')->name('businesses.view');
     Route::get('businesses/{slug}', [PublicDirectory::class, 'show'])->where('slug', '[a-z0-9-]{1,170}')->name('businesses.show');
     Route::get('announcements', [PublicAnnouncements::class, 'index'])->name('announcements');
-    Route::get('announcements/{announcement}', [PublicAnnouncements::class, 'show'])->whereNumber('announcement')->name('announcements.show');
-    Route::get('announcements/{announcement}/photo', [PublicMedia::class, 'announcement'])->whereNumber('announcement')->name('announcements.photo');
-    Route::get('photos/{photo}', [PublicMedia::class, 'photo'])->whereNumber('photo')->name('photo');
-    Route::get('photos/{photo}/preview', [PublicMedia::class, 'preview'])->whereNumber('photo')->middleware('signed:relative')->name('photo.preview');
+    Route::get('announcements/{announcement}', [PublicAnnouncements::class, 'show'])->name('announcements.show');
+    Route::get('announcements/{announcement}/photo', [PublicMedia::class, 'announcement'])->name('announcements.photo');
+    Route::get('photos/{photo}', [PublicMedia::class, 'photo'])->name('photo');
+    Route::get('photos/{photo}/preview', [PublicMedia::class, 'preview'])->middleware('signed:relative')->name('photo.preview');
+    // A page seen on the website, sent by its server: counted per day and path, nobody identified.
+    Route::post('pageview', [PublicPageViews::class, 'store'])->name('pageview');
 });
 
 // Business owners: "Continue with Telegram", then their own listings.
-Route::prefix('owner')->name('owner.')->group(function (): void {
+Route::prefix('owner')->name('owner.')->middleware('locale')->group(function (): void {
     Route::post('login/start', [OwnerAuth::class, 'start'])->middleware('throttle:owner-login-start')->name('login.start');
     Route::post('login/poll', [OwnerAuth::class, 'poll'])->middleware('throttle:owner-login-poll')->name('login.poll');
     Route::post('login/verify', [OwnerAuth::class, 'verify'])->middleware('throttle:owner-login-verify')->name('login.verify');
@@ -80,12 +91,13 @@ Route::prefix('owner')->name('owner.')->group(function (): void {
 });
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
-    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:6,1')->name('login');
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:admin-login')->name('login');
 
     Route::middleware(['auth:sanctum', 'abilities:admin'])->group(function (): void {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('me', [AuthController::class, 'me'])->name('me');
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+        Route::get('analytics', AnalyticsController::class)->name('analytics');
 
         Route::get('members', [MemberController::class, 'index'])->name('members.index');
         Route::get('members/{member}', [MemberController::class, 'show'])->name('members.show');

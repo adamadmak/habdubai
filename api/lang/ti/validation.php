@@ -1,0 +1,43 @@
+<?php
+
+// The rules business owners can hit on the website's forms, in Tigrinya.
+// Anything not here falls back to English.
+return [
+    'required' => ':attribute የድሊ።',
+    'string' => ':attribute ጽሑፍ ክኸውን ኣለዎ።',
+    'integer' => ':attribute ቁጽሪ ክኸውን ኣለዎ።',
+    'array' => ':attribute ዝርዝር ክኸውን ኣለዎ።',
+    'file' => ':attribute ፋይል ክኸውን ኣለዎ።',
+    'min' => [
+        'string' => ':attribute እንተወሓደ :min ፊደላት ክህልዎ ኣለዎ።',
+    ],
+    'max' => [
+        'string' => ':attribute ካብ :max ፊደላት ክበዝሕ የብሉን።',
+        'array' => ':attribute ካብ :max ክበዝሕ የብሉን።',
+        'file' => ':attribute ካብ :max ኪሎባይት ክበዝሕ የብሉን።',
+    ],
+    'in' => 'ዝተመረጸ :attribute ቅኑዕ ኣይኮነን።',
+    'exists' => 'ዝተመረጸ :attribute ቅኑዕ ኣይኮነን።',
+    'url' => ':attribute ቅኑዕ ኣድራሻ መርበብ ሓበሬታ ክኸውን ኣለዎ።',
+    'regex' => 'ኣጻሕፋ :attribute ቅኑዕ ኣይኮነን።',
+    'mimetypes' => ':attribute JPEG፣ PNG ወይ WebP ስእሊ ክኸውን ኣለዎ።',
+
+    'attributes' => [
+        'name' => 'ስም ንግዲ',
+        'category' => 'ዓይነት ንግዲ',
+        'city_id' => 'ከተማ',
+        'area' => 'ከባቢ',
+        'maps_url' => 'መላግቦ ካርታ Google',
+        'phone' => 'ስልኪ',
+        'whatsapp' => 'WhatsApp',
+        'telegram' => 'ስም ቴሌግራም',
+        'website' => 'መርበብ ሓበሬታ',
+        'description' => 'ሓጺር መግለጺ',
+        'about' => 'ብዛዕባ ንግዲ',
+        'hours' => 'ሰዓታት ስራሕ',
+        'languages' => 'ቋንቋታት',
+        'languages.*' => 'ቋንቋ',
+        'photo' => 'ስእሊ',
+        'note' => 'መብርሂ',
+    ],
+];

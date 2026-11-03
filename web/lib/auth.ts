@@ -1,7 +1,10 @@
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+
+/** How long an admin token lasts on the API, and so how long a dashboard session may. */
+export const ADMIN_SESSION_SECONDS = 60 * 60 * 24 * 14;
 
 /**
  * The dashboard signs in against the Laravel API. The Sanctum token the API
@@ -26,6 +29,8 @@ export const authOptions: NextAuthOptions = {
           body: JSON.stringify({ email, password }),
         });
 
+        // next-auth hands a thrown message to the form as `error`; the form words it.
+        if (response.status === 429) throw new Error("RATE_LIMITED");
         if (!response.ok) return null;
 
         const data = (await response.json()) as { token: string; user: { id: number; name: string; email: string } };
@@ -35,13 +40,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
-  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 14 },
+  session: { strategy: "jwt", maxAge: ADMIN_SESSION_SECONDS },
   pages: { signIn: "/en/auth/login" },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.accessToken = (user as { accessToken?: string }).accessToken;
         token.user = { id: Number(user.id), name: user.name ?? "", email: user.email ?? "" };
+        // The cookie's own expiry rolls forward on use; the API token's does not.
+        token.expiresAt = Date.now() + ADMIN_SESSION_SECONDS * 1000;
       }
       return token;
     },
@@ -49,6 +56,22 @@ export const authOptions: NextAuthOptions = {
       session.accessToken = token.accessToken as string;
       session.user = { ...session.user, ...(token.user as { id: number; name: string; email: string }) };
       return session;
+    },
+  },
+  events: {
+    // Signing out revokes the API token too, so a copied cookie stops working.
+    // Best effort: an unreachable API never keeps an admin signed in.
+    async signOut({ token }) {
+      if (!token?.accessToken) return;
+      try {
+        await fetch(`${API_URL}/api/admin/logout`, {
+          method: "POST",
+          headers: { Accept: "application/json", Authorization: `Bearer ${token.accessToken}` },
+          signal: AbortSignal.timeout(5000),
+        });
+      } catch {
+        // The token expires on its own.
+      }
     },
   },
 };

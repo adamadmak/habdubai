@@ -1,4 +1,4 @@
-import type { Locale } from "./i18n";
+import type { Locale } from "./locales";
 
 /** Intl locale tags: Amharic and Tigrinya with their country so month names are right. */
 const TAG: Record<Locale, string> = { am: "am-ET", ti: "ti-ER", en: "en-GB" };

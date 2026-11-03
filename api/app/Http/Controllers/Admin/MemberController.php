@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Bot\Choices;
 use App\Http\Controllers\Controller;
+use App\Support\Search;
 use App\Models\AuditLog;
 use App\Models\Member;
 use App\Services\TelegramBotService;
@@ -20,8 +21,8 @@ class MemberController extends Controller
 
         if ($search = trim((string) $request->query('search', ''))) {
             $query->where(function ($q) use ($search): void {
-                $q->where('display_name', 'like', '%'.$search.'%')
-                    ->orWhere('telegram_username', 'like', '%'.$search.'%')
+                // Case-insensitive on Postgres too, where plain like is not.
+                Search::anyColumn($q, ['display_name', 'telegram_username'], $search)
                     ->orWhere('phone_last4', $search);
 
                 if (ctype_digit($search)) {

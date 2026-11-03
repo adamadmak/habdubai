@@ -12,5 +12,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     accessToken?: string;
     user?: { id: number; name: string; email: string };
+    /** When the API token runs out (ms since the epoch); set at sign-in. */
+    expiresAt?: number;
   }
 }

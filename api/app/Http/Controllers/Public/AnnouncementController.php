@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\AnnouncementTopic;
 use App\Support\PublicUrls;
+use App\Support\Search;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,7 @@ class AnnouncementController extends Controller
     {
         $data = $request->validate([
             'topic' => ['nullable', 'string', 'max:40'],
+            'q' => ['nullable', 'string', 'max:80'],
             'events' => ['nullable', 'boolean'],
             'page' => ['nullable', 'integer', 'min:1', 'max:500'],
         ]);
@@ -25,6 +27,8 @@ class AnnouncementController extends Controller
 
         $page = Announcement::query()->with('topic')->where('status', 'published')
             ->when($topic, fn ($q) => $q->where('topic_id', $topic->id))
+            // Any of the three languages, so English words find an Amharic post by its translation.
+            ->when(trim((string) ($data['q'] ?? '')) !== '', fn ($q) => Search::anyColumn($q, ['text_en', 'text_am', 'text_ti', 'event_place'], (string) $data['q']))
             ->when($events, fn ($q) => $q->whereNotNull('event_date')->whereDate('event_date', '>=', now('Asia/Dubai')->toDateString())->orderBy('event_date'))
             ->when(! $events, fn ($q) => $q->orderByDesc('published_at')->orderByDesc('id'))
             ->paginate(12);

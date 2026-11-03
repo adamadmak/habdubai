@@ -66,8 +66,13 @@ class GroupModerator
         return $chatId !== '' && in_array($chatId, array_filter([Community::questionsGroup(), Community::goodsGroup()]), true);
     }
 
-    /** @return bool true when the message was removed (nothing else should read it) */
-    public function check(array $message): bool
+    /**
+     * An edited message is judged the same way, except that an edit never files
+     * a /report a second time.
+     *
+     * @return bool true when the message was removed (nothing else should read it)
+     */
+    public function check(array $message, bool $edited = false): bool
     {
         $chatId = (string) ($message['chat']['id'] ?? '');
         $messageId = (int) ($message['message_id'] ?? 0);
@@ -94,7 +99,7 @@ class GroupModerator
             return true;
         }
 
-        if (preg_match('#^/report(@\w+)?\b#i', $text)) {
+        if (! $edited && preg_match('#^/report(@\w+)?\b#i', $text)) {
             $this->report($member, $message);
 
             return true;
@@ -110,7 +115,7 @@ class GroupModerator
             return true;
         }
 
-        $reason = $this->violation($member, $text, $chatId);
+        $reason = $this->violation($member, $text, $chatId, self::hasHiddenLink($message));
 
         if ($reason === null) {
             return false;
@@ -129,7 +134,7 @@ class GroupModerator
     }
 
     /** The text key explaining the removal, or null when the message is fine. */
-    private function violation(Member $member, string $text, string $chatId): ?string
+    private function violation(Member $member, string $text, string $chatId, bool $hiddenLink = false): ?string
     {
         if ($text === '') {
             return null;
@@ -138,7 +143,7 @@ class GroupModerator
         $lower = mb_strtolower($text);
         $isNew = $member->verified_at === null || $member->verified_at->greaterThan(now()->subDays(self::NEW_MEMBER_DAYS));
 
-        if ($isNew && (preg_match('#(https?://|www\.|t\.me/|\b[a-z0-9-]+\.(com|net|org|ae|et|io|me)\b)#i', $text) || preg_match('/(\+?\d[\d\s-]{7,}\d)/', $text))) {
+        if ($isNew && ($hiddenLink || preg_match('#(https?://|www\.|t\.me/|\b[a-z0-9-]+\.(com|net|org|ae|et|io|me)\b)#i', $text) || preg_match('/(\+?\d[\d\s-]{7,}\d)/', $text))) {
             return 'mod_removed_link';
         }
 
@@ -153,6 +158,21 @@ class GroupModerator
         }
 
         return null;
+    }
+
+    /**
+     * A link or number Telegram found in the message, including one hidden behind
+     * ordinary words ("apply here") that the text alone does not show.
+     */
+    private static function hasHiddenLink(array $message): bool
+    {
+        foreach (array_merge($message['entities'] ?? [], $message['caption_entities'] ?? []) as $entity) {
+            if (in_array($entity['type'] ?? '', ['url', 'text_link', 'phone_number', 'email'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function report(Member $reporter, array $message): void

@@ -6,6 +6,7 @@ use App\Ai\Translator;
 use App\Bot\Choices;
 use App\Bot\QuestionsFlow;
 use App\Http\Controllers\Controller;
+use App\Support\Search;
 use App\Models\AuditLog;
 use App\Models\FaqEntry;
 use App\Models\Question;
@@ -26,7 +27,7 @@ class QuestionController extends Controller
             $query->where('category', $category);
         }
         if ($search = trim((string) $request->query('search', ''))) {
-            $query->where('body', 'like', '%'.$search.'%');
+            Search::anyColumn($query, ['body'], $search);
         }
 
         $page = $query->paginate(25);

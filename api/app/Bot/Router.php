@@ -51,6 +51,18 @@ class Router
             return;
         }
 
+        // An edit is judged again in the community groups, so nobody posts "hi" and
+        // edits it into a scam link. Anywhere else it is ignored: in a private chat it
+        // would replay a step of a flow, or ask the assistant a second time.
+        if (isset($payload['edited_message'])) {
+            $edited = $payload['edited_message'];
+            if (is_array($edited) && GroupModerator::isCommunityGroup((string) ($edited['chat']['id'] ?? ''))) {
+                $this->moderator->check($edited, edited: true);
+            }
+
+            return;
+        }
+
         // A post in a channel or group registered as a job source.
         $post = $payload['channel_post'] ?? null;
         if ($post === null && isset($payload['message']['chat']['type']) && $payload['message']['chat']['type'] !== 'private') {

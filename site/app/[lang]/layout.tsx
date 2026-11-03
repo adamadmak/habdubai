@@ -3,10 +3,12 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Noto_Sans_Ethiopic, Noto_Serif_Ethiopic } from "next/font/google";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { FallbackCopyProvider } from "@/components/FallbackCopy";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Motion } from "@/components/Motion";
 import { TabBar } from "@/components/NavLinks";
+import { PageViews } from "@/components/PageViews";
 import { api, type Meta } from "@/lib/api";
 import { dict, isLocale, LOCALES } from "@/lib/i18n";
 import { siteUrl } from "@/lib/site";
@@ -15,7 +17,8 @@ import { siteUrl } from "@/lib/site";
 const ethiopic = Noto_Sans_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic", display: "swap" });
 /** Headings: Fraunces for Latin, Noto Serif Ethiopic for Ge'ez, so a heading reads like print in both scripts. */
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap", axes: ["SOFT", "WONK", "opsz"] });
-const ethiopicSerif = Noto_Serif_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic-serif", display: "swap", weight: ["600", "700"] });
+// Not preloaded: two heavy weights that only Ge'ez headings use; English pages would fetch them for nothing.
+const ethiopicSerif = Noto_Serif_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic-serif", display: "swap", weight: ["600", "700"], preload: false });
 
 /*
  * No generateStaticParams: nothing under /[lang] is pre-rendered at build time,
@@ -62,10 +65,23 @@ export default async function LangLayout({ children, params }: { children: React
           {d.skip}
         </a>
         <Header lang={lang} d={d} meta={meta} />
-        <main id="main">{children}</main>
+        <FallbackCopyProvider
+          copy={{
+            lang,
+            notFoundTitle: d.common.notFoundTitle,
+            notFoundText: d.common.notFoundText,
+            goHome: d.common.goHome,
+            errorTitle: d.common.errorTitle,
+            errorText: d.common.errorText,
+            retry: d.common.retry,
+          }}
+        >
+          <main id="main">{children}</main>
+        </FallbackCopyProvider>
         <Footer lang={lang} d={d} meta={meta} />
-        <TabBar lang={lang} labels={d.tabs} />
+        <TabBar lang={lang} labels={d.tabs} label={d.navLabel} />
         <Motion />
+        <PageViews />
       </body>
     </html>
   );

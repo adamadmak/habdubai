@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
-import { ArrowRight, ArrowUpRight, CalendarDays, Newspaper, Send, ShieldCheck, Store } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Bell, CalendarDays, Newspaper, Plus, Send, ShieldCheck, Store } from "lucide-react";
 import { GEEZ, Section } from "@/components/Bits";
 import { BusinessCard, EventCard, firstLine, JobCard, ListingMock, NewsCard } from "@/components/Cards";
 import { Clocks } from "@/components/Clocks";
@@ -20,6 +20,10 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   const { meta, stats } = home;
   const job = home.jobs[0];
   const event = home.events[0];
+
+  // The big blue tile, whether it links to the jobs or (before the first one) holds the alerts link.
+  const jobsTile =
+    "tile spot reveal col-span-2 flex min-h-[22rem] flex-col bg-[linear-gradient(145deg,#1b4ddb_0%,#2b5cff_45%,#3a2fb8_100%)] p-6 text-white md:p-8 lg:row-span-2";
 
   const statItems = [
     stats.members > 0 && { n: stats.members, label: d.home.stats.members },
@@ -48,7 +52,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
               {d.home.heroTitle} <span className="gild">{d.home.heroAccent}</span>
             </h1>
             <p className="mt-5 max-w-xl text-[1.0625rem] muted-on-night md:text-lg">{d.home.lead}</p>
-            <HomeSearch lang={lang} placeholder={d.home.searchPlaceholder} scopes={d.home.scopes} searchLabel={d.common.search} />
+            <HomeSearch lang={lang} placeholder={d.home.searchPlaceholder} scopes={d.home.scopes} scopeLabel={d.home.searchIn} searchLabel={d.common.search} />
             {statItems.length > 0 && (
               <dl className="mt-8 flex flex-wrap gap-x-8 gap-y-4">
                 {statItems.map((s) => (
@@ -62,7 +66,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
           </div>
 
           {/* The live board: the two clocks, the newest job, the next event. */}
-          <div className="settle settle-2 flex flex-col gap-3" aria-label={d.home.live}>
+          <div className="settle settle-2 flex flex-col gap-3" role="group" aria-label={d.home.live}>
             <Clocks lang={lang} labels={d.clock} />
             {job && (
               <Link href={`/${lang}/jobs/${job.id}`} className="glass press hidden items-center gap-3.5 rounded-[1.375rem] p-3.5 transition-colors hover:bg-white/12 md:flex">
@@ -98,42 +102,55 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       {/* ---- Bento: the four things this site is for, one tile each. ---- */}
       <section className="mx-auto mt-10 max-w-6xl px-4 md:mt-14" aria-label={d.brand}>
         <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-          {/* Jobs */}
-          <Link
-            href={`/${lang}/jobs`}
-            className="tile tile-link spot reveal col-span-2 flex min-h-[22rem] flex-col bg-[linear-gradient(145deg,#1b4ddb_0%,#2b5cff_45%,#3a2fb8_100%)] p-6 text-white md:p-8 lg:row-span-2"
-          >
-            <span className="weave" aria-hidden="true" />
-            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/14 px-3 py-1 text-xs font-semibold ring-1 ring-white/20">
-              <ShieldCheck className="size-3.5 text-accent" aria-hidden="true" /> {d.home.bento.jobsBadge}
-            </span>
-            <span className="mt-6 flex items-end gap-3">
-              <span className="display text-[4.5rem] leading-[0.85] tabular md:text-[5.5rem]">{number(stats.jobs, lang)}</span>
-              <span className="headline pb-1 text-xl">{d.home.stats.jobs}</span>
-            </span>
-            <span className="mt-3 max-w-md text-[0.9375rem] text-white/80">{d.home.bento.jobsText}</span>
-            {home.jobs.length > 0 && (
-              <span className="mt-6 flex flex-col gap-2">
-                {home.jobs.slice(0, 3).map((j, i) => (
-                  <span key={j.id} className={`items-center gap-3 rounded-2xl bg-white/10 p-2.5 ring-1 ring-white/12 ${i === 2 ? "hidden lg:flex" : "flex"}`}>
-                    <KindBadge kind="trade" category={j.category} className="size-9 rounded-xl ring-1 ring-white/20" iconClass="size-4" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">{j.title}</span>
-                      <span className="block truncate text-xs text-white/65">{[j.company, label(meta.labels.emirates[j.emirate], lang)].filter(Boolean).join(" · ")}</span>
-                    </span>
-                    {j.salary && <span className="hidden shrink-0 rounded-full bg-white/14 px-2.5 py-1 text-xs font-semibold sm:inline">{j.salary}</span>}
-                  </span>
-                ))}
+          {/* Jobs. Before the first one is published: a welcome, and the alerts in the bot (a tile cannot be a link holding a link). */}
+          {stats.jobs > 0 ? (
+            <Link href={`/${lang}/jobs`} className={`${jobsTile} tile-link`}>
+              <span className="weave" aria-hidden="true" />
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/14 px-3 py-1 text-xs font-semibold ring-1 ring-white/20">
+                <ShieldCheck className="size-3.5 text-accent" aria-hidden="true" /> {d.home.bento.jobsBadge}
               </span>
-            )}
-            <span className="mt-auto flex items-center gap-1.5 pt-6 font-semibold">
-              {d.common.seeAll} <ArrowRight className="tile-arrow size-4" aria-hidden="true" />
-            </span>
-          </Link>
+              <span className="mt-6 flex items-end gap-3">
+                <span className="display text-[4.5rem] leading-[0.85] tabular md:text-[5.5rem]">{number(stats.jobs, lang)}</span>
+                <span className="headline pb-1 text-xl">{d.home.stats.jobs}</span>
+              </span>
+              <span className="mt-3 max-w-md text-[0.9375rem] text-white/80">{d.home.bento.jobsText}</span>
+              {home.jobs.length > 0 && (
+                <span className="mt-6 flex flex-col gap-2">
+                  {home.jobs.slice(0, 3).map((j, i) => (
+                    <span key={j.id} className={`items-center gap-3 rounded-2xl bg-white/10 p-2.5 ring-1 ring-white/12 ${i === 2 ? "hidden lg:flex" : "flex"}`}>
+                      <KindBadge kind="trade" category={j.category} className="size-9 rounded-xl ring-1 ring-white/20" iconClass="size-4" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">{j.title}</span>
+                        <span className="block truncate text-xs text-white/65">{[j.company, label(meta.labels.emirates[j.emirate], lang)].filter(Boolean).join(" · ")}</span>
+                      </span>
+                      {j.salary && <span className="hidden shrink-0 rounded-full bg-white/14 px-2.5 py-1 text-xs font-semibold sm:inline">{j.salary}</span>}
+                    </span>
+                  ))}
+                </span>
+              )}
+              <span className="mt-auto flex items-center gap-1.5 pt-6 font-semibold">
+                {d.common.seeAll} <ArrowRight className="tile-arrow size-4" aria-hidden="true" />
+              </span>
+            </Link>
+          ) : (
+            <div className={jobsTile}>
+              <span className="weave" aria-hidden="true" />
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/14 px-3 py-1 text-xs font-semibold ring-1 ring-white/20">
+                <ShieldCheck className="size-3.5 text-accent" aria-hidden="true" /> {d.home.bento.jobsBadge}
+              </span>
+              <span className="headline mt-6 block max-w-md text-[1.875rem] md:text-[2.25rem]">{d.home.bento.jobsWelcome}</span>
+              <span className="mt-3 max-w-md text-[0.9375rem] text-white/80">{d.home.bento.jobsWelcomeText}</span>
+              {meta.bot.link && (
+                <a href={`${meta.bot.link}?start=jobs`} target="_blank" rel="noopener noreferrer" className="btn btn-gold relative z-10 mt-auto w-fit rounded-full">
+                  <Bell className="size-4" aria-hidden="true" /> {d.home.bento.jobsAlerts}
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Places */}
           <Link
-            href={`/${lang}/directory`}
+            href={stats.businesses > 0 ? `/${lang}/directory` : `/${lang}/business`}
             className="tile tile-link spot reveal reveal-2 col-span-2 flex min-h-[15rem] flex-col bg-[linear-gradient(150deg,#4a2511_0%,#9c4a22_55%,#d9822b_100%)] p-6 text-white sm:col-span-1 lg:col-span-1"
           >
             <span className="grid w-fit grid-cols-3 gap-1.5">
@@ -141,14 +158,26 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
                 <KindBadge key={c.key} kind="place" category={c.key} className="size-9 rounded-xl ring-1 ring-white/25" iconClass="size-4" />
               ))}
             </span>
-            <span className="mt-5 flex items-end gap-2">
-              <span className="display text-[3rem] leading-[0.85] tabular">{number(stats.businesses, lang)}</span>
-              <span className="headline pb-0.5 text-lg">{d.home.bento.placesTitle}</span>
-            </span>
-            <span className="mt-2 text-sm text-white/80">{d.home.bento.placesText}</span>
-            <span className="mt-auto flex items-center gap-1.5 pt-4 text-sm font-semibold">
-              <Store className="size-4" aria-hidden="true" /> {d.nav.directory} <ArrowRight className="tile-arrow size-4" aria-hidden="true" />
-            </span>
+            {stats.businesses > 0 ? (
+              <>
+                <span className="mt-5 flex items-end gap-2">
+                  <span className="display text-[3rem] leading-[0.85] tabular">{number(stats.businesses, lang)}</span>
+                  <span className="headline pb-0.5 text-lg">{d.home.bento.placesTitle}</span>
+                </span>
+                <span className="mt-2 text-sm text-white/80">{d.home.bento.placesText}</span>
+                <span className="mt-auto flex items-center gap-1.5 pt-4 text-sm font-semibold">
+                  <Store className="size-4" aria-hidden="true" /> {d.nav.directory} <ArrowRight className="tile-arrow size-4" aria-hidden="true" />
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="headline mt-5 block text-[1.375rem]">{d.home.bento.placesFirst}</span>
+                <span className="mt-2 text-sm text-white/80">{d.home.bento.placesFirstText}</span>
+                <span className="mt-auto flex items-center gap-1.5 pt-4 text-sm font-semibold">
+                  <Plus className="size-4" aria-hidden="true" /> {d.home.ownerCta} <ArrowRight className="tile-arrow size-4" aria-hidden="true" />
+                </span>
+              </>
+            )}
           </Link>
 
           {/* Events */}

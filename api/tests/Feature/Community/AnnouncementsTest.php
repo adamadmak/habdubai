@@ -181,11 +181,11 @@ test('safety alerts are pinned for 48 hours, then unpinned; events get a reminde
 
     $this->postJson('/api/admin/announcements', ['topic_id' => topic('platform')->id, 'text' => 'Community meeting about the new bot features.', 'event_date' => now('Asia/Dubai')->addDay()->toDateString()])->assertCreated();
     $before = count(sentMessages());
-    $this->artisan('announcements:chores --reminders')->assertSuccessful();
+    $this->artisan('announcements:chores --reminders --any-hour')->assertSuccessful();
     $reminders = collect(sentMessages())->slice($before)->where('chat_id', 740);
     expect($reminders->last()['text'])->toContain('Reminder: tomorrow')->toContain('Community meeting');
 
-    $this->artisan('announcements:chores --reminders')->assertSuccessful();
+    $this->artisan('announcements:chores --reminders --any-hour')->assertSuccessful();
     expect(collect(sentMessages())->slice($before)->where('chat_id', 740))->toHaveCount(1);
 });
 

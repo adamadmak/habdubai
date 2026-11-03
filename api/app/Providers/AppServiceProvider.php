@@ -61,5 +61,11 @@ class AppServiceProvider extends ServiceProvider
             $limit::perMinute(10)->by('verify:'.$ref($r)),
             $limit::perMinute(30)->by('verify-ip:'.$client($r)),
         ]);
+        // The admin signs in through its own server, so every attempt arrives from one address:
+        // count per email first, so a stranger guessing cannot lock out every administrator.
+        \Illuminate\Support\Facades\RateLimiter::for('admin-login', fn (\Illuminate\Http\Request $r) => [
+            $limit::perMinute(5)->by('admin-login:'.mb_strtolower(trim((string) $r->input('email')))),
+            $limit::perMinute(30)->by('admin-login-ip:'.$r->ip()),
+        ]);
     }
 }

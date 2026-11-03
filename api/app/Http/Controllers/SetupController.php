@@ -64,18 +64,28 @@ class SetupController extends Controller
         $token = RuntimeEnv::get('services.host.setup_token', null, 'SETUP_TOKEN');
 
         // On this host no environment variable of ours reaches the app, but the database
-        // connection does; its password is the one secret the account holder can read in the
-        // AletCloud dashboard and nobody else can. Whoever holds it can already change the
-        // database directly, so it opens nothing new.
+        // connection does; its password is a secret only the account holder can read, in the
+        // AletCloud dashboard. The database itself is private, so the password must not become
+        // a standing key to the internet-facing API: it opens setup only until the first
+        // administrator exists. After that, setup needs SETUP_TOKEN or is closed.
         if (strlen($token) < 32) {
             $password = (string) config('database.connections.'.config('database.default').'.password');
-            $token = strlen($password) >= 24 ? $password : '';
+            $token = strlen($password) >= 24 && ! $this->hasAdmin() ? $password : '';
         }
 
         $provided = (string) $request->header('X-Setup-Token', '');
 
-        if (strlen($token) < 32 || ! hash_equals($token, $provided)) {
+        if ($token === '' || ! hash_equals($token, $provided)) {
             abort(404);
+        }
+    }
+
+    private function hasAdmin(): bool
+    {
+        try {
+            return Schema::hasTable('users') && User::query()->exists();
+        } catch (\Throwable) {
+            return false;
         }
     }
 }

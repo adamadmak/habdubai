@@ -4,17 +4,13 @@ import { ti } from "@/i18n/ti";
 import type { Locale } from "./locales";
 
 export * from "./locales";
+export { fill } from "./fill";
 export type { Dictionary };
 
 const DICTIONARIES: Record<Locale, Dictionary> = { am, ti, en };
 
 export function dict(locale: Locale): Dictionary {
   return DICTIONARIES[locale] ?? en;
-}
-
-/** "{n} open jobs" with the values filled in. */
-export function fill(template: string, values: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) => (key in values ? String(values[key]) : `{${key}}`));
 }
 
 /** A label from the API's three-language lists, falling back to English. */

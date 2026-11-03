@@ -45,8 +45,22 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
   const text = a.text[reading] || a.text.en;
   const soon = a.event_date ? daysUntil(a.event_date) : null;
 
+  // An event reads to search engines as one: its name, its day and where it is held.
+  const jsonLd = a.event_date
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        name: firstLine(a.text[lang] || a.text.en, 110),
+        startDate: a.event_date,
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        location: a.event_place ? { "@type": "Place", name: a.event_place, address: a.event_place } : undefined,
+        url: siteUrl(`${lang}/news/${a.id}`),
+      }
+    : null;
+
   return (
     <article className="mx-auto max-w-3xl px-4 pt-6 md:pt-10">
+      {jsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />}
       <Link href={`/${lang}/news`} className="press inline-flex items-center gap-1 text-sm font-semibold text-primary">
         <ChevronLeft className="size-4" aria-hidden="true" /> {d.news.back}
       </Link>
@@ -77,9 +91,12 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
         </div>
       )}
 
+      {/* The box holds its shape while the photo loads, so the text below never jumps; a poster shows whole inside it. */}
       {a.photo && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={a.photo} alt="" className="mt-6 w-full rounded-2xl border border-line object-cover" />
+        <div className="mt-6 aspect-[4/3] overflow-hidden rounded-2xl border border-line bg-surface">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={a.photo} alt="" decoding="async" className="size-full object-contain" />
+        </div>
       )}
 
       <div role="group" aria-label={d.news.readIn} className="mt-6 flex items-center gap-2 text-sm">

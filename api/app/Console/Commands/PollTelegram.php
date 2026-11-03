@@ -61,7 +61,7 @@ class PollTelegram extends Command
                     continue;
                 }
 
-                $orderKey = (int) (data_get($payload, 'callback_query.from.id') ?? data_get($payload, 'message.chat.id') ?? data_get($payload, 'channel_post.chat.id') ?? 0);
+                $orderKey = TelegramUpdate::orderKey($payload);
                 $this->line('update '.$updateId.' '.implode(',', array_diff(array_keys($payload), ['update_id'])));
 
                 try {

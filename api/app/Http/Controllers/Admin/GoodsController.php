@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Bot\Choices;
 use App\Bot\GoodsFlow;
 use App\Http\Controllers\Controller;
+use App\Support\Search;
 use App\Models\GoodsMatch;
 use App\Models\GoodsPost;
 use App\Models\Member;
@@ -38,8 +39,8 @@ class GoodsController extends Controller
             ->when($data['kind'] ?? null, fn ($q, $kind) => $q->where('kind', $kind))
             ->when($data['direction'] ?? null, fn ($q, $direction) => $q->where('direction', $direction))
             ->when(trim((string) ($data['search'] ?? '')), fn ($q, $search) => $q->where(fn ($w) => $w
-                ->where('description', 'like', '%'.$search.'%')
-                ->orWhereHas('member', fn ($m) => $m->where('display_name', 'like', '%'.$search.'%'))));
+                ->where(fn ($d) => Search::anyColumn($d, ['description'], $search))
+                ->orWhereHas('member', fn ($m) => Search::anyColumn($m, ['display_name'], $search))));
 
         $page = $query->paginate(25);
 

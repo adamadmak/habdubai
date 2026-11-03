@@ -13,6 +13,33 @@ const siteHost = (() => {
   }
 })();
 
+/** Listing and announcement photos load from the API's own address. */
+const apiOrigin = (() => {
+  try {
+    return process.env.API_URL ? new URL(process.env.API_URL).origin : null;
+  } catch {
+    return null;
+  }
+})();
+
+/*
+ * What a page may load: its own scripts and styles (Next inlines a few of
+ * each), photos from the API, nothing framed elsewhere, forms only to itself.
+ * Production only: the dev server's hot reload needs eval.
+ */
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob:${apiOrigin ? ` ${apiOrigin}` : ""}`,
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "frame-ancestors 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join("; ");
+
 const config: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
@@ -31,6 +58,7 @@ const config: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          ...(process.env.NODE_ENV === "production" ? [{ key: "Content-Security-Policy", value: contentSecurityPolicy }] : []),
         ],
       },
     ];

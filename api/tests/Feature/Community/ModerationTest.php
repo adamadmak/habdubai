@@ -163,3 +163,30 @@ test('the moderation queue denies a guest', function (): void {
     $this->getJson('/api/admin/moderation')->assertStatus(401);
     $this->postJson('/api/admin/moderation/resolve')->assertStatus(401);
 });
+
+test('an edit is judged again: "hi" edited into a link is removed, and an edit never files a report twice', function (): void {
+    joinMember(805, '+971500000805');
+    $id = inGroup(MOD_QGROUP, 805, 'hi everyone');
+    expect(deleted())->not->toContain($id);
+
+    $edit = fn (string $text) => $this->postJson('/api/telegram/webhook/'.webhookSecret(), ['update_id' => nextUpdateId(), 'edited_message' => [
+        'message_id' => $id, 'date' => time(), 'edit_date' => time(),
+        'chat' => ['id' => (int) MOD_QGROUP, 'type' => 'supergroup', 'title' => 'G'],
+        'from' => ['id' => 805, 'is_bot' => false, 'first_name' => 'X'],
+        'text' => $text,
+    ]])->assertOk();
+
+    $edit('/report');
+    expect(GroupReport::query()->count())->toBe(0);
+
+    $edit('Cheap visas here https://cheap-visas.example.com');
+    expect(deleted())->toContain($id);
+});
+
+test('a link hidden behind ordinary words counts as a link', function (): void {
+    joinMember(806, '+971500000806');
+
+    $hidden = inGroup(MOD_QGROUP, 806, 'apply here', ['entities' => [['type' => 'text_link', 'offset' => 0, 'length' => 10, 'url' => 'https://cheap-visas.example.com']]]);
+
+    expect(deleted())->toContain($hidden);
+});

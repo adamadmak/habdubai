@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { api } from "@/lib/api";
 import { currentClient } from "@/lib/client";
+import { refuseCrossSite } from "@/lib/guard";
 
 /** A visit to a business page, from the visitor's browser: the API counts each visitor once every few hours. */
-export async function POST(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
+
   const { slug } = await params;
   if (!/^[a-z0-9-]{1,170}$/.test(slug)) return new NextResponse(null, { status: 404 });
 

@@ -18,6 +18,9 @@ export class ApiError extends Error {
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+/** Several queries can meet the same 401 at once; sign out only once. */
+let signingOut = false;
+
 export async function apiRequest<T>(path: string, token: string | undefined, method: Method = "GET", body?: unknown): Promise<T> {
   const response = await fetch(`${API_URL}/api${path}`, {
     method,
@@ -34,7 +37,9 @@ export async function apiRequest<T>(path: string, token: string | undefined, met
   const data = text ? (JSON.parse(text) as any) : null;
 
   if (!response.ok) {
-    if (response.status === 401) {
+    if (response.status === 401 && !signingOut) {
+      signingOut = true;
+      // Through next-auth, whose signOut event also revokes the token on the API.
       await signOut({ callbackUrl: "/auth/login" });
     }
     throw new ApiError(response.status, data?.message ?? `Request failed (${response.status})`, data?.errors ?? {});
@@ -61,8 +66,9 @@ export function useApiQuery<T>(key: unknown[], path: string, options?: Omit<UseQ
   return useQuery<T>({
     queryKey: key,
     queryFn: () => request<T>(path),
-    enabled: ready && (options?.enabled ?? true),
     ...options,
+    // After the options, so a caller's `enabled` cannot run a query before the session has a token.
+    enabled: ready && (options?.enabled ?? true),
   });
 }
 
@@ -161,6 +167,15 @@ export interface DashboardPayload {
   community: { questions_open: number; questions_today: number; announcements_pending: number; safety_open: number; faq_live: number; reports_open: number };
   goods: { open_posts: number; live_matches: number; disputes: number; completed: number };
   tick: { at: string; seconds: number } | null;
+}
+
+/** Website page views (`GET /admin/analytics?days=N`): counts per day and path, no personal data. */
+export interface SiteAnalytics {
+  total: number;
+  /** Oldest first, one row per day including days with no views. */
+  days: { day: string; views: number }[];
+  /** Up to ten paths, most viewed first. */
+  top: { path: string; views: number }[];
 }
 
 export interface GoodsMember {

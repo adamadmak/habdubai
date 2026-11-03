@@ -289,7 +289,7 @@ test('a photo is re-encoded, previewed through a signed link, and public only on
     $png = (string) ob_get_clean();
     $png = substr_replace($png, pack('NN', 30000, 30000), 16, 8); // IHDR width and height
     asOwner($token)->post("/api/owner/businesses/{$id}/photo", ['photo' => UploadedFile::fake()->createWithContent('bomb.png', $png)], ['Accept' => 'application/json'])
-        ->assertStatus(422)->assertJsonPath('errors.photo.0', 'The photo is too large. Use one under 40 megapixels.');
+        ->assertStatus(422)->assertJsonPath('errors.photo.0', 'The photo is too large. Use one under 24 megapixels.');
 });
 
 test('listing a hidden business again does not publish the owner\'s queued photo; a moderator\'s edit drops the same queued change', function (): void {
@@ -378,4 +378,43 @@ test('an owner withdraws a listing in review, or takes a live one down, which re
 
     expect(telegramCalls('deleteMessage'))->toHaveCount(1)->and(Business::query()->find($live)->channel_message_id)->toBeNull();
     $this->getJson('/api/public/businesses/'.Business::query()->find($live)->slug)->assertNotFound();
+});
+
+test('rejecting a live listing takes its channel post down too', function (): void {
+    $token = ownerSignIn(9030);
+    $id = asOwner($token)->postJson('/api/owner/businesses', listing())->json('business.id');
+    asAdmin()->postJson("/api/admin/businesses/{$id}/approve")->assertOk();
+    expect(Business::query()->find($id)->channel_message_id)->not->toBeNull();
+
+    asAdmin()->postJson("/api/admin/businesses/{$id}/reject", ['note' => 'Closed for good'])->assertOk();
+
+    expect(telegramCalls('deleteMessage'))->toHaveCount(1)->and(Business::query()->find($id)->channel_message_id)->toBeNull();
+});
+
+test('owners read the API messages in their own language', function (): void {
+    $token = ownerSignIn(9031);
+
+    asOwner($token)->withHeader('X-Locale', 'am')->postJson('/api/owner/businesses', listing(['name' => '', 'phone' => 'call me']))
+        ->assertStatus(422)
+        ->assertJsonPath('errors.name.0', 'የንግዱ ስም ያስፈልጋል።');
+    asOwner($token)->withHeader('X-Locale', 'ti')->postJson('/api/owner/businesses', listing(['phone' => 'call me']))
+        ->assertStatus(422)->assertJsonPath('errors.phone.0', 'እዚ ቁጽሪ ስልኪ ኣይመስልን።');
+    // (Test headers persist between requests, so the default is checked with none at all.)
+    $this->flushHeaders();
+    asOwner($token)->postJson('/api/owner/businesses', listing(['phone' => 'call me']))
+        ->assertStatus(422)->assertJsonPath('errors.phone.0', 'That does not look like a phone number.');
+});
+
+test('a card can ask for a narrower copy of a listing photo', function (): void {
+    $token = ownerSignIn(9032);
+    $id = asOwner($token)->postJson('/api/owner/businesses', listing())->json('business.id');
+    asOwner($token)->post("/api/owner/businesses/{$id}/photo", ['photo' => UploadedFile::fake()->createWithContent('front.jpg', jpegBytes(2400, 1600))], ['Accept' => 'application/json'])->assertOk();
+    asAdmin()->postJson("/api/admin/businesses/{$id}/approve")->assertOk();
+
+    $url = parse_url($this->getJson('/api/public/businesses/'.Business::query()->find($id)->slug)->json('business.photo'));
+    $full = getimagesizefromstring($this->get($url['path'].'?'.$url['query'])->assertOk()->getContent());
+    $thumb = getimagesizefromstring($this->get($url['path'].'?'.$url['query'].'&w=480')->assertOk()->getContent());
+    $odd = getimagesizefromstring($this->get($url['path'].'?'.$url['query'].'&w=123')->assertOk()->getContent());
+
+    expect($full[0])->toBe(1600)->and($thumb[0])->toBe(480)->and($odd[0])->toBe(1600);
 });

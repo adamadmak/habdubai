@@ -28,7 +28,8 @@ class HandleTelegramUpdate implements ShouldQueue
 
     public function handle(Router $router): void
     {
-        $lock = Cache::lock('telegram-chat:'.$this->chatId, 30);
+        // Longer than a slow Claude call, so a lock never lapses while its holder still runs.
+        $lock = Cache::lock('telegram-chat:'.$this->chatId, 120);
 
         try {
             $lock->block(10, fn () => $this->run($router));
@@ -42,13 +43,16 @@ class HandleTelegramUpdate implements ShouldQueue
     {
         $update = TelegramUpdate::query()->find($this->updateId);
 
-        if (! $update || $update->processed_at !== null) {
+        if (! $update || $update->processed_at !== null || ! empty($update->payload['redacted'])) {
             return;
         }
 
+        $update->increment('attempts');
+
         try {
             $router->handle($update);
-            $update->forceFill(['processed_at' => now(), 'error' => null])->save();
+            // Handled: keep the id and kind only. A contact card carries a phone number.
+            $update->forceFill(['processed_at' => now(), 'error' => null, 'payload' => TelegramUpdate::redact($update->payload)])->save();
         } catch (\Throwable $e) {
             $update->forceFill(['error' => str($e->getMessage())->limit(500)->toString()])->save();
             Log::error('Telegram update failed.', ['update_id' => $update->update_id, 'error' => $e->getMessage()]);

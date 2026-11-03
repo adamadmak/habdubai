@@ -7,6 +7,7 @@ import { BusinessCard, countLabel } from "@/components/Cards";
 import { BusinessIcon } from "@/components/CategoryIcon";
 import { Chip, ChipRow, hrefWith, SearchBox } from "@/components/Filters";
 import { api, query, type Business, type Facets, type Meta, type Page } from "@/lib/api";
+import { currentClient } from "@/lib/client";
 import { dict, fill, isLocale, label, pick } from "@/lib/i18n";
 
 type Search = { q?: string; city?: string; category?: string; page?: string };
@@ -25,9 +26,12 @@ export default async function DirectoryIndex({ params, searchParams }: { params:
   const sp = await searchParams;
   const current = { q: sp.q?.slice(0, 80), city: sp.city, category: sp.category };
   const page = Math.max(1, Number(sp.page) || 1);
+  // A search, a filter or a later page is asked for as this visitor, uncached, so
+  // searching spends the visitor's own allowance at the API, not the whole site's.
+  const searched = Object.values(current).some(Boolean) || page > 1;
 
   const [list, facets, meta] = await Promise.all([
-    api<Page<Business>>(`/public/businesses${query({ ...current, page })}`),
+    api<Page<Business>>(`/public/businesses${query({ ...current, page })}`, searched ? { client: await currentClient() } : {}),
     api<Facets>("/public/directory", { revalidate: 60 }),
     api<Meta>("/public/meta", { revalidate: 300 }),
   ]);
@@ -68,6 +72,7 @@ export default async function DirectoryIndex({ params, searchParams }: { params:
       </div>
 
       <div className="mx-auto mt-6 max-w-6xl px-4">
+        <h2 className="sr-only">{d.common.results}</h2>
         <p className="mb-3 text-sm text-muted" aria-live="polite">{countLabel(list.meta.total, d.directory.countOne, d.directory.count, lang)}</p>
         {list.data.length === 0 ? (
           <Empty>

@@ -20,6 +20,9 @@ export class ApiError extends Error {
 /** Proves to the API that a call comes from this website, so it believes the visitor address sent with it. */
 const SITE_KEY = process.env.SITE_API_KEY ?? "";
 
+/** How long one attempt may take. A hung API must not hold a page open. */
+const TIMEOUT_MS = 8000;
+
 type Options = {
   revalidate?: number;
   token?: string | null;
@@ -27,6 +30,8 @@ type Options = {
   body?: unknown;
   /** The visitor, for calls made on their behalf (never on cached reads: it would split the cache per visitor). */
   client?: { ip: string | null; agent: string | null };
+  /** The page's language: the owner API words its validation and refusal messages in it. */
+  locale?: Locale;
 };
 
 export async function api<T>(path: string, options: Options = {}): Promise<T> {
@@ -36,6 +41,7 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   if (SITE_KEY) headers["X-Site-Key"] = SITE_KEY;
   if (options.client?.ip) headers["X-Client-Ip"] = options.client.ip;
   if (options.client?.agent) headers["X-Client-Agent"] = options.client.agent;
+  if (options.locale) headers["X-Locale"] = options.locale;
 
   let body: string | undefined;
   if (options.body !== undefined) {
@@ -44,12 +50,23 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   }
 
   const cacheable = method === "GET" && !options.token && !options.client;
-  const response = await fetch(`${API}${path}`, {
+  const init: RequestInit = {
     method,
     headers,
     body,
     ...(cacheable ? { next: { revalidate: options.revalidate ?? 60 } } : { cache: "no-store" as const }),
-  });
+  };
+  const attempt = () => fetch(`${API}${path}`, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
+
+  let response: Response;
+  try {
+    response = await attempt();
+  } catch (error) {
+    // A dropped connection or a timeout, not an answer. A read is asked once
+    // more; a write is not, since the first one may have landed.
+    if (method !== "GET") throw error;
+    response = await attempt();
+  }
 
   if (!response.ok) {
     let data: { message?: string; errors?: Record<string, string[]> } = {};
@@ -60,6 +77,9 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
     }
     throw new ApiError(response.status, data.message ?? response.statusText, data.errors ?? {});
   }
+
+  // A count or a sign-out answers with no body at all.
+  if (response.status === 204) return undefined as T;
 
   return (await response.json()) as T;
 }

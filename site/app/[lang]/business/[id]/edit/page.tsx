@@ -22,14 +22,14 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 export default async function EditListing({ params, searchParams }: { params: Promise<Params>; searchParams: Promise<{ new?: string }> }) {
   const { lang, id } = await params;
   if (!isLocale(lang) || !/^\d+$/.test(id)) notFound();
-  if (!(await currentOwner())) redirect(`/${lang}/business/login?next=/${lang}/business/${id}/edit`);
+  if (!(await currentOwner(lang))) redirect(`/${lang}/business/login?next=/${lang}/business/${id}/edit`);
   const d = dict(lang);
   const b = d.business;
 
   let business: OwnerBusiness;
   let choices: OwnerChoices;
   try {
-    [{ business }, choices] = await Promise.all([ownerApi<{ business: OwnerBusiness }>(`/businesses/${id}`), ownerApi<OwnerChoices>("/choices")]);
+    [{ business }, choices] = await Promise.all([ownerApi<{ business: OwnerBusiness }>(`/businesses/${id}`, { locale: lang }), ownerApi<OwnerChoices>("/choices", { locale: lang })]);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) notFound();
     throw error;
@@ -61,9 +61,10 @@ export default async function EditListing({ params, searchParams }: { params: Pr
         <h2 className="title mb-4 text-lg">{b.sections.photo}</h2>
         <PhotoUpload
           id={business.id}
+          lang={lang}
           live={business.photo}
           pending={business.pending_photo}
-          labels={{ ...b.photo, inReview: b.photoInReview }}
+          labels={{ ...b.photo, inReview: b.photoInReview, network: b.network, server: b.serverError, sessionExpired: b.sessionExpired, signInAgain: b.signInAgain }}
         />
       </section>
 

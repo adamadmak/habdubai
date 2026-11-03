@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import QRCode from "qrcode";
 import { CircleAlert, CircleCheck, KeyRound, Send, ShieldCheck, Smartphone } from "lucide-react";
+import type { Locale } from "@/lib/locales";
 
 type Phase = "starting" | "waiting" | "code" | "approved" | "expired" | "declined" | "locked" | "unavailable" | "busy";
 
@@ -23,6 +24,7 @@ type Labels = {
   done: string;
   unavailable: string;
   privacy: string;
+  network: string;
 };
 
 /**
@@ -32,8 +34,10 @@ type Labels = {
  * asks for the six-digit code the bot sent them. The code goes from Telegram
  * to this page, never the other way, so a sign-in link someone else started
  * and forwarded gives them nothing.
+ *
+ * Every request carries the page's language, so the API answers in it.
  */
-export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
+export function LoginPanel({ lang, next, labels }: { lang: Locale; next: string; labels: Labels }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("starting");
   const [link, setLink] = useState<string | null>(null);
@@ -51,7 +55,7 @@ export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
     setCode("");
     setError(null);
     try {
-      const response = await fetch("/api/auth/start", { method: "POST" });
+      const response = await fetch("/api/auth/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lang }) });
       if (response.status === 429) {
         setPhase("busy");
         return;
@@ -65,7 +69,7 @@ export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
     } catch {
       setPhase("unavailable");
     }
-  }, []);
+  }, [lang]);
 
   const poll = useCallback(async () => {
     if (busy.current) return;
@@ -75,7 +79,7 @@ export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
     }
     busy.current = true;
     try {
-      const response = await fetch("/api/auth/poll", { method: "POST" });
+      const response = await fetch("/api/auth/poll", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lang }) });
       const data: { status: string } = await response.json();
       if (data.status === "code") setPhase("code");
       else if (data.status === "declined" || data.status === "expired") setPhase(data.status);
@@ -84,7 +88,7 @@ export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
     } finally {
       busy.current = false;
     }
-  }, []);
+  }, [lang]);
 
   const verify = async (event: FormEvent) => {
     event.preventDefault();
@@ -92,7 +96,7 @@ export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
     setSending(true);
     setError(null);
     try {
-      const response = await fetch("/api/auth/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+      const response = await fetch("/api/auth/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, lang }) });
       const data: { status: string; attempts_left?: number } = await response.json();
       if (data.status === "approved") {
         setPhase("approved");
@@ -102,13 +106,19 @@ export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
         setError(labels.codeWrong.replace("{n}", String(data.attempts_left ?? 0)));
         setCode("");
         codeInput.current?.focus();
-      } else if (data.status === "locked" || data.status === "expired" || data.status === "busy") {
+      } else if (data.status === "busy") {
+        // Too many tries this minute: the code still stands, so the form stays.
+        setError(labels.busy);
+        codeInput.current?.focus();
+      } else if (data.status === "locked" || data.status === "expired") {
         setPhase(data.status);
       } else {
         setPhase("unavailable");
       }
     } catch {
-      setPhase("unavailable");
+      // No answer at all: keep the code on screen and say so, rather than starting over.
+      setError(labels.network);
+      codeInput.current?.focus();
     } finally {
       setSending(false);
     }
@@ -175,8 +185,11 @@ export function LoginPanel({ next, labels }: { next: string; labels: Labels }) {
           className="field mt-5 max-w-56 text-center font-mono text-3xl font-bold tracking-[0.35em] tabular"
           placeholder="••••••"
         />
-        {error && <p id="login-code-error" className="mt-2 text-sm text-danger" role="alert">{error}</p>}
-        <button type="submit" className="btn btn-primary mt-5 w-full sm:w-auto" disabled={code.length !== 6 || sending}>{labels.codeSubmit}</button>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <button type="submit" className="btn btn-primary w-full sm:w-auto" disabled={code.length !== 6 || sending}>{labels.codeSubmit}</button>
+          {/* Always in the page, beside the button, so each new answer is heard. */}
+          <p id="login-code-error" className="min-w-0 flex-1 text-sm text-danger" aria-live="assertive">{error}</p>
+        </div>
       </form>
     );
   }

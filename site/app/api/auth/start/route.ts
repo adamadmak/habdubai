@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { api, ApiError } from "@/lib/api";
 import { currentClient } from "@/lib/client";
+import { refuseCrossSite, requestLocale } from "@/lib/guard";
 import { cookieBase, LOGIN_COOKIE } from "@/lib/owner";
 
 type Started = { ref: string; secret: string; link: string | null; expires_at: string };
@@ -9,9 +10,15 @@ type Started = { ref: string; secret: string; link: string | null; expires_at: s
  * Start "Continue with Telegram". The browser gets the bot link; the secret
  * that will collect the token stays in an httpOnly cookie only this server reads.
  */
-export async function POST() {
+export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
+
+  const body = await request.json().catch(() => ({}));
+  const locale = requestLocale(request, body?.lang);
+
   try {
-    const started = await api<Started>("/owner/login/start", { method: "POST", client: await currentClient() });
+    const started = await api<Started>("/owner/login/start", { method: "POST", client: await currentClient(), locale });
     const response = NextResponse.json({ link: started.link, expires_at: started.expires_at });
     response.cookies.set(LOGIN_COOKIE, JSON.stringify({ ref: started.ref, secret: started.secret }), { ...cookieBase, maxAge: 25 * 60 });
 

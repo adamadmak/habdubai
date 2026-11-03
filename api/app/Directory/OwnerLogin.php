@@ -179,13 +179,25 @@ class OwnerLogin
             return ['status' => 'expired'];
         }
 
+        // Count the try before judging it, in one statement: parallel guesses each use up
+        // a try of their own instead of all reading the same count.
+        $counted = OwnerLoginRequest::query()->whereKey($request->id)
+            ->where('status', 'approved')->where('attempts', '<', self::MAX_ATTEMPTS)
+            ->increment('attempts');
+        if ($counted !== 1) {
+            return ['status' => 'locked'];
+        }
+
         $code = preg_replace('/\D/', '', $code) ?? '';
         if (strlen($code) !== 6 || ! hash_equals((string) $request->confirm_code_hash, $this->codeHash($request->ref, $code))) {
-            $attempts = $request->attempts + 1;
-            $locked = $attempts >= self::MAX_ATTEMPTS;
-            $request->forceFill(['attempts' => $attempts, 'status' => $locked ? 'declined' : 'approved'])->save();
+            $attempts = (int) OwnerLoginRequest::query()->whereKey($request->id)->value('attempts');
+            if ($attempts >= self::MAX_ATTEMPTS) {
+                OwnerLoginRequest::query()->whereKey($request->id)->where('status', 'approved')->update(['status' => 'declined', 'updated_at' => now()]);
 
-            return $locked ? ['status' => 'locked'] : ['status' => 'wrong', 'attempts_left' => self::MAX_ATTEMPTS - $attempts];
+                return ['status' => 'locked'];
+            }
+
+            return ['status' => 'wrong', 'attempts_left' => self::MAX_ATTEMPTS - $attempts];
         }
 
         // Exactly once, even if two submissions arrive together.

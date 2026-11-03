@@ -3,6 +3,7 @@ import { BadgeCheck, BedDouble, MapPin, MessageCircle, Navigation, Phone, Stamp 
 import { dict, fill, label, pick, type Locale } from "@/lib/i18n";
 import { dayAndMonth, ethiopianDate, formatDate, relative, weekday } from "@/lib/format";
 import type { Announcement, Business, Job, Meta } from "@/lib/api";
+import { photoSrcSet } from "@/lib/photos";
 import { Cover, KindBadge } from "./Cover";
 
 /** A job: the title leads, then who and where; the pay is set large, and the two facts that matter most sit beside it. */
@@ -57,8 +58,17 @@ export function BusinessCard({ business, lang, meta }: { business: Business; lan
     <Link href={`/${lang}/directory/${business.slug}`} className="card lift group flex h-full flex-col overflow-hidden">
       <div className="relative aspect-[16/10] overflow-hidden">
         {business.photo ? (
+          // The 480px copy for a card, the original on wide or dense screens. Cards run one, two, three or four across.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={business.photo} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+          <img
+            src={business.photo}
+            srcSet={photoSrcSet(business.photo)}
+            sizes="(min-width: 1280px) 280px, (min-width: 1024px) 370px, (min-width: 640px) 50vw, 100vw"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover"
+          />
         ) : (
           <Cover category={business.category} name={business.name} seed={business.id} className="size-full" />
         )}

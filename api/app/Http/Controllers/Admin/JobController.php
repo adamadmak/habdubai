@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\Search;
 use App\Jobs\Pipeline\Classification;
 use App\Jobs\Pipeline\JobPublisher;
 use App\Models\AuditLog;
@@ -25,7 +26,7 @@ class JobController extends Controller
         }
 
         if ($search = trim((string) $request->query('search', ''))) {
-            $query->where(fn ($q) => $q->where('title', 'like', '%'.$search.'%')->orWhere('company', 'like', '%'.$search.'%'));
+            Search::anyColumn($query, ['title', 'company'], $search);
         }
 
         foreach (['category', 'emirate', 'source_id'] as $field) {

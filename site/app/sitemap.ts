@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { api, type Business, type Job, type Page } from "@/lib/api";
 import { LOCALES } from "@/lib/locales";
-import { siteUrl } from "@/lib/site";
+import { LEGAL_UPDATED, siteUrl } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -20,13 +20,15 @@ async function all<T>(path: string, maxPages: number): Promise<T[]> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [businesses, jobs] = await Promise.all([all<Business>("/public/businesses", 40), all<Job>("/public/jobs", 10)]);
 
-  const paths: { path: string; changeFrequency: "daily" | "weekly"; priority: number; modified?: string }[] = [
+  const paths: { path: string; changeFrequency: "daily" | "weekly" | "monthly"; priority: number; modified?: string }[] = [
     { path: "", changeFrequency: "daily", priority: 1 },
     { path: "/jobs", changeFrequency: "daily", priority: 0.9 },
     { path: "/directory", changeFrequency: "daily", priority: 0.9 },
     { path: "/news", changeFrequency: "daily", priority: 0.8 },
     { path: "/business", changeFrequency: "weekly", priority: 0.6 },
     { path: "/about", changeFrequency: "weekly", priority: 0.4 },
+    { path: "/privacy", changeFrequency: "monthly", priority: 0.2, modified: LEGAL_UPDATED },
+    { path: "/terms", changeFrequency: "monthly", priority: 0.2, modified: LEGAL_UPDATED },
     ...businesses.map((b) => ({ path: `/directory/${b.slug}`, changeFrequency: "weekly" as const, priority: 0.7 })),
     ...jobs.map((j) => ({ path: `/jobs/${j.id}`, changeFrequency: "weekly" as const, priority: 0.5, modified: j.published_at ?? undefined })),
   ];

@@ -72,10 +72,10 @@ class BusinessController extends Controller
         $owner = $request->user();
 
         if ($owner->businesses()->count() >= BusinessOwner::MAX_LISTINGS) {
-            throw ValidationException::withMessages(['name' => ['You already have '.BusinessOwner::MAX_LISTINGS.' listings, the most one account can manage.']]);
+            throw ValidationException::withMessages(['name' => [__('owner.max_listings', ['n' => BusinessOwner::MAX_LISTINGS])]]);
         }
         if ($owner->businesses()->where('status', 'pending')->count() >= BusinessOwner::MAX_PENDING) {
-            throw ValidationException::withMessages(['name' => ['You have '.BusinessOwner::MAX_PENDING.' listings waiting for review. Add more once they are checked.']]);
+            throw ValidationException::withMessages(['name' => [__('owner.max_pending', ['n' => BusinessOwner::MAX_PENDING])]]);
         }
 
         $data = $this->validated($request);
@@ -104,7 +104,7 @@ class BusinessController extends Controller
         }
 
         if ($business->status === 'rejected' && $request->user()->businesses()->where('status', 'pending')->count() >= BusinessOwner::MAX_PENDING) {
-            throw ValidationException::withMessages(['name' => ['You have '.BusinessOwner::MAX_PENDING.' listings waiting for review. Send this one again once they are checked.']]);
+            throw ValidationException::withMessages(['name' => [__('owner.max_pending_resend', ['n' => BusinessOwner::MAX_PENDING])]]);
         }
 
         if (in_array($business->status, ['pending', 'rejected'], true)) {
@@ -130,7 +130,7 @@ class BusinessController extends Controller
         $this->authorizeOwner($request, $business);
         $request->validate([
             'photo' => ['required', 'file', 'max:'.PhotoStore::MAX_UPLOAD_KB, 'mimetypes:image/jpeg,image/png,image/webp'],
-        ], ['photo.max' => 'The photo is larger than 8 MB.', 'photo.mimetypes' => 'Use a JPEG, PNG or WebP photo.']);
+        ], ['photo.max' => __('owner.photo_max', ['mb' => intdiv(PhotoStore::MAX_UPLOAD_KB, 1024)]), 'photo.mimetypes' => __('owner.photo_type')]);
 
         $photos->store($business, (string) file_get_contents($request->file('photo')->getRealPath()));
 
@@ -147,6 +147,8 @@ class BusinessController extends Controller
         $this->authorizeOwner($request, $business);
 
         if (in_array($business->status, ['pending', 'rejected'], true)) {
+            // A rejected listing may have been live before; its channel post goes first.
+            $publisher->unpost($business);
             $business->delete();
             AuditLog::record(null, 'directory.owner_withdrew', 'business', $business->id);
 
@@ -170,15 +172,15 @@ class BusinessController extends Controller
         abort_unless($business->status === 'approved', 404);
 
         if ($business->owner_id !== null) {
-            throw ValidationException::withMessages(['note' => [$business->owner_id === $owner->id ? 'This listing is already yours.' : 'This listing already has an owner. If that is wrong, contact the moderators.']]);
+            throw ValidationException::withMessages(['note' => [__($business->owner_id === $owner->id ? 'owner.claim_yours' : 'owner.claim_taken')]]);
         }
         if ($owner->claims()->where('status', 'pending')->count() >= 3) {
-            throw ValidationException::withMessages(['note' => ['You have 3 claims waiting. Wait until they are checked.']]);
+            throw ValidationException::withMessages(['note' => [__('owner.claim_limit', ['n' => 3])]]);
         }
 
         $claim = BusinessClaim::query()->where('business_id', $business->id)->where('owner_id', $owner->id)->first();
         if ($claim !== null) {
-            throw ValidationException::withMessages(['note' => [$claim->status === 'pending' ? 'Your claim is already waiting for a moderator.' : 'A moderator already decided on your claim.']]);
+            throw ValidationException::withMessages(['note' => [__($claim->status === 'pending' ? 'owner.claim_pending' : 'owner.claim_decided')]]);
         }
 
         $claim = BusinessClaim::query()->create(['business_id' => $business->id, 'owner_id' => $owner->id, 'note' => $data['note'] ?? null, 'status' => 'pending']);
@@ -212,14 +214,14 @@ class BusinessController extends Controller
             'languages' => ['nullable', 'array', 'max:6'],
             'languages.*' => ['string', Rule::in(array_keys(Choices::SPOKEN_LANGUAGES))],
         ], [
-            'telegram.regex' => 'A Telegram username is 5 to 32 letters, digits or underscores.',
-        ], ['city_id' => 'city', 'maps_url' => 'map link']);
+            'telegram.regex' => __('owner.telegram_format'),
+        ], app()->getLocale() === 'en' ? ['city_id' => 'city', 'maps_url' => 'map link'] : []);
 
         foreach (['phone', 'whatsapp'] as $field) {
             if (filled($data[$field] ?? null)) {
                 $phone = MapLocation::phone($data[$field]);
                 if ($phone === null) {
-                    throw ValidationException::withMessages([$field => ['That does not look like a phone number.']]);
+                    throw ValidationException::withMessages([$field => [__('owner.phone_invalid')]]);
                 }
                 $data[$field] = $phone;
             } else {
@@ -260,9 +262,7 @@ class BusinessController extends Controller
 
         if ($exists !== null) {
             throw ValidationException::withMessages(['name' => [
-                $exists->status === 'approved' && $exists->owner_id === null
-                    ? 'This business is already in the directory. Open its page and claim it instead.'
-                    : 'A business with this name is already listed in this city.',
+                __($exists->status === 'approved' && $exists->owner_id === null ? 'owner.listed_claim' : 'owner.listed_name'),
             ]]);
         }
     }

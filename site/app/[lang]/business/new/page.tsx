@@ -16,9 +16,9 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 export default async function NewListing({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
-  if (!(await currentOwner())) redirect(`/${lang}/business/login?next=/${lang}/business/new`);
+  if (!(await currentOwner(lang))) redirect(`/${lang}/business/login?next=/${lang}/business/new`);
   const d = dict(lang);
-  const choices = await ownerApi<OwnerChoices>("/choices");
+  const choices = await ownerApi<OwnerChoices>("/choices", { locale: lang });
 
   return (
     <div className="mx-auto max-w-2xl px-4 pt-8 md:pt-12">

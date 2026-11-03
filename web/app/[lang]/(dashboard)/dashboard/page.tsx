@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import PageTitle from "@/components/page-title";
+import SiteVisitsCard from "@/components/site-visits-card";
 import { useApiQuery, type DashboardPayload, LANGUAGE_NAMES } from "@/lib/api";
 
 const EMIRATES: Record<string, string> = { dubai: "Dubai", sharjah: "Sharjah", abu_dhabi: "Abu Dhabi", ajman: "Ajman", other: "Other emirate" };
@@ -93,6 +94,10 @@ const DashboardPage = () => {
           {!data.tick && <div>The scheduler has not ticked yet, so sources are not fetched and alerts are not sent on their own.</div>}
         </div>
       )}
+
+      <div className="mt-8">
+        <SiteVisitsCard />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 mt-6">
         <Card>

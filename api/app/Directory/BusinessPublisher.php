@@ -200,7 +200,8 @@ class BusinessPublisher
         }
     }
 
-    private function refresh(Business $business): void
+    /** The channel post rewritten to match the listing as it now stands. */
+    public function refresh(Business $business): void
     {
         $channel = JobSettings::channel();
         if ($channel === '' || ! $business->channel_message_id) {
