@@ -33,7 +33,28 @@ class GroupModerator
 
     public const WARNING_MUTE_DAYS = 7;
 
-    private const BANNED_ITEMS = ['cash', 'gold', 'jewel', 'medicine', 'pills', 'drugs', 'weapon', 'cigarette', 'alcohol', 'ወርቅ', 'መድሃኒት', 'ወርቂ'];
+    /**
+     * What the goods board never carries, as regex fragments matched at the
+     * start of a word (so "jewel" also catches "jewellery"). Checked in the
+     * goods group and in every goods post a member writes.
+     */
+    public const BANNED_ITEMS = [
+        'cash(?!ew)', 'gold', 'jewel', 'medicine', 'pills', 'drugs', 'weapon', 'cigarette', 'alcohol', 'khat',
+        'ወርቅ', 'ወርቂ', 'ጌጣጌጥ', 'ስልማት', 'መድሃኒት', 'መድኃኒት', 'ጫት',
+    ];
+
+    public static function bannedItemIn(string $text): bool
+    {
+        $lower = mb_strtolower($text);
+
+        foreach (self::BANNED_ITEMS as $item) {
+            if (preg_match('/(?<![\p{L}])'.$item.'/u', $lower)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public function __construct(
         private readonly TelegramBotService $telegram,
@@ -127,12 +148,8 @@ class GroupModerator
             }
         }
 
-        if ($chatId === Community::goodsGroup()) {
-            foreach (self::BANNED_ITEMS as $item) {
-                if (preg_match('/(?<![\p{L}])'.preg_quote($item, '/').'/u', $lower)) {
-                    return 'mod_removed_item';
-                }
-            }
+        if ($chatId === Community::goodsGroup() && self::bannedItemIn($text)) {
+            return 'mod_removed_item';
         }
 
         return null;

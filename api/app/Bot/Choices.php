@@ -87,6 +87,65 @@ final class Choices
         'other' => ['am' => '📌 ሌላ', 'ti' => '📌 ካልእ', 'en' => '📌 Other'],
     ];
 
+    /** Goods board: which way a trip or a parcel goes. */
+    public const GOODS_DIRECTIONS = [
+        'to_et' => ['am' => '🇦🇪 → 🇪🇹 ወደ ኢትዮጵያ', 'ti' => '🇦🇪 → 🇪🇹 ናብ ኢትዮጵያ', 'en' => '🇦🇪 → 🇪🇹 To Ethiopia'],
+        'to_ae' => ['am' => '🇪🇹 → 🇦🇪 ወደ ኢማራት', 'ti' => '🇪🇹 → 🇦🇪 ናብ ኢማራት', 'en' => '🇪🇹 → 🇦🇪 To the UAE'],
+    ];
+
+    public const GOODS_CITIES_UAE = [
+        'dubai' => ['am' => 'ዱባይ', 'ti' => 'ዱባይ', 'en' => 'Dubai'],
+        'sharjah' => ['am' => 'ሻርጃ', 'ti' => 'ሻርጃ', 'en' => 'Sharjah'],
+        'abu_dhabi' => ['am' => 'አቡ ዳቢ', 'ti' => 'ኣቡ ዳቢ', 'en' => 'Abu Dhabi'],
+        'ajman' => ['am' => 'አጅማን', 'ti' => 'ዓጅማን', 'en' => 'Ajman'],
+        'other_uae' => ['am' => 'ሌላ ኢማራት', 'ti' => 'ካልእ ኢማራት', 'en' => 'Other emirate'],
+    ];
+
+    public const GOODS_CITIES_ET = [
+        'addis_ababa' => ['am' => 'አዲስ አበባ', 'ti' => 'ኣዲስ ኣበባ', 'en' => 'Addis Ababa'],
+        'dire_dawa' => ['am' => 'ድሬ ዳዋ', 'ti' => 'ድሬ ዳዋ', 'en' => 'Dire Dawa'],
+        'mekelle' => ['am' => 'መቀሌ', 'ti' => 'መቐለ', 'en' => 'Mekelle'],
+        'bahir_dar' => ['am' => 'ባሕር ዳር', 'ti' => 'ባሕር ዳር', 'en' => 'Bahir Dar'],
+        'gondar' => ['am' => 'ጎንደር', 'ti' => 'ጎንደር', 'en' => 'Gondar'],
+        'hawassa' => ['am' => 'ሀዋሳ', 'ti' => 'ሃዋሳ', 'en' => 'Hawassa'],
+        'adama' => ['am' => 'አዳማ', 'ti' => 'ኣዳማ', 'en' => 'Adama'],
+        'jimma' => ['am' => 'ጅማ', 'ti' => 'ጅማ', 'en' => 'Jimma'],
+        'dessie' => ['am' => 'ደሴ', 'ti' => 'ደሴ', 'en' => 'Dessie'],
+        'other_et' => ['am' => 'ሌላ ከተማ', 'ti' => 'ካልእ ከተማ', 'en' => 'Other city'],
+    ];
+
+    /** What a traveller accepts, or what a parcel is. Banned items are refused in the text, not listed here. */
+    public const GOODS_CATEGORIES = [
+        'documents' => ['am' => '📄 ሰነድና ደብዳቤ', 'ti' => '📄 ሰነድን ደብዳበን', 'en' => '📄 Documents and letters'],
+        'clothes' => ['am' => '👕 ልብስና ጫማ', 'ti' => '👕 ክዳንን ጫማን', 'en' => '👕 Clothes and shoes'],
+        'food' => ['am' => '🌶 የታሸገ ምግብና ቅመም', 'ti' => '🌶 ዝተዓሸገ መግብን ቀመምን', 'en' => '🌶 Packed food and spices'],
+        'cosmetics' => ['am' => '🧴 ኮስሞቲክስ', 'ti' => '🧴 ኮስመቲክስ', 'en' => '🧴 Cosmetics'],
+        'electronics' => ['am' => '📱 ኤሌክትሮኒክስ', 'ti' => '📱 ኤሌክትሮኒክስ', 'en' => '📱 Electronics'],
+        'gifts' => ['am' => '🎁 ስጦታ', 'ti' => '🎁 ህያብ', 'en' => '🎁 Gifts'],
+        'other' => ['am' => '📌 ሌላ', 'ti' => '📌 ካልእ', 'en' => '📌 Other'],
+    ];
+
+    /** Quick kilo buttons; any whole number up to the maximum may be typed instead. */
+    public const GOODS_KILOS_TRAVELLER = [2, 5, 10, 15, 20, 30];
+
+    public const GOODS_KILOS_SENDER = [1, 2, 5, 10, 20];
+
+    public const GOODS_MAX_KILOS = 46;
+
+    /** The cities on the side a direction starts from, and the side it ends at. */
+    public static function goodsCities(string $direction, bool $from): array
+    {
+        $uaeSide = ($direction === 'to_et') === $from;
+
+        return $uaeSide ? self::GOODS_CITIES_UAE : self::GOODS_CITIES_ET;
+    }
+
+    public static function goodsCity(string $key, string $language): string
+    {
+        return self::GOODS_CITIES_UAE[$key][$language] ?? self::GOODS_CITIES_ET[$key][$language]
+            ?? self::GOODS_CITIES_UAE[$key]['en'] ?? self::GOODS_CITIES_ET[$key]['en'] ?? $key;
+    }
+
     /** Helper ranks by points: shown on the profile, they carry no rights. */
     public const RANKS = [500 => 'elder', 100 => 'trusted', 20 => 'helper'];
 

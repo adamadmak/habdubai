@@ -162,6 +162,18 @@ class TelegramBotService
         ], fn ($value) => $value !== null))->json('result', []);
     }
 
+    /** Take the inline buttons off a message once they have been used, keeping its text. */
+    public function clearButtons(int|string $chatId, int $messageId): bool
+    {
+        try {
+            $this->post('editMessageReplyMarkup', ['chat_id' => $chatId, 'message_id' => $messageId, 'reply_markup' => ['inline_keyboard' => []]], retry: false, timeout: 5);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
     public function editCaption(int|string $chatId, int $messageId, string $caption): bool
     {
         try {

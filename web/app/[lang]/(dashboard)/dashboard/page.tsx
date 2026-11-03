@@ -69,6 +69,14 @@ const DashboardPage = () => {
         <Stat label="Reported messages" value={data.community.reports_open} href="/moderation" tone={data.community.reports_open > 0 ? "destructive" : undefined} />
       </div>
 
+      <h2 className="text-lg font-semibold text-default-900 mt-8 mb-3">Goods board</h2>
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Stat label="Open posts" value={data.goods.open_posts} href="/goods" />
+        <Stat label="Matches in progress" value={data.goods.live_matches} href="/goods" />
+        <Stat label="Disputes to decide" value={data.goods.disputes} href="/goods" tone={data.goods.disputes > 0 ? "destructive" : undefined} />
+        <Stat label="Delivered" value={data.goods.completed} href="/goods" />
+      </div>
+
       <h2 className="text-lg font-semibold text-default-900 mt-8 mb-3">Business directory</h2>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Stat label="Listed businesses" value={data.directory.listed} href="/directory?status=approved" />

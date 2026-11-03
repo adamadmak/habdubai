@@ -31,6 +31,7 @@ class Router
         private readonly SafetyFlow $safety,
         private readonly AnnouncementsFlow $announcements,
         private readonly GroupModerator $moderator,
+        private readonly GoodsFlow $goods,
     ) {}
 
     public function handle(TelegramUpdate $update): void
@@ -99,6 +100,13 @@ class Router
 
                     return;
                 }
+                // "Interested" under a card in the goods group opens the bot with g<post id>.
+                if (preg_match('/^g(\d+)$/', $in->commandArgument(), $m) && $member?->isActive()) {
+                    $conversation->reset();
+                    $this->goods->interest($member, (int) $m[1]);
+
+                    return;
+                }
                 $this->start($conversation, $member, $in);
 
                 return;
@@ -146,6 +154,21 @@ class Router
                 return;
             case 'addbusiness':
                 $member?->isActive() ? $this->directory->beginSuggest($member, $conversation) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'goods':
+                $member?->isActive() ? $this->goods->menu($member) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'travel':
+            case 'send':
+                $member?->isActive()
+                    ? $this->goods->begin($member, $conversation, $in->command() === 'travel' ? 'traveller' : 'sender')
+                    : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'mygoods':
+                $member?->isActive() ? $this->goods->mine($member) : $this->reply($conversation, 'not_member');
 
                 return;
             case 'help':
@@ -216,6 +239,12 @@ class Router
 
         if (in_array($conversation->state, SafetyFlow::STATES, true) && $member?->isActive()) {
             $this->safety->handle($member, $conversation, $in);
+
+            return;
+        }
+
+        if (in_array($conversation->state, GoodsFlow::STATES, true) && $member?->isActive()) {
+            $this->goods->handle($member, $conversation, $in);
 
             return;
         }
@@ -299,6 +328,7 @@ class Router
             'language' => Choices::LANGUAGE_LABELS[$language] ?? $language,
             'points' => $member->helper_points,
             'rank' => ($rank = Choices::rank((int) $member->helper_points)) ? ' · '.$this->messages->text('rank_'.$rank, $language) : '',
+            'goods' => $this->goods->profileLine($member),
         ]);
     }
 
@@ -406,6 +436,12 @@ class Router
 
         if ($parts[0] === 'f' && $member?->isActive() && $cb->inPrivateChat()) {
             $this->faq->button($member, $cb);
+
+            return;
+        }
+
+        if ($parts[0] === 'g' && $member?->isActive()) {
+            $this->goods->button($member, $cb);
 
             return;
         }

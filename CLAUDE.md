@@ -103,6 +103,35 @@ exchange or transfer is deliberately not one of them.
 - **Groups and channels** the bot is added to are recorded in `bot_chats`
   and listed on Settings, so ids are picked, not typed.
 
+## Goods board: trust only, nothing carried by us
+
+`App\Bot\GoodsFlow` (`/travel`, `/send`, `/goods`, `/mygoods`, buttons `g:…`).
+No money moves through the platform and `goods_posts.price` stays null in
+phase one. Rules that are easy to break:
+
+- **Interest needs your own post on the other side.** "Interested" on a trip
+  without a parcel post starts `/send` and sends the request the moment it is
+  posted. So every `goods_matches` row pairs two posts, and a traveller always
+  reads what is in the parcel before agreeing.
+- **Nothing is shared before the owner accepts.** The request shows the
+  asker's post and badge only; the `tg://user` links go out on acceptance.
+- **Kilos come off the trip only when both press "We agreed"**, inside one
+  transaction (`finalise`), which re-checks the room and closes the parcel.
+- A trip closes after its flight date; a parcel's date is approximate, so it
+  stays open three days longer (`GoodsPost::lastDay()`, scopes `live` and
+  `stale`).
+- `goods:chores` (hourly) expires posts, asks "did it arrive?" from the day
+  after the flight between 09:00 and 21:00 Dubai time, every two days until
+  answered, settles silent matches after 14 days, and reveals ratings a week
+  old. Two yeses complete a match and count a deal for both; a "no" opens a
+  dispute for moderators (Telegram alert plus the admin Goods page).
+- Ratings stay hidden until both sides rate or seven days pass, so nobody
+  rates in reply. `Rating::recount()` is the only writer of `rating_avg`.
+- Two `failed` matches within a year (`GoodsMatch::blocked()`) hide the
+  member's open posts and refuse new ones.
+- Banned items are `GroupModerator::BANNED_ITEMS`, shared by the group
+  filter and every goods post a member writes.
+
 ## Phone numbers are never stored
 
 A member is keyed on `phone_hash` (HMAC of the digits with the app key) plus

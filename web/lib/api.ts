@@ -157,7 +157,67 @@ export interface DashboardPayload {
   sources: { active: number; paused: number; failing: number };
   directory: { listed: number; pending: number; hidden: number };
   community: { questions_open: number; questions_today: number; announcements_pending: number; safety_open: number; faq_live: number; reports_open: number };
+  goods: { open_posts: number; live_matches: number; disputes: number; completed: number };
   tick: { at: string; seconds: number } | null;
+}
+
+export interface GoodsMember {
+  id: number;
+  name: string;
+  username: string | null;
+  verified_at: string | null;
+  deals: number;
+  rating_avg: number | null;
+  rating_count: number;
+  failures_year: number;
+}
+
+export interface GoodsPostRow {
+  id: number;
+  kind: "traveller" | "sender";
+  direction: "to_et" | "to_ae";
+  route: string;
+  date: string;
+  kilos: number;
+  kilos_left: number | null;
+  categories: string[];
+  description: string | null;
+  status: "open" | "matched" | "expired" | "closed" | "hidden";
+  open: boolean;
+  hidden_reason: string | null;
+  in_group: boolean;
+  member: GoodsMember | null;
+  created_at: string;
+}
+
+export type GoodsMatchStatus =
+  | "requested" | "introduced" | "agreed" | "disputed" | "completed" | "failed" | "cancelled" | "declined" | "expired" | "unconfirmed";
+
+export interface GoodsMatchRow {
+  id: number;
+  status: GoodsMatchStatus;
+  route: string | null;
+  flight_date: string | null;
+  kilos: number | null;
+  parcel: string | null;
+  traveller: GoodsMember | null;
+  sender: GoodsMember | null;
+  owner_id: number;
+  requester_id: number;
+  checkin_on: string | null;
+  checkin: { traveller: string | null; sender: string | null };
+  ratings: { from_member_id: number; stars: number; visible: boolean }[];
+  failed_member_id: number | null;
+  moderator_note: string | null;
+  introduced_at: string | null;
+  agreed_at: string | null;
+  closed_at: string | null;
+  created_at: string;
+}
+
+export function formatDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  return new Date(value + (value.length === 10 ? "T00:00:00" : "")).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export type JobStatus = "pending" | "review" | "published" | "rejected" | "duplicate" | "closed";

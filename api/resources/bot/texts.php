@@ -155,9 +155,9 @@ return [
         'en' => 'Let us finish setting up your account.',
     ],
     'profile' => [
-        'am' => "👤 {name}\n✅ ከ{since} የተረጋገጠ\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ የረዳት ነጥብ፡ {points}{rank}",
-        'ti' => "👤 {name}\n✅ ካብ {since} ዝተረጋገጸ\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ ነጥቢ ሓጋዚ፡ {points}{rank}",
-        'en' => "👤 {name}\n✅ Verified since {since}\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ Helper points: {points}{rank}",
+        'am' => "👤 {name}\n✅ ከ{since} የተረጋገጠ\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ የረዳት ነጥብ፡ {points}{rank}{goods}",
+        'ti' => "👤 {name}\n✅ ካብ {since} ዝተረጋገጸ\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ ነጥቢ ሓጋዚ፡ {points}{rank}{goods}",
+        'en' => "👤 {name}\n✅ Verified since {since}\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ Helper points: {points}{rank}{goods}",
     ],
     'not_member' => [
         'am' => 'ገና አባል አይደሉም። ለመቀላቀል /start ይላኩ።',
@@ -165,9 +165,9 @@ return [
         'en' => 'You are not a member yet. Send /start to join.',
     ],
     'help' => [
-        'am' => "ማንኛውንም ጥያቄ እዚህ ይጻፉ፤ ረዳቱ ከተረጋገጡ ምንጮች ይመልሳል።\n\nትዕዛዞች፡\n/ask — ማህበረሰቡን መጠየቅ\n/myquestions — የእርስዎ ጥያቄዎች\n/faq — ተደጋግመው የሚጠየቁ\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/directory — የሐበሻ ንግድ ማውጫ\n/addbusiness — ንግድ መጠቆም\n/safe — እርዳታና ደህንነት\n/topics — የሚደርስዎ ማስታወቂያ\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ",
-        'ti' => "ዝኾነ ሕቶ ኣብዚ ጸሓፉ፤ ሓጋዚ ካብ ዝተረጋገጹ ምንጭታት ይምልስ።\n\nትእዛዛት፡\n/ask — ንማሕበረሰብ ምሕታት\n/myquestions — ሕቶታትኩም\n/faq — ብተደጋጋሚ ዝሕተቱ\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/directory — መምርሒ ንግዲ ሓበሻ\n/addbusiness — ንግዲ ምምልካት\n/safe — ሓገዝን ድሕነትን\n/topics — ዝበጽሓኩም መወዓውዒ\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ",
-        'en' => "Write any question here and the assistant answers from checked sources.\n\nCommands:\n/ask — ask the community\n/myquestions — your questions\n/faq — frequently asked questions\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/directory — Habesha business directory\n/addbusiness — suggest a business\n/safe — help and safety\n/topics — announcements you receive\n/profile — your profile\n/language — change language\n/leave — leave the community",
+        'am' => "ማንኛውንም ጥያቄ እዚህ ይጻፉ፤ ረዳቱ ከተረጋገጡ ምንጮች ይመልሳል።\n\nትዕዛዞች፡\n/ask — ማህበረሰቡን መጠየቅ\n/myquestions — የእርስዎ ጥያቄዎች\n/faq — ተደጋግመው የሚጠየቁ\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/directory — የሐበሻ ንግድ ማውጫ\n/addbusiness — ንግድ መጠቆም\n/goods — የዕቃ ሰሌዳ (ኢማራት ⇄ ኢትዮጵያ)\n/travel — እጓዛለሁ፣ ቦታ አለኝ\n/send — የሚላክ ዕቃ አለኝ\n/mygoods — የዕቃ ልጥፎቼና ስምምነቶቼ\n/safe — እርዳታና ደህንነት\n/topics — የሚደርስዎ ማስታወቂያ\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ",
+        'ti' => "ዝኾነ ሕቶ ኣብዚ ጸሓፉ፤ ሓጋዚ ካብ ዝተረጋገጹ ምንጭታት ይምልስ።\n\nትእዛዛት፡\n/ask — ንማሕበረሰብ ምሕታት\n/myquestions — ሕቶታትኩም\n/faq — ብተደጋጋሚ ዝሕተቱ\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/directory — መምርሒ ንግዲ ሓበሻ\n/addbusiness — ንግዲ ምምልካት\n/goods — ሰሌዳ ኣቕሑ (ኢማራት ⇄ ኢትዮጵያ)\n/travel — ክጉዓዝ እየ፣ ቦታ ኣለኒ\n/send — ዝስደድ ኣቕሓ ኣለኒ\n/mygoods — ልጥፋት ኣቕሑን ስምምዓትን\n/safe — ሓገዝን ድሕነትን\n/topics — ዝበጽሓኩም መወዓውዒ\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ",
+        'en' => "Write any question here and the assistant answers from checked sources.\n\nCommands:\n/ask — ask the community\n/myquestions — your questions\n/faq — frequently asked questions\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/directory — Habesha business directory\n/addbusiness — suggest a business\n/goods — goods board between the UAE and Ethiopia\n/travel — I am travelling and have space\n/send — I need something carried\n/mygoods — your goods posts and deals\n/safe — help and safety\n/topics — announcements you receive\n/profile — your profile\n/language — change language\n/leave — leave the community",
     ],
     'unknown' => [
         'am' => 'አልገባኝም። /help ይላኩ።',
@@ -1050,5 +1050,493 @@ return [
         'am' => "📣 <b>በመልዕክት የሚደርስዎ ማስታወቂያ</b>\n\nርዕስ ለማብራት ወይም ለማጥፋት ይጫኑ። ሁሉም በቻናሉም ይገኛል።",
         'ti' => "📣 <b>ብመልእኽቲ ዝበጽሓኩም መወዓውዒ</b>\n\nኣርእስቲ ንምብራህ ወይ ንምጥፋእ ጠውቑ። ኩሉ ኣብ ቻነል እውን ይርከብ።",
         'en' => "📣 <b>Announcements you get as a message</b>\n\nTap a topic to turn it on or off. Everything is also in the channel.",
+    ],
+
+    // ---- goods board ---------------------------------------------------------
+
+    'goods_menu' => [
+        'am' => "📦 <b>የዕቃ ሰሌዳ</b>\n\nትርፍ ኪሎ ያላቸው ተጓዦች በኢማራትና በኢትዮጵያ መካከል ዕቃ ማስላክ ከሚፈልጉ አባላት ጋር ይገናኛሉ። ገንዘብ በእኛ በኩል አያልፍም፤ እርስ በርሳችሁ ትስማማላችሁ፣ ቦቱ መዝገቡንና ደረጃውን ይይዛል።\n\n/travel — እጓዛለሁ፣ ቦታ አለኝ\n/send — የሚላክ ዕቃ አለኝ\n/mygoods — የእኔ ልጥፎችና ስምምነቶች\n\nክፍት የሆኑትን ይመልከቱ፡",
+        'ti' => "📦 <b>ሰሌዳ ኣቕሑ</b>\n\nተረፍ ኪሎ ዘለዎም ገያሾ ኣብ መንጎ ኢማራትን ኢትዮጵያን ኣቕሓ ክሰዱ ምስ ዝደልዩ ኣባላት ይራኸቡ። ገንዘብ ብኣና ኣይሓልፍን፤ ብሓባር ትሰማምዑ፣ ቦት መዝገብን ደረጃን ይሕዝ።\n\n/travel — ክጉዓዝ እየ፣ ቦታ ኣለኒ\n/send — ዝስደድ ኣቕሓ ኣለኒ\n/mygoods — ልጥፋተይን ስምምዓተይን\n\nክፉታት ርኣዩ፡",
+        'en' => "📦 <b>Goods board</b>\n\nTravellers with spare kilos meet members who need something carried between the UAE and Ethiopia. No money goes through us: you agree between yourselves, and the bot keeps the record and the ratings.\n\n/travel — I am travelling and have space\n/send — I need something carried\n/mygoods — my posts and deals\n\nBrowse what is open:",
+    ],
+    'btn_goods_browse_traveller_to_et' => [
+        'am' => '🧳 ተጓዦች → ኢትዮጵያ',
+        'ti' => '🧳 ገያሾ → ኢትዮጵያ',
+        'en' => '🧳 Travellers → Ethiopia',
+    ],
+    'btn_goods_browse_traveller_to_ae' => [
+        'am' => '🧳 ተጓዦች → ኢማራት',
+        'ti' => '🧳 ገያሾ → ኢማራት',
+        'en' => '🧳 Travellers → UAE',
+    ],
+    'btn_goods_browse_sender_to_et' => [
+        'am' => '📦 ዕቃዎች → ኢትዮጵያ',
+        'ti' => '📦 ኣቕሑ → ኢትዮጵያ',
+        'en' => '📦 Parcels → Ethiopia',
+    ],
+    'btn_goods_browse_sender_to_ae' => [
+        'am' => '📦 ዕቃዎች → ኢማራት',
+        'ti' => '📦 ኣቕሑ → ኢማራት',
+        'en' => '📦 Parcels → UAE',
+    ],
+    'goods_browse_empty' => [
+        'am' => 'እዚህ ገና ክፍት ልጥፍ የለም።',
+        'ti' => 'ኣብዚ ገና ክፉት ልጥፍ የለን።',
+        'en' => 'Nothing open here yet.',
+    ],
+    'goods_blocked' => [
+        'am' => 'በዚህ ዓመት ሁለት ስምምነቶች ስለከሸፉ የዕቃ ሰሌዳውን መጠቀም አይችሉም። ስህተት ነው ብለው ካሰቡ አወያይን ያነጋግሩ።',
+        'ti' => 'ኣብዚ ዓመት ክልተ ስምምዓት ስለዝፈሸሉ ሰሌዳ ኣቕሑ ክትጥቀሙ ኣይትኽእሉን። ጌጋ እዩ እንተኢልኩም ንኣወያዪ ተዘራረቡ።',
+        'en' => 'You cannot use the goods board after two failed deals this year. If you think this is wrong, talk to a moderator.',
+    ],
+    'goods_max_open' => [
+        'am' => 'የዚህ ዓይነት {max} ክፍት ልጥፎች አሉዎት። መጀመሪያ በ /mygoods አንዱን ይዝጉ።',
+        'ti' => 'ናይዚ ዓይነት {max} ክፉታት ልጥፋት ኣለዉኹም። መጀመርታ ብ /mygoods ሓደ ዕጸዉ።',
+        'en' => 'You already have {max} open posts of this kind. Close one in /mygoods first.',
+    ],
+    'goods_ask_direction' => [
+        'am' => 'ወዴት?',
+        'ti' => 'ናበይ?',
+        'en' => 'Which way?',
+    ],
+    'goods_ask_date_traveller' => [
+        'am' => 'የበረራዎ ቀን መቼ ነው? እንደ 20/11/2026 ይጻፉ።',
+        'ti' => 'ዕለት በረራኹም መዓስ እዩ? ከም 20/11/2026 ጸሓፉ።',
+        'en' => 'What date is your flight? Write it like 20/11/2026.',
+    ],
+    'goods_ask_date_sender' => [
+        'am' => 'በግምት በየትኛው ቀን መሄድ አለበት? እንደ 20/11/2026 ይጻፉ። በሦስት ቀን ውስጥ የሚጓዙ ተጓዦች ይገናኛሉ።',
+        'ti' => 'ብግምት ኣበየናይ ዕለት ክኸይድ ኣለዎ? ከም 20/11/2026 ጸሓፉ። ኣብ ውሽጢ ሰለስተ መዓልቲ ዝጓዓዙ ገያሾ ክራኸቡ እዮም።',
+        'en' => 'Around what date should it go? Write it like 20/11/2026. Travellers within three days of it will match.',
+    ],
+    'goods_date_invalid' => [
+        'am' => 'ከዛሬ ጀምሮ እስከ አራት ወር ድረስ ያለ ቀን እንደ 20/11/2026 ይጻፉ።',
+        'ti' => 'ካብ ሎሚ ጀሚሩ ክሳብ ኣርባዕተ ወርሒ ዘሎ ዕለት ከም 20/11/2026 ጸሓፉ።',
+        'en' => 'Write a date from today up to four months ahead, like 20/11/2026.',
+    ],
+    'goods_ask_from' => [
+        'am' => 'ከየትኛው ከተማ?',
+        'ti' => 'ካብ ኣየናይ ከተማ?',
+        'en' => 'From which city?',
+    ],
+    'goods_ask_to' => [
+        'am' => 'ወደ የትኛው ከተማ?',
+        'ti' => 'ናብ ኣየናይ ከተማ?',
+        'en' => 'To which city?',
+    ],
+    'goods_ask_kilos_traveller' => [
+        'am' => 'ለሌሎች ስንት ኪሎ መያዝ ይችላሉ? ቁጥር ይጫኑ ወይም ይጻፉ።',
+        'ti' => 'ንኻልኦት ክንደይ ኪሎ ክትሕዙ ትኽእሉ? ቁጽሪ ጠውቑ ወይ ጸሓፉ።',
+        'en' => 'How many kilos can you carry for others? Tap a number or write one.',
+    ],
+    'goods_ask_kilos_sender' => [
+        'am' => 'በግምት ክብደቱ ስንት ነው? የኪሎ ቁጥር ይጫኑ ወይም ይጻፉ።',
+        'ti' => 'ብግምት ክብደቱ ክንደይ እዩ? ቁጽሪ ኪሎ ጠውቑ ወይ ጸሓፉ።',
+        'en' => 'About how heavy is it? Tap a number of kilos or write one.',
+    ],
+    'goods_kilos_invalid' => [
+        'am' => 'ከ1 እስከ {max} ያለ ሙሉ የኪሎ ቁጥር ይጻፉ።',
+        'ti' => 'ካብ 1 ክሳብ {max} ዘሎ ምሉእ ቁጽሪ ኪሎ ጸሓፉ።',
+        'en' => 'Write a whole number of kilos from 1 to {max}.',
+    ],
+    'btn_goods_kilos' => [
+        'am' => '{kilos} ኪሎ',
+        'ti' => '{kilos} ኪሎ',
+        'en' => '{kilos} kg',
+    ],
+    'goods_ask_categories_traveller' => [
+        'am' => 'ምን ዓይነት ዕቃ ይይዛሉ? የሚቀበሉትን እያንዳንዱን ይጫኑ፣ ከዚያ ጨርሻለሁ ይበሉ።',
+        'ti' => 'እንታይ ዓይነት ኣቕሓ ክትሕዙ ኢኹም? ዝቕበሉዎ ነፍሲ ወከፍ ጠውቑ፣ ድሕሪኡ ወዲአ በሉ።',
+        'en' => 'What will you carry? Tap each kind you accept, then Done.',
+    ],
+    'goods_ask_categories_sender' => [
+        'am' => 'ምን ዓይነት ዕቃ ነው? የሚመለከተውን ሁሉ ይጫኑ፣ ከዚያ ጨርሻለሁ ይበሉ።',
+        'ti' => 'እንታይ ዓይነት ኣቕሓ እዩ? ዝምልከቶ ኩሉ ጠውቑ፣ ድሕሪኡ ወዲአ በሉ።',
+        'en' => 'What kind of thing is it? Tap each that applies, then Done.',
+    ],
+    'goods_categories_picked' => [
+        'am' => 'የተመረጡ፡ {list}። ተጨማሪ ይጫኑ ወይም ጨርሻለሁ ይበሉ።',
+        'ti' => 'ዝተመርጹ፡ {list}። ተወሳኺ ጠውቑ ወይ ወዲአ በሉ።',
+        'en' => 'Picked: {list}. Tap more, or Done.',
+    ],
+    'goods_categories_need_one' => [
+        'am' => 'ቢያንስ አንድ ይምረጡ።',
+        'ti' => 'እንተወሓደ ሓደ ምረጹ።',
+        'en' => 'Pick at least one.',
+    ],
+    'goods_ask_terms' => [
+        'am' => 'ለላኪዎች ቅድመ ሁኔታ አለዎት? ለምሳሌ፡ ክፍት ቦርሳ ብቻ፣ እስከ 18 ቀን ድረስ ዴይራ ላይ ማስረከብ። ወይም ዝለል ይጫኑ።',
+        'ti' => 'ንሰደድቲ ቅድመ ኩነት ኣለኩም? ንኣብነት፡ ክፉት ቦርሳ ጥራይ፣ ክሳብ 18 ዕለት ኣብ ዴይራ ምርካብ። ወይ ሕለፍ ጠውቑ።',
+        'en' => 'Any conditions for senders? For example: open bags only, hand over in Deira by the 18th. Or tap Skip.',
+    ],
+    'goods_ask_description' => [
+        'am' => 'ውስጡ ያለውን በአንድ ወይም በሁለት መስመር ይግለጹ። ተጓዡ ከመስማማቱ በፊት ይህን ያነባል።',
+        'ti' => 'ኣብ ውሽጡ ዘሎ ብሓደ ወይ ብኽልተ መስመር ግለጹ። እቲ ገያሻይ ቅድሚ ምስምማዑ እዚ የንብብ።',
+        'en' => 'Describe what is inside in one or two lines. The traveller reads this before agreeing.',
+    ],
+    'goods_text_invalid' => [
+        'am' => 'ከ5 እስከ 300 ፊደላት ይጻፉ።',
+        'ti' => 'ካብ 5 ክሳብ 300 ፊደላት ጸሓፉ።',
+        'en' => 'Write between 5 and 300 characters.',
+    ],
+    'goods_banned_item' => [
+        'am' => 'ይህ በሰሌዳው ሊላክ አይችልም፤ ጥሬ ገንዘብ፣ ወርቅ፣ ጌጣጌጥ፣ መድኃኒት፣ አደንዛዥ ዕፅ፣ መሳሪያ፣ ሲጋራ፣ አልኮልና ጫት በፍጹም አይላኩም። ያለ እነሱ እንደገና ይጻፉ።',
+        'ti' => 'እዚ ብሰሌዳ ክስደድ ኣይክእልን፤ ጥረ ገንዘብ፣ ወርቂ፣ ስልማት፣ መድሃኒት፣ ኣደንዛዚ ዕጸ፣ ኣጽዋር፣ ሽጋራ፣ ኣልኮልን ጫትን ፈጺሞም ኣይስደዱን። ብዘይካኦም እንደገና ጸሓፉ።',
+        'en' => 'That cannot go through the board: cash, gold, jewellery, medicine, drugs, weapons, cigarettes, alcohol and khat are never carried. Write it again without them.',
+    ],
+    'goods_preview' => [
+        'am' => "ልጥፍዎ እንዲህ ይታያል፡\n\n{card}\n\nይለጠፍ?",
+        'ti' => "ልጥፍኩም ከምዚ ይርአ፡\n\n{card}\n\nይለጠፍ?",
+        'en' => "This is how your post will look:\n\n{card}\n\nPost it?",
+    ],
+    'btn_goods_post' => [
+        'am' => '📦 ለጥፍ',
+        'ti' => '📦 ለጥፍ',
+        'en' => '📦 Post it',
+    ],
+    'goods_posted' => [
+        'am' => '✅ ተለጥፏል።{group}',
+        'ti' => '✅ ተለጢፉ።{group}',
+        'en' => '✅ Posted.{group}',
+    ],
+    'goods_posted_group' => [
+        'am' => ' በዕቃ ሰሌዳ ቡድኑም ላይ ወጥቷል።',
+        'ti' => ' ኣብ ጉጅለ ሰሌዳ ኣቕሑ እውን ወጺኡ።',
+        'en' => ' It is on the goods board group too.',
+    ],
+    'goods_matches_title' => [
+        'am' => 'እነዚህ ልጥፎች ከእርስዎ ጋር ይገጥማሉ። ለመጠየቅ ፍላጎት አለኝ ይጫኑ፡',
+        'ti' => 'እዞም ልጥፋት ምስ ናትኩም ይሰማምዑ። ንምሕታት ድሌት ኣለኒ ጠውቑ፡',
+        'en' => 'These posts match yours. Tap Interested to ask:',
+    ],
+    'goods_no_matches' => [
+        'am' => 'ገና የሚገጥም የለም። ሲለጠፍ መልዕክት እንልክልዎታለን።',
+        'ti' => 'ገና ዝሰማማዕ የለን። ምስ ተለጠፈ መልእኽቲ ክንሰደልኩም ኢና።',
+        'en' => 'No match yet. We will message you when one is posted.',
+    ],
+    'goods_new_match' => [
+        'am' => "💡 አዲስ ልጥፍ ከእርስዎ ጋር ይገጥማል፡\n\n{card}",
+        'ti' => "💡 ሓድሽ ልጥፍ ምስ ናትኩም ይሰማማዕ፡\n\n{card}",
+        'en' => "💡 A new post matches yours:\n\n{card}",
+    ],
+    'btn_goods_interested' => [
+        'am' => '🤝 ፍላጎት አለኝ',
+        'ti' => '🤝 ድሌት ኣለኒ',
+        'en' => '🤝 Interested',
+    ],
+    'goods_need_post_traveller' => [
+        'am' => 'ይህን ለመያዝ ለማቅረብ መጀመሪያ ጉዞዎን ይለጥፉ። ልክ እንደለጠፉ ጥያቄዎ ይላካል።',
+        'ti' => 'ነዚ ክትሕዙ ንምቕራብ መጀመርታ ጉዕዞኹም ለጥፉ። ልክዕ ምስ ለጠፍኩም ሕቶኹም ይለኣኽ።',
+        'en' => 'To offer to carry this, post your trip first. Your request goes out the moment you post.',
+    ],
+    'goods_need_post_sender' => [
+        'am' => 'ይህን ተጓዥ ለመጠየቅ መጀመሪያ የሚልኩትን ይለጥፉ። ልክ እንደለጠፉ ጥያቄዎ ይላካል።',
+        'ti' => 'ነዚ ገያሻይ ንምሕታት መጀመርታ እትሰዱዎ ለጥፉ። ልክዕ ምስ ለጠፍኩም ሕቶኹም ይለኣኽ።',
+        'en' => 'To ask this traveller, first post what you are sending. Your request goes out the moment you post.',
+    ],
+    'goods_interest_mismatch' => [
+        'am' => 'አዲሱ ልጥፍዎ ከዚያኛው ጋር አይገጥምም (ቀኑ ወይም ኪሎው ይለያያል)፣ ስለዚህ ጥያቄ አልተላከም።',
+        'ti' => 'ሓድሽ ልጥፍኩም ምስቲ ካልእ ኣይሰማማዕን (ዕለቱ ወይ ኪሎኡ ይፈላለ)፣ ስለዚ ሕቶ ኣይተላእከን።',
+        'en' => 'Your new post does not fit that one (the dates or the kilos differ), so no request was sent.',
+    ],
+    'goods_post_closed' => [
+        'am' => 'ይህ ልጥፍ ከአሁን በኋላ ክፍት አይደለም።',
+        'ti' => 'እዚ ልጥፍ ድሕሪ ሕጂ ክፉት ኣይኮነን።',
+        'en' => 'This post is no longer open.',
+    ],
+    'goods_own_post' => [
+        'am' => 'ይህ የራስዎ ልጥፍ ነው።',
+        'ti' => 'እዚ ናይ ባዕልኹም ልጥፍ እዩ።',
+        'en' => 'This is your own post.',
+    ],
+    'goods_already_asked' => [
+        'am' => 'ስለዚህ ልጥፍ አስቀድመው ጠይቀዋል።',
+        'ti' => 'ብዛዕባ እዚ ልጥፍ ኣቐዲምኩም ሓቲትኩም ኢኹም።',
+        'en' => 'You have already asked about this post.',
+    ],
+    'goods_requests_limit' => [
+        'am' => 'ዛሬ {count} ጥያቄዎችን ልከዋል። ነገ እንደገና ይሞክሩ።',
+        'ti' => 'ሎሚ {count} ሕቶታት ሰዲድኩም። ጽባሕ እንደገና ፈትኑ።',
+        'en' => 'You have sent {count} requests today. Try again tomorrow.',
+    ],
+    'goods_request_sent' => [
+        'am' => 'ጥያቄ ለ{name} ተልኳል። ሲመልሱ እንነግርዎታለን።',
+        'ti' => 'ሕቶ ን{name} ተላኢኹ። ምስ መለሱ ክንነግረኩም ኢና።',
+        'en' => 'Request sent to {name}. We will tell you when they answer.',
+    ],
+    'goods_request' => [
+        'am' => "🤝 <b>{name}</b> ልጥፍዎን ይፈልጋሉ።\n\nየእነሱ ልጥፍ፡\n{card}\n\nአድራሻ ለመለዋወጥ ይቀበሉ። ካልተቀበሉ ምንም አይጋራም።",
+        'ti' => "🤝 <b>{name}</b> ልጥፍኩም ይደልዩ።\n\nልጥፎም፡\n{card}\n\nኣድራሻ ንምልውዋጥ ተቐበሉ። እንተዘይተቐበልኩም ዋላ ሓንቲ ኣይክፈልን።",
+        'en' => "🤝 <b>{name}</b> is interested in your post.\n\nTheir post:\n{card}\n\nAccept to swap contacts. Nothing is shared unless you accept.",
+    ],
+    'btn_goods_accept' => [
+        'am' => '✅ ተቀበል',
+        'ti' => '✅ ተቐበል',
+        'en' => '✅ Accept',
+    ],
+    'btn_goods_decline' => [
+        'am' => '✖️ አይሆንም',
+        'ti' => '✖️ ኣይፋል',
+        'en' => '✖️ No thanks',
+    ],
+    'goods_request_accepted' => [
+        'am' => '✅ {name}ን ተቀብለዋል።',
+        'ti' => '✅ ን{name} ተቐቢልኩም።',
+        'en' => '✅ You accepted {name}.',
+    ],
+    'goods_request_unreachable' => [
+        'am' => '{name} አሁን ሊገኙ አይችሉም። ሌላ ልጥፍ ይሞክሩ።',
+        'ti' => '{name} ሕጂ ክርከቡ ኣይክእሉን። ካልእ ልጥፍ ፈትኑ።',
+        'en' => '{name} cannot be reached right now. Try another post.',
+    ],
+    'goods_declined' => [
+        'am' => '{name} ይህን መቀበል አይችሉም። ሌሎች ልጥፎችን በ /goods ይመልከቱ።',
+        'ti' => '{name} ነዚ ክቕበሉ ኣይክእሉን። ካልኦት ልጥፋት ብ /goods ርኣዩ።',
+        'en' => '{name} cannot take this one. See other posts with /goods.',
+    ],
+    'goods_declined_owner' => [
+        'am' => 'ውድቅ ተደርጓል። በትህትና አሳውቀናቸዋል።',
+        'ti' => 'ተነጺጉ። ብትሕትና ኣፍሊጥናዮም።',
+        'en' => 'Declined. We let them know politely.',
+    ],
+    'goods_introduced' => [
+        'am' => "🤝 ከ{name} ጋር ተገናኝተዋል።\n{badge}\n\n{contact}\n\nዝርዝሩን በመካከላችሁ ተስማሙ፡ የት እንደሚሰጥ፣ በትክክል ምን እንደሚላክ፣ በሌላኛው ወገን ማን እንደሚቀበል። ሁሉንም አብራችሁ ፈትሹ፤ ሲታሸግ ያላዩትን ዕቃ በፍጹም አይያዙ።\n\nስትስማሙ ሁለታችሁም ተስማምተናል ይጫኑ።",
+        'ti' => "🤝 ምስ {name} ተራኺብኩም።\n{badge}\n\n{contact}\n\nዝርዝር ኣብ መንጎኹም ተሰማምዑ፡ ኣበይ ከም ዝወሃብ፣ ብልክዕ እንታይ ከም ዝኸይድ፣ ኣብ ካልእ ወገን መን ከም ዝቕበሎ። ኩሉ ብሓባር መርምሩ፤ ክዕሸግ ዘይረኣኹምዎ ኣቕሓ ፈጺምኩም ኣይትሓዙ።\n\nምስ ተሰማማዕኩም ክልቴኹም ተሰማሚዕና ጠውቑ።",
+        'en' => "🤝 You are connected with {name}.\n{badge}\n\n{contact}\n\nAgree the details between you: where to hand over, exactly what goes, and who collects it at the other end. Check everything together, and never carry a parcel you did not see packed.\n\nWhen you have agreed, both press We agreed.",
+    ],
+    'goods_contact' => [
+        'am' => "መልዕክት ይላኩላቸው፡ {link}\nስሙ ውይይት ካልከፈተ መለያቸው የግል ነው፤ ስምዎ አላቸው፣ መልዕክት ይልኩልዎታል።",
+        'ti' => "መልእኽቲ ስደዱሎም፡ {link}\nእቲ ስም ዕላል እንተዘይከፊቱ ኣካውንቶም ብሕታዊ እዩ፤ ስምኩም ኣለዎም፣ መልእኽቲ ክሰዱልኩም እዮም።",
+        'en' => "Message them: {link}\nIf the name does not open a chat, their account is private: they have your name and will message you.",
+    ],
+    'btn_goods_agree' => [
+        'am' => '🤝 ተስማምተናል',
+        'ti' => '🤝 ተሰማሚዕና',
+        'en' => '🤝 We agreed',
+    ],
+    'btn_goods_drop' => [
+        'am' => '✖️ አልቀጥልም',
+        'ti' => '✖️ ኣይቕጽልን',
+        'en' => '✖️ Not going ahead',
+    ],
+    'goods_agree_waiting' => [
+        'am' => 'ተመዝግቧል። {name} ተስማምተናል እስኪጫኑ እየጠበቅን ነው።',
+        'ti' => 'ተመዝጊቡ። {name} ተሰማሚዕና ክሳብ ዝጥውቑ ንጽበ ኣለና።',
+        'en' => 'Noted. Waiting for {name} to press We agreed too.',
+    ],
+    'goods_agree_nudge' => [
+        'am' => '{name} ተስማምተናል ተጭነዋል። እርስዎም ስትስማሙ ይጫኑ።',
+        'ti' => '{name} ተሰማሚዕና ጠዊቖም። ንስኹም እውን ምስ ተሰማማዕኩም ጠውቑ።',
+        'en' => '{name} pressed We agreed. Press it too once you have agreed.',
+    ],
+    'goods_agreed' => [
+        'am' => "✅ ከ{name} ጋር ተስማምተዋል፡ {kilos} ኪሎ፣ {route}፣ {date}። በ{checkin} መድረሱን ሁለታችሁንም እንጠይቃለን።\n\nበሕዝብ ቦታ ይስጡ፣ አብራችሁ ከፍታችሁ ፈትሹ፣ ለተገዛለት ማንኛውም ነገር ደረሰኝ ያስቀምጡ።",
+        'ti' => "✅ ምስ {name} ተሰማሚዕኩም፡ {kilos} ኪሎ፣ {route}፣ {date}። ብ{checkin} ምብጻሑ ንኽልቴኹም ክንሓትት ኢና።\n\nኣብ ህዝባዊ ቦታ ሃቡ፣ ብሓባር ከፊትኩም መርምሩ፣ ንዝተገዝኣሉ ዝኾነ ነገር ቅብሊት ዓቕቡ።",
+        'en' => "✅ Agreed with {name}: {kilos} kg, {route}, {date}. On {checkin} we will ask you both whether it arrived.\n\nHand over in a public place, open and check it together, and keep receipts for anything bought for it.",
+    ],
+    'goods_no_room' => [
+        'am' => 'ተጓዡ ለዚህ ዕቃ የቀረው ቦታ የለም።',
+        'ti' => 'እቲ ገያሻይ ነዚ ኣቕሓ ዝተረፎ ቦታ የብሉን።',
+        'en' => 'The traveller has no room left for this parcel.',
+    ],
+    'goods_dropped' => [
+        'am' => 'ተፈጽሟል፤ ይህ ግንኙነት ተሰርዟል።',
+        'ti' => 'ተፈጺሙ፤ እዚ ርክብ ተሰሪዙ።',
+        'en' => 'Done: this match is cancelled.',
+    ],
+    'goods_dropped_other' => [
+        'am' => '{name} በግንኙነታችሁ አልቀጠሉም ({route}፣ {date})። ልጥፍዎ ክፍት ሆኖ ይቆያል።',
+        'ti' => '{name} ብርክብኩም ኣይቀጸሉን ({route}፣ {date})። ልጥፍኩም ክፉት ኮይኑ ይጸንሕ።',
+        'en' => '{name} is not going ahead with your match ({route}, {date}). Your post stays open.',
+    ],
+    'goods_match_closed' => [
+        'am' => 'ይህ ግንኙነት ተዘግቷል።',
+        'ti' => 'እዚ ርክብ ተዓጽዩ እዩ።',
+        'en' => 'This match is already closed.',
+    ],
+    'goods_checkin' => [
+        'am' => '📦 ከ{name} ጋር የነበረው ዕቃ ({route}፣ {date}) በሰላም ደረሰ?',
+        'ti' => '📦 ምስ {name} ዝነበረ ኣቕሓ ({route}፣ {date}) ብሰላም በጺሑ ድዩ?',
+        'en' => '📦 Did the parcel with {name} ({route}, {date}) arrive safely?',
+    ],
+    'btn_goods_ci_yes' => [
+        'am' => '✅ አዎ፣ ደርሷል',
+        'ti' => '✅ እወ፣ በጺሑ',
+        'en' => '✅ Yes, it arrived',
+    ],
+    'btn_goods_ci_no' => [
+        'am' => '❌ አይ፣ ችግር አለ',
+        'ti' => '❌ ኣይፋል፣ ጸገም ኣሎ',
+        'en' => '❌ No, there is a problem',
+    ],
+    'btn_goods_ci_wait' => [
+        'am' => '⏳ ገና ነው',
+        'ti' => '⏳ ገና እዩ',
+        'en' => '⏳ Not yet',
+    ],
+    'goods_checkin_thanks' => [
+        'am' => 'አመሰግናለሁ፣ ተመዝግቧል።',
+        'ti' => 'የቐንየለይ፣ ተመዝጊቡ።',
+        'en' => 'Thank you, noted.',
+    ],
+    'goods_checkin_wait' => [
+        'am' => 'እሺ። ከሁለት ቀን በኋላ እንደገና እንጠይቃለን።',
+        'ti' => 'ሕራይ። ድሕሪ ክልተ መዓልቲ እንደገና ክንሓትት ኢና።',
+        'en' => 'OK. We will ask again in two days.',
+    ],
+    'goods_completed' => [
+        'am' => '🎉 ደርሷል። {name} እንዴት ነበሩ? እነሱም እስኪሰጡዎ ወይም ለአንድ ሳምንት ኮከቦችዎ ተደብቀው ይቆያሉ።',
+        'ti' => '🎉 በጺሑ። {name} ከመይ ነይሮም? ንሳቶም እውን ክሳብ ዝህቡኹም ወይ ንሓደ ሰሙን ኮኾባትኩም ተሓቢኦም ይጸንሑ።',
+        'en' => '🎉 Delivered. How was {name}? Your stars stay hidden until they rate you too, or for a week.',
+    ],
+    'goods_rated' => [
+        'am' => 'አመሰግናለሁ። ደረጃዎ ተቀምጧል።',
+        'ti' => 'የቐንየለይ። ደረጃኹም ተዓቂቡ።',
+        'en' => 'Thank you. Your rating is saved.',
+    ],
+    'goods_already_rated' => [
+        'am' => 'ይህን ግንኙነት አስቀድመው ገምግመዋል።',
+        'ti' => 'ነዚ ርክብ ኣቐዲምኩም ገምጊምኩም።',
+        'en' => 'You have already rated this match.',
+    ],
+    'goods_disputed' => [
+        'am' => 'እናዝናለን። አወያይ ሁለታችሁንም ያነጋግራል። መልዕክቶቻችሁንና ደረሰኞችን ያስቀምጡ።',
+        'ti' => 'ንጠዓስ። ኣወያዪ ንኽልቴኹም ክዛረበኩም እዩ። መልእኽትታትኩምን ቅብሊታትን ዓቕቡ።',
+        'en' => 'We are sorry. A moderator will contact you both. Keep your messages and any receipts.',
+    ],
+    'goods_dispute_alert' => [
+        'am' => '⚠️ የዕቃ ክርክር #{id}፡ {route}፣ {date}፣ በ{traveller} (ተጓዥ) እና በ{sender} (ላኪ) መካከል። በአስተዳዳሪው የዕቃ ገጽ ላይ ይወስኑ።',
+        'ti' => '⚠️ ናይ ኣቕሓ ክርክር #{id}፡ {route}፣ {date}፣ ኣብ መንጎ {traveller} (ገያሻይ) ን {sender} (ሰዳዲ) ን። ኣብ ገጽ ኣቕሑ ናይ ኣመሓዳሪ ወስኑ።',
+        'en' => '⚠️ Goods dispute #{id}: {route}, {date}, between {traveller} (traveller) and {sender} (sender). Decide on the Goods page of the admin.',
+    ],
+    'goods_resolved' => [
+        'am' => 'አወያይ ግንኙነትዎን ዘግቷል ({route}፣ {date})፡ {outcome}',
+        'ti' => 'ኣወያዪ ርክብኩም ዓጽዩ ({route}፣ {date})፡ {outcome}',
+        'en' => 'A moderator closed your match ({route}, {date}): {outcome}',
+    ],
+    'goods_outcome_completed' => [
+        'am' => 'እንደደረሰ ይቆጠራል።',
+        'ti' => 'ከም ዝበጽሐ ይቑጸር።',
+        'en' => 'it counts as delivered.',
+    ],
+    'goods_outcome_failed' => [
+        'am' => 'አልተሳካም፤ በጥፋተኛው አባል መዝገብ ላይ ሰፍሯል።',
+        'ti' => 'ኣይተዓወተን፤ ኣብ መዝገብ እቲ ጌጋ ዝገበረ ኣባል ሰፊሩ።',
+        'en' => 'it failed, and it is on the record of the member at fault.',
+    ],
+    'goods_outcome_cancelled' => [
+        'am' => 'ማንም ጥፋተኛ ሳይሆን ተዘግቷል።',
+        'ti' => 'ዋላ ሓደ ጌጋ ከይገበረ ተዓጽዩ።',
+        'en' => 'it is closed with nobody at fault.',
+    ],
+    'goods_posts_hidden' => [
+        'am' => 'በዚህ ዓመት ሁለት ስምምነቶች ስለከሸፉ የዕቃ ልጥፎችዎ ተደብቀዋል። ስህተት ነው ብለው ካሰቡ አወያይን ያነጋግሩ።',
+        'ti' => 'ኣብዚ ዓመት ክልተ ስምምዓት ስለዝፈሸሉ ልጥፋት ኣቕሑኹም ተሓቢኦም። ጌጋ እዩ እንተኢልኩም ንኣወያዪ ተዘራረቡ።',
+        'en' => 'Your goods posts are hidden after two failed deals this year. If you think this is wrong, talk to a moderator.',
+    ],
+    'goods_post_removed' => [
+        'am' => 'አወያይ የዕቃ ልጥፍዎን አስወግዷል ({route}፣ {date})፡ {reason}',
+        'ti' => 'ኣወያዪ ልጥፍ ኣቕሑኹም ኣልዩ ({route}፣ {date})፡ {reason}',
+        'en' => 'A moderator removed your goods post ({route}, {date}): {reason}',
+    ],
+    'goods_mine_none' => [
+        'am' => 'ክፍት ልጥፍ ወይም ስምምነት የለዎትም። በ /travel ወይም /send ይጀምሩ።',
+        'ti' => 'ክፉት ልጥፍ ወይ ስምምዕ የብልኩምን። ብ /travel ወይ /send ጀምሩ።',
+        'en' => 'You have no open posts or deals. Start with /travel or /send.',
+    ],
+    'goods_mine_title' => [
+        'am' => '📦 <b>የእርስዎ ልጥፎችና ስምምነቶች</b>',
+        'ti' => '📦 <b>ልጥፋትኩምን ስምምዓትኩምን</b>',
+        'en' => '📦 <b>Your posts and deals</b>',
+    ],
+    'goods_mine_posts' => [
+        'am' => '<b>ክፍት ልጥፎች</b>',
+        'ti' => '<b>ክፉታት ልጥፋት</b>',
+        'en' => '<b>Open posts</b>',
+    ],
+    'goods_mine_deals' => [
+        'am' => '<b>ስምምነቶች</b>',
+        'ti' => '<b>ስምምዓት</b>',
+        'en' => '<b>Deals</b>',
+    ],
+    'btn_goods_close' => [
+        'am' => '🔒 {n}ን ዝጋ',
+        'ti' => '🔒 {n} ዕጸው',
+        'en' => '🔒 Close {n}',
+    ],
+    'goods_closed' => [
+        'am' => 'ልጥፉ ተዘግቷል።',
+        'ti' => 'ልጥፍ ተዓጽዩ።',
+        'en' => 'Post closed.',
+    ],
+    'goods_state_requested' => [
+        'am' => 'መልስ በመጠባበቅ ላይ',
+        'ti' => 'መልሲ ይጽበ',
+        'en' => 'waiting for an answer',
+    ],
+    'goods_state_introduced' => [
+        'am' => 'ተገናኝተዋል፣ ገና አልተስማሙም',
+        'ti' => 'ተራኺብኩም፣ ገና ኣይተሰማማዕኩምን',
+        'en' => 'connected, not agreed yet',
+    ],
+    'goods_state_agreed' => [
+        'am' => 'ተስማምተዋል',
+        'ti' => 'ተሰማሚዕኩም',
+        'en' => 'agreed',
+    ],
+    'goods_state_disputed' => [
+        'am' => 'በአወያይ እየታየ',
+        'ti' => 'ኣብ ኣወያዪ',
+        'en' => 'with a moderator',
+    ],
+    'goods_card_traveller' => [
+        'am' => "🧳 <b>ተጓዥ · {route}</b>\n📅 {date} · 🎒 {kilos} ኪሎ ቦታ\n📦 {categories}{notes}\n👤 {badge}",
+        'ti' => "🧳 <b>ገያሻይ · {route}</b>\n📅 {date} · 🎒 {kilos} ኪሎ ቦታ\n📦 {categories}{notes}\n👤 {badge}",
+        'en' => "🧳 <b>Traveller · {route}</b>\n📅 {date} · 🎒 {kilos} kg free\n📦 {categories}{notes}\n👤 {badge}",
+    ],
+    'goods_card_sender' => [
+        'am' => "📦 <b>ዕቃ · {route}</b>\n📅 በግምት {date} · ⚖️ {kilos} ኪሎ\n🏷 {categories}{notes}\n👤 {badge}",
+        'ti' => "📦 <b>ኣቕሓ · {route}</b>\n📅 ብግምት {date} · ⚖️ {kilos} ኪሎ\n🏷 {categories}{notes}\n👤 {badge}",
+        'en' => "📦 <b>Parcel · {route}</b>\n📅 around {date} · ⚖️ {kilos} kg\n🏷 {categories}{notes}\n👤 {badge}",
+    ],
+    'goods_card_rules' => [
+        'am' => '⚠️ ጥሬ ገንዘብ፣ ወርቅ፣ መድኃኒት ወይም የታሸገ ዕቃ የለም። ሁሉንም አብራችሁ ፈትሹ።',
+        'ti' => '⚠️ ጥረ ገንዘብ፣ ወርቂ፣ መድሃኒት ወይ ዝተዓሸገ ኣቕሓ የለን። ኩሉ ብሓባር መርምሩ።',
+        'en' => '⚠️ No cash, gold, medicine or sealed parcels. Check everything together.',
+    ],
+    'goods_tag_matched' => [
+        'am' => '✅ ተገናኝቷል',
+        'ti' => '✅ ተራኺቡ',
+        'en' => '✅ Matched',
+    ],
+    'goods_tag_expired' => [
+        'am' => '⌛ ቀኑ አልፏል',
+        'ti' => '⌛ ዕለቱ ሓሊፉ',
+        'en' => '⌛ Date passed',
+    ],
+    'goods_tag_closed' => [
+        'am' => '🔒 ተዘግቷል',
+        'ti' => '🔒 ተዓጽዩ',
+        'en' => '🔒 Closed',
+    ],
+    'goods_badge_deals' => [
+        'am' => 'ስምምነቶች፡ {count}',
+        'ti' => 'ስምምዓት፡ {count}',
+        'en' => 'deals: {count}',
+    ],
+    'goods_badge_new' => [
+        'am' => 'በሰሌዳው አዲስ',
+        'ti' => 'ኣብ ሰሌዳ ሓድሽ',
+        'en' => 'new on the board',
+    ],
+    'goods_profile_line' => [
+        'am' => "\n🧳 የዕቃ ሰሌዳ ስምምነቶች፡ {deals} · {rating}",
+        'ti' => "\n🧳 ስምምዓት ሰሌዳ ኣቕሑ፡ {deals} · {rating}",
+        'en' => "\n🧳 Goods board deals: {deals} · {rating}",
+    ],
+    'goods_no_rating' => [
+        'am' => 'ገና ደረጃ የለም',
+        'ti' => 'ገና ደረጃ የለን',
+        'en' => 'no ratings yet',
     ],
 ];

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DirectoryCityController;
 use App\Http\Controllers\Admin\EmployerReportController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\GoodsController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\JobController;
 use App\Http\Controllers\Admin\JobSettingsController;
@@ -107,6 +108,11 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
 
         Route::get('moderation', [ModerationController::class, 'index'])->name('moderation.index');
         Route::post('moderation/resolve', [ModerationController::class, 'resolve'])->name('moderation.resolve');
+
+        Route::get('goods/posts', [GoodsController::class, 'posts'])->name('goods.posts');
+        Route::post('goods/posts/{post}/hide', [GoodsController::class, 'hide'])->name('goods.posts.hide');
+        Route::get('goods/matches', [GoodsController::class, 'matches'])->name('goods.matches');
+        Route::post('goods/matches/{match}/resolve', [GoodsController::class, 'resolve'])->name('goods.matches.resolve');
 
         Route::get('employer-reports', [EmployerReportController::class, 'index'])->name('employer-reports.index');
         Route::put('employer-reports/{report}', [EmployerReportController::class, 'update'])->name('employer-reports.update');

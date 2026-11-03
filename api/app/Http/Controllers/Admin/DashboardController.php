@@ -67,7 +67,23 @@ class DashboardController extends Controller
                 'faq_live' => \App\Models\FaqEntry::query()->where('active', true)->count(),
                 'reports_open' => \App\Models\GroupReport::query()->where('status', 'open')->distinct()->count('message_id'),
             ],
+            'goods' => $this->goods(),
             'tick' => Cache::get(SystemTickController::LAST_TICK_KEY),
         ]);
+    }
+
+    /** Goods board counts; empty until an administrator has applied the goods migration. */
+    private function goods(): array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('goods_matches')) {
+            return ['open_posts' => 0, 'live_matches' => 0, 'disputes' => 0, 'completed' => 0];
+        }
+
+        return [
+            'open_posts' => \App\Models\GoodsPost::query()->live()->count(),
+            'live_matches' => \App\Models\GoodsMatch::query()->whereIn('status', ['requested', 'introduced', 'agreed'])->count(),
+            'disputes' => \App\Models\GoodsMatch::query()->where('status', 'disputed')->count(),
+            'completed' => \App\Models\GoodsMatch::query()->where('status', 'completed')->count(),
+        ];
     }
 }
