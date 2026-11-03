@@ -213,3 +213,21 @@ test('announcements: news, upcoming events, one in all three languages, and its 
     // Fetched from Telegram once, then served from the cache; the token never appears in a URL we hand out.
     expect(telegramCalls('getFile'))->toHaveCount(1);
 });
+
+test('the tick token and the website key are write-only settings: never shown, blank keeps them', function (): void {
+    \Laravel\Sanctum\Sanctum::actingAs(admin(), ['admin']);
+    $key = str_repeat('s', 40);
+
+    $this->putJson('/api/admin/settings', ['site_api_key' => 'too-short'])->assertStatus(422);
+    $this->putJson('/api/admin/settings', ['site_api_key' => $key, 'tick_token' => str_repeat('t', 40)])->assertOk()
+        ->assertJsonPath('settings.site_api_key', '')->assertJsonPath('secrets.site_api_key', true)->assertJsonPath('secrets.tick_token', true);
+    $this->putJson('/api/admin/settings', ['site_api_key' => '', 'community_language' => 'en'])->assertOk();
+
+    expect(PlatformSetting::valueFor('site_api_key'))->toBe($key)
+        ->and(json_encode(\App\Models\AuditLog::query()->get()))->not->toContain($key);
+
+    // And the API now believes the website's forwarded visitor address.
+    app('auth')->forgetGuards();
+    $this->withHeaders(['X-Site-Key' => $key, 'X-Client-Ip' => '198.51.100.7'])->postJson('/api/owner/login/start')->assertOk();
+    expect(\App\Models\OwnerLoginRequest::query()->latest('id')->value('ip'))->toBe('198.51.100.7');
+});

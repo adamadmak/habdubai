@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import PageTitle from "@/components/page-title";
 import { useApiQuery, useApiMutation, formatDateTime, type SettingsPayload } from "@/lib/api";
 
-const FIELDS: { key: string; label: string; hint: string; placeholder?: string }[] = [
+const FIELDS: { key: string; label: string; hint: string; placeholder?: string; secret?: boolean }[] = [
   { key: "public_url", label: "Public URL of the API", hint: "Where Telegram reaches the webhook, and the address of listing photos. Must be https and not localhost.", placeholder: "https://api.habesha-dubai.com" },
   { key: "site_url", label: "Public website address", hint: "The website members and visitors use. Channel posts and bot messages link to it.", placeholder: "https://habesha-dubai.com" },
   { key: "support_telegram_username", label: "Support Telegram username", hint: "Shown to a member whose number is already taken, and in the ban message.", placeholder: "habesha_admin" },
@@ -24,6 +24,8 @@ const FIELDS: { key: string; label: string; hint: string; placeholder?: string }
   { key: "assistant_per_day", label: "Assistant answers per member per day", hint: "Each answer is one Claude call. Default 20; 0 turns the assistant off.", placeholder: "20" },
   { key: "safety_consulate_phone", label: "Ethiopian consulate phone, for /safe", hint: "Shown on the safety card when set. Check the number before saving.", placeholder: "+971 …" },
   { key: "safety_mohre_phone", label: "MoHRE phone, for /safe", hint: "Shown on the safety card when set. Check the number before saving.", placeholder: "…" },
+  { key: "tick_token", label: "Scheduler token (TICK_TOKEN)", hint: "The same value as TICK_TOKEN on the public website, which calls the scheduler every minute. At least 32 characters. Write-only.", secret: true },
+  { key: "site_api_key", label: "Website key (SITE_API_KEY)", hint: "The same value as SITE_API_KEY on the public website, so rate limits count each visitor. At least 32 characters. Write-only.", secret: true },
 ];
 
 const SettingsPage = () => {
@@ -64,7 +66,14 @@ const SettingsPage = () => {
               {FIELDS.map((f) => (
                 <div key={f.key}>
                   <Label htmlFor={f.key} className="mb-2 block">{f.label}</Label>
-                  <Input id={f.key} value={form[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+                  <Input
+                    id={f.key}
+                    type={f.secret ? "password" : "text"}
+                    autoComplete={f.secret ? "off" : undefined}
+                    value={form[f.key] ?? ""}
+                    placeholder={f.secret ? (data.secrets?.[f.key] ? "Saved. Type a new value to replace it." : "Not set") : f.placeholder}
+                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                  />
                   <p className="mt-1 text-xs text-default-500">{f.hint}</p>
                   {save.error?.errors?.[f.key] && <p className="mt-1 text-xs text-destructive">{save.error.errors[f.key][0]}</p>}
                 </div>

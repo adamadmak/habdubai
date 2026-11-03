@@ -36,3 +36,25 @@ test('the right token runs migrations and creates the first admin once', functio
     $this->postJson('/api/admin/login', ['email' => 'owner@example.com', 'password' => 'first-admin-password'])->assertOk();
     putenv('SETUP_TOKEN');
 });
+
+test('on a host where our environment never arrives, the database password opens setup', function (): void {
+    putenv('SETUP_TOKEN');
+    $connection = config('database.default');
+    config(["database.connections.{$connection}.password" => 'db-password-from-the-dashboard-123456']);
+
+    $this->withHeader('X-Setup-Token', 'wrong')->postJson('/api/setup/migrate')->assertStatus(404);
+    $this->withHeader('X-Setup-Token', 'db-password-from-the-dashboard-123456')->postJson('/api/setup/migrate')
+        ->assertOk()->assertJsonPath('driver', 'sqlite');
+
+    // A short database password is no key at all.
+    config(["database.connections.{$connection}.password" => 'short']);
+    $this->withHeader('X-Setup-Token', 'short')->postJson('/api/setup/migrate')->assertStatus(404);
+});
+
+test('the status page says what the app can see, in yes and no only', function (): void {
+    $status = $this->getJson('/api/system/status')->assertOk()->json();
+
+    expect($status['database'])->toBe('sqlite')->and($status['migrated'])->toBeTrue()
+        ->and($status['tick_token'])->toHaveKeys(['config', 'getenv', 'env_file', 'server', 'setting'])
+        ->and(collect($status)->flatten()->every(fn ($v) => is_bool($v) || in_array($v, ['sqlite', 'pgsql', 'mysql'], true)))->toBeTrue();
+});

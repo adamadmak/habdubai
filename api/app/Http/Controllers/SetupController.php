@@ -62,6 +62,16 @@ class SetupController extends Controller
     private function authorise(Request $request): void
     {
         $token = RuntimeEnv::get('services.host.setup_token', null, 'SETUP_TOKEN');
+
+        // On this host no environment variable of ours reaches the app, but the database
+        // connection does; its password is the one secret the account holder can read in the
+        // AletCloud dashboard and nobody else can. Whoever holds it can already change the
+        // database directly, so it opens nothing new.
+        if (strlen($token) < 32) {
+            $password = (string) config('database.connections.'.config('database.default').'.password');
+            $token = strlen($password) >= 24 ? $password : '';
+        }
+
         $provided = (string) $request->header('X-Setup-Token', '');
 
         if (strlen($token) < 32 || ! hash_equals($token, $provided)) {

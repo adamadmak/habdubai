@@ -15,7 +15,7 @@ final class ClientIp
 {
     public static function siteKeyValid(Request $request): bool
     {
-        $expected = RuntimeEnv::get('services.host.site_api_key', null, 'SITE_API_KEY');
+        $expected = RuntimeEnv::get('services.host.site_api_key', 'site_api_key', 'SITE_API_KEY');
         $given = (string) $request->header('X-Site-Key', '');
 
         return $expected !== '' && strlen($expected) >= 24 && hash_equals($expected, $given);

@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Until SITE_API_KEY is set on both apps, every visitor arrives as the website's
         // server; the limits are then generous enough that the site is not throttled as one.
-        $keyed = fn (): bool => \App\Support\RuntimeEnv::get('services.host.site_api_key', null, 'SITE_API_KEY') !== '';
+        $keyed = fn (): bool => \App\Support\RuntimeEnv::get('services.host.site_api_key', 'site_api_key', 'SITE_API_KEY') !== '';
 
         \Illuminate\Support\Facades\RateLimiter::for('public', function (\Illuminate\Http\Request $r) use ($limit, $keyed) {
             if (\App\Support\ClientIp::siteKeyValid($r) && ! $r->hasHeader('X-Client-Ip')) {

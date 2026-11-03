@@ -139,6 +139,8 @@ export interface BotTextRow {
 
 export interface SettingsPayload {
   settings: Record<string, string>;
+  /** Write-only settings: whether each one is stored. */
+  secrets?: Record<string, boolean>;
   chats?: BotChatRow[];
   telegram: {
     configured: boolean;

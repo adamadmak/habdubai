@@ -33,7 +33,14 @@ class SettingController extends Controller
         'assistant_per_day' => ['nullable', 'integer', 'min:0', 'max:500'],
         'safety_consulate_phone' => ['nullable', 'string', 'max:40'],
         'safety_mohre_phone' => ['nullable', 'string', 'max:40'],
+        // Shared with the public website (its TICK_TOKEN and SITE_API_KEY). Environment variables
+        // never reach this app on the host, so they are set here.
+        'tick_token' => ['nullable', 'string', 'min:32', 'max:128'],
+        'site_api_key' => ['nullable', 'string', 'min:32', 'max:128'],
     ];
+
+    /** Write-only: never sent back to the page; a blank box keeps the stored value. */
+    public const SECRETS = ['tick_token', 'site_api_key'];
 
     /** Shown when nothing is saved, so the form says what the bot actually uses. */
     private const DEFAULTS = [
@@ -46,11 +53,18 @@ class SettingController extends Controller
     public function show(TelegramBotService $telegram): JsonResponse
     {
         $settings = [];
+        $secrets = [];
         foreach (array_keys(self::FIELDS) as $key) {
-            $settings[$key] = RuntimeEnv::get(null, $key, null, self::DEFAULTS[$key] ?? '');
+            $value = RuntimeEnv::get(null, $key, null, self::DEFAULTS[$key] ?? '');
+            if (in_array($key, self::SECRETS, true)) {
+                $secrets[$key] = $value !== '';
+                $value = '';
+            }
+            $settings[$key] = $value;
         }
 
         return response()->json([
+            'secrets' => $secrets,
             'settings' => $settings,
             'telegram' => $this->telegramState($telegram),
             // Groups and channels the bot has been added to, to pick from instead of typing ids.
@@ -63,12 +77,18 @@ class SettingController extends Controller
         $data = $request->validate(self::FIELDS);
 
         $before = [];
+        $after = [];
         foreach ($data as $key => $value) {
-            $before[$key] = RuntimeEnv::get(null, $key, null);
+            $secret = in_array($key, self::SECRETS, true);
+            if ($secret && trim((string) $value) === '') {
+                continue; // A blank secret box keeps what is stored.
+            }
+            $before[$key] = $secret ? '(hidden)' : RuntimeEnv::get(null, $key, null);
+            $after[$key] = $secret ? '(changed)' : $value;
             PlatformSetting::put($key, trim((string) $value));
         }
 
-        AuditLog::record($request->user()->id, 'settings.updated', 'settings', null, $before, $data);
+        AuditLog::record($request->user()->id, 'settings.updated', 'settings', null, $before, $after);
 
         return $this->show(app(TelegramBotService::class));
     }

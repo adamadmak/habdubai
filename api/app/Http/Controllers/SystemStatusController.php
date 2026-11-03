@@ -23,6 +23,14 @@ class SystemStatusController extends Controller
             'server' => ! empty($_SERVER[$env] ?? null) || ! empty($_ENV[$env] ?? null),
         ];
 
+        $setting = function (string $key): bool {
+            try {
+                return trim((string) \App\Models\PlatformSetting::valueFor($key, '')) !== '';
+            } catch (\Throwable) {
+                return false;
+            }
+        };
+
         try {
             $driver = DB::connection()->getDriverName();
             $migrated = Schema::hasTable('owner_login_requests') && Schema::hasColumn('owner_login_requests', 'confirm_code_hash');
@@ -38,8 +46,8 @@ class SystemStatusController extends Controller
             'migrated' => $migrated,
             'app_key' => $seen('app.key', 'APP_KEY'),
             'setup_token' => $seen('services.host.setup_token', 'SETUP_TOKEN'),
-            'tick_token' => $seen('services.host.tick_token', 'TICK_TOKEN'),
-            'site_api_key' => $seen('services.host.site_api_key', 'SITE_API_KEY'),
+            'tick_token' => $seen('services.host.tick_token', 'TICK_TOKEN') + ['setting' => $setting('tick_token')],
+            'site_api_key' => $seen('services.host.site_api_key', 'SITE_API_KEY') + ['setting' => $setting('site_api_key')],
             'db_url' => $seen(null, 'DB_HOST'),
         ])->header('Cache-Control', 'no-store');
     }
