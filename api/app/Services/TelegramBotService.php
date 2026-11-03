@@ -195,6 +195,29 @@ class TelegramBotService
         }
     }
 
+    /** Stop a member posting in a group until the given time; Telegram lifts it by itself. */
+    public function mute(int|string $chatId, int $userId, \DateTimeInterface $until): bool
+    {
+        try {
+            $this->post('restrictChatMember', [
+                'chat_id' => $chatId,
+                'user_id' => $userId,
+                'permissions' => [
+                    'can_send_messages' => false, 'can_send_audios' => false, 'can_send_documents' => false,
+                    'can_send_photos' => false, 'can_send_videos' => false, 'can_send_video_notes' => false,
+                    'can_send_voice_notes' => false, 'can_send_polls' => false, 'can_send_other_messages' => false,
+                    'can_add_web_page_previews' => false,
+                ],
+                'use_independent_chat_permissions' => true,
+                'until_date' => $until->getTimestamp(),
+            ], retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
     /** "typing…" in the chat while something slow runs. Best effort. */
     public function typing(int|string $chatId): void
     {

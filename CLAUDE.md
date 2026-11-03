@@ -77,6 +77,32 @@ one stays until a moderator acts. Cities are rows in `directory_cities`
 Business kinds are fixed in `Choices::BUSINESS_CATEGORIES`, and money
 exchange or transfer is deliberately not one of them.
 
+## Community: questions, assistant, announcements, moderation
+
+- **Every Claude call goes through `App\Ai\ClaudeJson`** (model from Job
+  settings, CA list, default refusal fallback, error mapping to
+  `AiUnavailable` / `AiDeclined`). The container builds `ClaudeJson` and
+  `ClaudeJobClassifier` by hand in `AppServiceProvider`; left to itself it
+  would inject a bare Anthropic client without the stored key.
+- **The assistant answers only from checked material**: the knowledge base
+  and the FAQ, cached in the system prompt. It must say when it does not know
+  rather than guess fees, dates or rules; keep it that way when you edit the
+  prompt. No key, or Claude failing, falls back to `KnowledgeSearch`.
+- **Questions** live in forum topics in the questions group
+  (`QuestionsFlow`); answers are members' messages in the topic. Points: 1
+  for a member's first answer, 5 for the marked solution, 10 when it becomes
+  an FAQ entry. Ranks carry no rights.
+- **Announcements** (`AnnouncementsFlow`, `AnnouncementPublisher`): leaders
+  post only in topics granted on their member page; deaths and fundraisers
+  from a leader wait for a moderator. DMs go out on the queue
+  (`SendAnnouncementDms`), never inside the request.
+- **Group moderation** (`GroupModerator`) runs before anything else reads a
+  group message; a removed message is never recorded as an answer. Leaders,
+  moderators and admins are exempt. Every removal is explained to the member
+  privately. Keep new checks inside it so the Moderation page sees them.
+- **Groups and channels** the bot is added to are recorded in `bot_chats`
+  and listed on Settings, so ids are picked, not typed.
+
 ## Phone numbers are never stored
 
 A member is keyed on `phone_hash` (HMAC of the digits with the app key) plus

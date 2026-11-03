@@ -26,6 +26,7 @@ class Member extends Model
             'agreed_rules_at' => 'datetime',
             'left_at' => 'datetime',
             'banned_at' => 'datetime',
+            'muted_until' => 'datetime',
             'rating_avg' => 'decimal:2',
         ];
     }
@@ -44,6 +45,17 @@ class Member extends Model
     public function isBanned(): bool
     {
         return $this->banned_at !== null;
+    }
+
+    public function isMuted(): bool
+    {
+        return $this->muted_until !== null && $this->muted_until->isFuture();
+    }
+
+    /** Leaders, moderators and admins are trusted: the automatic checks leave them alone. */
+    public function isTrusted(): bool
+    {
+        return $this->hasRole('leader', 'moderator', 'admin');
     }
 
     public function hasLeft(): bool

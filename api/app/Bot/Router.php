@@ -30,6 +30,7 @@ class Router
         private readonly FaqFlow $faq,
         private readonly SafetyFlow $safety,
         private readonly AnnouncementsFlow $announcements,
+        private readonly GroupModerator $moderator,
     ) {}
 
     public function handle(TelegramUpdate $update): void
@@ -431,10 +432,16 @@ class Router
     {
         $chatId = (string) ($post['chat']['id'] ?? '');
         \App\Models\BotChat::touchFromMessage($post['chat'] ?? []);
-        $questionsGroup = \App\Support\Community::questionsGroup();
 
-        if ($questionsGroup !== '' && $chatId === $questionsGroup && isset($post['from']['id']) && empty($post['from']['is_bot'])) {
-            $this->questions->groupMessage($post, Member::findByTelegramUser((int) $post['from']['id']));
+        if (GroupModerator::isCommunityGroup($chatId)) {
+            // Moderation first: a removed message is never recorded as an answer.
+            if ($this->moderator->check($post)) {
+                return;
+            }
+
+            if ($chatId === \App\Support\Community::questionsGroup() && isset($post['from']['id'])) {
+                $this->questions->groupMessage($post, Member::findByTelegramUser((int) $post['from']['id']));
+            }
 
             return;
         }

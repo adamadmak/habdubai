@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\JobController;
 use App\Http\Controllers\Admin\JobSettingsController;
 use App\Http\Controllers\Admin\JobSourceController;
 use App\Http\Controllers\Admin\MemberController;
+use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SystemTickController;
@@ -103,6 +104,9 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('announcement-topics', [AnnouncementController::class, 'storeTopic'])->name('announcement-topics.store');
         Route::put('announcement-topics/{topic}', [AnnouncementController::class, 'updateTopic'])->name('announcement-topics.update');
         Route::match(['get', 'put'], 'members/{member}/leader-topics', [AnnouncementController::class, 'leaderTopics'])->name('members.leader-topics');
+
+        Route::get('moderation', [ModerationController::class, 'index'])->name('moderation.index');
+        Route::post('moderation/resolve', [ModerationController::class, 'resolve'])->name('moderation.resolve');
 
         Route::get('employer-reports', [EmployerReportController::class, 'index'])->name('employer-reports.index');
         Route::put('employer-reports/{report}', [EmployerReportController::class, 'update'])->name('employer-reports.update');

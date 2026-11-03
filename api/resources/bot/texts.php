@@ -1009,6 +1009,43 @@ return [
         'ti' => "⏰ <b>መዘኻኸሪ፡ ጽባሕ</b>\n\n{card}",
         'en' => "⏰ <b>Reminder: tomorrow</b>\n\n{card}",
     ],
+    // ---- group moderation -------------------------------------------------
+    'mod_removed_link' => [
+        'am' => 'በቡድኑ የላኩት መልዕክት ተወግዷል፤ አዲስ አባላት በመጀመሪያዎቹ 7 ቀናት ሊንክ ወይም ስልክ ቁጥር መለጠፍ አይችሉም። ይህ አጭበርባሪዎችን ለመከላከል ነው።',
+        'ti' => 'ኣብ ጉጅለ ዝሰደድኩምዎ መልእኽቲ ተኣልዩ፤ ሓደስቲ ኣባላት ኣብ ቀዳሞት 7 መዓልታት ሊንክ ወይ ቁጽሪ ስልኪ ክለጥፉ ኣይኽእሉን። እዚ ንመታለልቲ ንምክልኻል እዩ።',
+        'en' => 'Your message in the group was removed: new members cannot post links or phone numbers in their first 7 days. This keeps scammers out.',
+    ],
+    'mod_removed_phrase' => [
+        'am' => 'በቡድኑ የላኩት መልዕክት የታወቀ የማጭበርበሪያ አገላለጽ ስለያዘ ተወግዷል። ስህተት ከሆነ ለአወያይ ይንገሩ።',
+        'ti' => 'ኣብ ጉጅለ ዝሰደድኩምዎ መልእኽቲ ፍሉጥ ናይ ምትላል ኣበሃህላ ስለዝሓዘ ተኣልዩ። ጌጋ እንተኾይኑ ንኣወያዪ ንገሩ።',
+        'en' => 'Your message in the group was removed because it matched a known scam phrase. If this is a mistake, tell a moderator.',
+    ],
+    'mod_removed_item' => [
+        'am' => 'የዕቃ መልዕክትዎ ተወግዷል፤ ጥሬ ገንዘብ፣ ወርቅ፣ ጌጣጌጥ፣ መድሃኒትና የተከለከሉ ዕቃዎችን በሰሌዳው ማጓጓዝ አይቻልም።',
+        'ti' => 'መልእኽቲ ኣቕሑኹም ተኣልዩ፤ ጥረ ገንዘብ፣ ወርቂ፣ ስልማት፣ መድሃኒትን ዝተኸልከሉ ኣቕሑን ብሰሌዳ ምጽዓን ኣይከኣልን።',
+        'en' => 'Your goods post was removed: cash, gold, jewellery, medicine and banned items cannot be carried through the board.',
+    ],
+    'mod_muted' => [
+        'am' => 'ተደጋጋሚ መልዕክቶች ስለተወገዱ ለ{hours} ሰዓታት በቡድኖቹ መለጠፍ አይችሉም።',
+        'ti' => 'ተደጋጋሚ መልእኽትታት ስለዝተኣልዩ ን{hours} ሰዓታት ኣብ ጉጅለታት ክትለጥፉ ኣይትኽእሉን።',
+        'en' => 'You cannot post in the groups for {hours} hours after repeated removals.',
+    ],
+    'mod_warning' => [
+        'am' => "⚠️ አወያይ አስጠንቅቆዎታል፡ {reason}\n\nእባክዎ የማህበረሰቡን ህጎች ይከተሉ። በ90 ቀናት ውስጥ ሦስት ማስጠንቀቂያ ለ7 ቀናት መለጠፍ ያስከለክላል።",
+        'ti' => "⚠️ ኣወያዪ ኣጠንቂቑኩም፡ {reason}\n\nበጃኹም ሕግታት ማሕበረሰብ ተኸተሉ። ኣብ 90 መዓልታት ሰለስተ መጠንቀቕታ ን7 መዓልታት ካብ ምልጣፍ የኽልክል።",
+        'en' => "⚠️ A moderator warned you: {reason}\n\nPlease follow the community rules. Three warnings in 90 days mean 7 days without posting.",
+    ],
+    'mod_report_need_reply' => [
+        'am' => 'መልዕክት ሪፖርት ለማድረግ ለዚያ መልዕክት በ /report ይመልሱ።',
+        'ti' => 'መልእኽቲ ሪፖርት ንምግባር ነቲ መልእኽቲ ብ /report መልሱሉ።',
+        'en' => 'To report a message, reply to it with /report.',
+    ],
+    'mod_report_thanks' => [
+        'am' => 'አመሰግናለሁ፤ ሪፖርትዎ ደርሷል። አወያዮች ያዩታል።',
+        'ti' => 'የቐንየለይ፤ ሪፖርትኹም በጺሑ። ኣወያየቲ ክርእይዎ እዮም።',
+        'en' => 'Thank you, your report is in. Moderators will look at it.',
+    ],
+
     'topics_menu' => [
         'am' => "📣 <b>በመልዕክት የሚደርስዎ ማስታወቂያ</b>\n\nርዕስ ለማብራት ወይም ለማጥፋት ይጫኑ። ሁሉም በቻናሉም ይገኛል።",
         'ti' => "📣 <b>ብመልእኽቲ ዝበጽሓኩም መወዓውዒ</b>\n\nኣርእስቲ ንምብራህ ወይ ንምጥፋእ ጠውቑ። ኩሉ ኣብ ቻነል እውን ይርከብ።",

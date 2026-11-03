@@ -156,7 +156,7 @@ export interface DashboardPayload {
   jobs: { published_today: number; open: number; review: number; duplicates_today: number; alerts_queued: number; classifier: "claude" | "rules"; channel: boolean };
   sources: { active: number; paused: number; failing: number };
   directory: { listed: number; pending: number; hidden: number };
-  community: { questions_open: number; questions_today: number; announcements_pending: number; safety_open: number; faq_live: number };
+  community: { questions_open: number; questions_today: number; announcements_pending: number; safety_open: number; faq_live: number; reports_open: number };
   tick: { at: string; seconds: number } | null;
 }
 

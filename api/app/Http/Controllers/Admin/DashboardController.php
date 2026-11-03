@@ -65,6 +65,7 @@ class DashboardController extends Controller
                 'announcements_pending' => \App\Models\Announcement::query()->where('status', 'pending')->count(),
                 'safety_open' => \App\Models\EmployerReport::query()->where('status', 'open')->count(),
                 'faq_live' => \App\Models\FaqEntry::query()->where('active', true)->count(),
+                'reports_open' => \App\Models\GroupReport::query()->where('status', 'open')->distinct()->count('message_id'),
             ],
             'tick' => Cache::get(SystemTickController::LAST_TICK_KEY),
         ]);
