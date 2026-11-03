@@ -8,7 +8,8 @@ import { Clocks } from "@/components/Clocks";
 import { KindBadge } from "@/components/Cover";
 import { HomeSearch } from "@/components/HomeSearch";
 import { Night } from "@/components/Night";
-import { api, type Home } from "@/lib/api";
+import { GoodsTeaser } from "@/components/goods/GoodsBits";
+import { api, type GoodsBoard, type Home } from "@/lib/api";
 import { dayAndMonth, ethiopianDate, number, relative, weekday } from "@/lib/format";
 import { dict, isLocale, label } from "@/lib/i18n";
 
@@ -16,7 +17,8 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const d = dict(lang);
-  const home = await api<Home>("/public/home");
+  // The goods board's numbers are a bonus: if they cannot be read, the front page still renders.
+  const [home, goods] = await Promise.all([api<Home>("/public/home"), api<GoodsBoard>("/public/goods").catch(() => null)]);
   const { meta, stats } = home;
   const job = home.jobs[0];
   const event = home.events[0];
@@ -261,17 +263,20 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         </Section>
       )}
 
+      {/* ---- The goods board: spare kilos between the two homes. ---- */}
+      <GoodsTeaser lang={lang} d={d} board={goods} mark={4} />
+
       {(home.events.length > 0 || home.announcements.length > 0) && (
         <div className="mx-auto grid max-w-6xl gap-x-8 md:grid-cols-[1fr_1.6fr]">
           {home.events.length > 0 && (
-            <Section mark={4} title={d.home.eventsTitle} more={{ href: `/${lang}/news?events=1`, label: d.common.seeAll }} className="w-full md:px-0 md:pl-4">
+            <Section mark={5} title={d.home.eventsTitle} more={{ href: `/${lang}/news?events=1`, label: d.common.seeAll }} className="w-full md:px-0 md:pl-4">
               <div className="flex flex-col gap-3">
                 {home.events.map((e) => <EventCard key={e.id} item={e} lang={lang} />)}
               </div>
             </Section>
           )}
           {home.announcements.length > 0 && (
-            <Section mark={home.events.length > 0 ? 5 : 4} title={d.home.newsTitle} more={{ href: `/${lang}/news`, label: d.common.seeAll }} className="w-full md:px-0 md:pr-4">
+            <Section mark={home.events.length > 0 ? 6 : 5} title={d.home.newsTitle} more={{ href: `/${lang}/news`, label: d.common.seeAll }} className="w-full md:px-0 md:pr-4">
               <div className="row-scroll md:mx-0 md:grid-flow-row md:grid-cols-2 md:overflow-visible md:px-0">
                 {home.announcements.slice(0, 4).map((a) => <NewsCard key={a.id} item={a} lang={lang} />)}
               </div>

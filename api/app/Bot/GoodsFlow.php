@@ -262,6 +262,10 @@ class GoodsFlow
             'kilos_left' => $traveller ? (int) $data['kilos'] : null,
             'categories' => array_values((array) $data['categories']),
             'description' => $data['text'] ?? null,
+            // Set from the website; the bot's own steps leave the purpose "send" and the fee to agree.
+            'mode' => $traveller ? null : (($data['mode'] ?? 'send') === 'request' ? 'request' : 'send'),
+            'price' => isset($data['price']) ? (int) $data['price'] : null,
+            'currency' => isset($data['price']) && (int) $data['price'] > 0 ? ($data['currency'] ?? 'AED') : null,
             'status' => 'open',
         ]);
         $post->setRelation('member', $member);
@@ -284,50 +288,59 @@ class GoodsFlow
         $conversation->reset();
 
         // Checked again: time has passed since /travel or /send.
-        if (GoodsMatch::blocked($member)) {
-            $this->say($member, 'goods_blocked', [], $this->telegram->removeKeyboard());
+        $refusal = $this->refusal($member, (string) $data['kind'], (string) ($data['date'] ?? ''));
+        if ($refusal !== null) {
+            $key = ['blocked' => 'goods_blocked', 'max_open' => 'goods_max_open', 'date' => 'goods_date_invalid'][$refusal];
+            $this->say($member, $key, $refusal === 'max_open' ? ['max' => GoodsPost::MAX_OPEN] : [], $this->telegram->removeKeyboard());
 
             return;
         }
-        if (GoodsPost::openOf($member, (string) $data['kind'])->count() >= GoodsPost::MAX_OPEN) {
-            $this->say($member, 'goods_max_open', ['max' => GoodsPost::MAX_OPEN], $this->telegram->removeKeyboard());
-
-            return;
-        }
-        if (($data['date'] ?? '') < GoodsPost::today()) {
-            $this->say($member, 'goods_date_invalid', [], $this->telegram->removeKeyboard());
-
-            return;
-        }
-
-        $post = $this->draft($member, $data);
-        $post->save();
-        AuditLog::record(null, 'goods.posted', 'goods_post', $post->id, null, ['member_id' => $member->id, 'kind' => $post->kind, 'direction' => $post->direction]);
-
-        $inGroup = $this->postToGroup($post);
-        $this->say($member, 'goods_posted', ['group' => $inGroup ? $this->messages->text('goods_posted_group', $l) : ''], $this->telegram->removeKeyboard());
 
         $pending = isset($data['interest']) ? GoodsPost::query()->with('member')->find((int) $data['interest']) : null;
-        if ($pending !== null) {
-            if (! $pending->isOpen() || ! $pending->member?->isActive()) {
-                $this->say($member, 'goods_post_closed');
-            } elseif (! $post->pairsWith($pending)) {
-                $this->say($member, 'goods_interest_mismatch');
-            } else {
-                $this->request($member, $pending, $post);
-            }
-        }
+        ['post' => $post, 'in_group' => $inGroup, 'others' => $others] = $this->create($member, $data, $pending?->id);
+        $this->say($member, 'goods_posted', ['group' => $inGroup ? $this->messages->text('goods_posted_group', $l) : ''], $this->telegram->removeKeyboard());
 
-        $candidates = $post->candidates(5);
-        $others = $candidates->reject(fn (GoodsPost $c) => $c->id === $pending?->id)->values();
+        if ($pending !== null) {
+            $this->sayStatus($member, $this->followUp($member, $post, $pending), $pending);
+        }
 
         if ($others->isNotEmpty()) {
             $this->sendList($member, $this->messages->text('goods_matches_title', $l), $others);
         } elseif ($pending === null) {
             $this->say($member, 'goods_no_matches');
         }
+    }
 
-        // The other side hears about a new post that fits theirs, once per member.
+    /**
+     * Why this member cannot add a post of this kind now, or null: blocked after failed deals,
+     * already at the most open posts, or a date in the past.
+     */
+    public function refusal(Member $member, string $kind, string $date): ?string
+    {
+        return match (true) {
+            GoodsMatch::blocked($member) => 'blocked',
+            GoodsPost::openOf($member, $kind)->count() >= GoodsPost::MAX_OPEN => 'max_open',
+            $date < GoodsPost::today() => 'date',
+            default => null,
+        };
+    }
+
+    /**
+     * A new post, from the bot or the website: saved, put on the goods group, and the members
+     * whose open posts fit it are told (once each). The post a request is waiting on is left out:
+     * that member hears through the request.
+     *
+     * @return array{post: GoodsPost, in_group: bool, others: Collection<int, GoodsPost>}
+     */
+    public function create(Member $member, array $data, ?int $skipPostId = null): array
+    {
+        $post = $this->draft($member, $data);
+        $post->save();
+        AuditLog::record(null, 'goods.posted', 'goods_post', $post->id, null, ['member_id' => $member->id, 'kind' => $post->kind, 'direction' => $post->direction]);
+
+        $inGroup = $this->postToGroup($post);
+        $others = $post->candidates(5)->reject(fn (GoodsPost $c) => $c->id === $skipPostId)->values();
+
         foreach ($others->unique('member_id') as $match) {
             $owner = $match->member;
             if (! $owner?->chat_id) {
@@ -341,6 +354,23 @@ class GoodsFlow
                 // A member who blocked the bot still sees it on the board.
             }
         }
+
+        return ['post' => $post, 'in_group' => $inGroup, 'others' => $others];
+    }
+
+    /**
+     * The request a post was made for ("interested" before the member had a post of their own):
+     * sent now if the two still pair.
+     *
+     * @return string closed|mismatch, or what sendRequest() answers
+     */
+    public function followUp(Member $member, GoodsPost $post, GoodsPost $pending): string
+    {
+        if (! $pending->isOpen() || ! $pending->member?->isActive()) {
+            return 'closed';
+        }
+
+        return $post->pairsWith($pending) ? $this->sendRequest($member, $pending, $post) : 'mismatch';
     }
 
     // ---- interest and introductions ----------------------------------------------
@@ -349,46 +379,9 @@ class GoodsFlow
     public function interest(Member $member, int $postId): void
     {
         $post = GoodsPost::query()->with('member')->find($postId);
+        $status = $this->ask($member, $post);
 
-        if (! $post || ! $post->isOpen() || ! $post->member?->isActive()) {
-            $this->say($member, 'goods_post_closed');
-
-            return;
-        }
-
-        if ($post->member_id === $member->id) {
-            $this->say($member, 'goods_own_post');
-
-            return;
-        }
-
-        if (GoodsMatch::blocked($member)) {
-            $this->say($member, 'goods_blocked');
-
-            return;
-        }
-
-        // They already asked about one of mine with this post: interest both ways is an acceptance.
-        $reverse = GoodsMatch::query()->where('requester_post_id', $post->id)->where('owner_id', $member->id)->where('status', 'requested')->first();
-        if ($reverse !== null) {
-            $this->accept($member, $reverse);
-
-            return;
-        }
-
-        $known = GoodsMatch::query()->where(function ($q) use ($post, $member): void {
-            $q->where(fn ($a) => $a->where('post_id', $post->id)->where('requester_id', $member->id))
-                ->orWhere(fn ($b) => $b->where('requester_post_id', $post->id)->where('owner_id', $member->id)->whereIn('status', ['introduced', 'agreed', 'disputed']));
-        })->exists();
-        if ($known) {
-            $this->say($member, 'goods_already_asked');
-
-            return;
-        }
-
-        $mine = $post->candidates(1, $member->id)->first();
-
-        if ($mine === null) {
+        if ($status === 'need_post') {
             $kind = $post->isTraveller() ? 'sender' : 'traveller';
             $this->say($member, 'goods_need_post_'.$kind);
             $this->begin($member, Conversation::forUser((int) $member->telegram_user_id, (int) $member->chat_id), $kind, $post);
@@ -396,16 +389,59 @@ class GoodsFlow
             return;
         }
 
-        $this->request($member, $post, $mine);
+        $this->sayStatus($member, $status, $post);
     }
 
-    private function request(Member $requester, GoodsPost $post, GoodsPost $mine): void
+    /**
+     * "Interested", from the bot or the website: the request goes to the post's owner, or the
+     * answer says why not. Interest needs the member's own open post on the other side.
+     *
+     * @return string sent|accepted|already|need_post|closed|own|blocked|limit|unreachable
+     */
+    public function ask(Member $member, ?GoodsPost $post): string
+    {
+        if (! $post || ! $post->isOpen() || ! $post->member?->isActive()) {
+            return 'closed';
+        }
+        if ($post->member_id === $member->id) {
+            return 'own';
+        }
+        if (GoodsMatch::blocked($member)) {
+            return 'blocked';
+        }
+
+        // They already asked about one of mine with this post: interest both ways is an acceptance.
+        $reverse = GoodsMatch::query()->where('requester_post_id', $post->id)->where('owner_id', $member->id)->where('status', 'requested')->first();
+        if ($reverse !== null) {
+            $this->accept($member, $reverse);
+
+            return 'accepted';
+        }
+
+        $known = GoodsMatch::query()->where(function ($q) use ($post, $member): void {
+            $q->where(fn ($a) => $a->where('post_id', $post->id)->where('requester_id', $member->id))
+                ->orWhere(fn ($b) => $b->where('requester_post_id', $post->id)->where('owner_id', $member->id)->whereIn('status', ['introduced', 'agreed', 'disputed']));
+        })->exists();
+        if ($known) {
+            return 'already';
+        }
+
+        $mine = $post->candidates(1, $member->id)->first();
+
+        return $mine === null ? 'need_post' : $this->sendRequest($member, $post, $mine);
+    }
+
+    /**
+     * The request itself: the owner reads the asker's post and badge, nothing more, and answers
+     * in Telegram.
+     *
+     * @return string sent|limit|already|unreachable
+     */
+    private function sendRequest(Member $requester, GoodsPost $post, GoodsPost $mine): string
     {
         $today = GoodsMatch::query()->where('requester_id', $requester->id)->where('created_at', '>=', now()->startOfDay())->count();
         if ($today >= GoodsMatch::REQUESTS_PER_DAY) {
-            $this->say($requester, 'goods_requests_limit', ['count' => $today]);
-
-            return;
+            return 'limit';
         }
 
         $sender = $post->isTraveller() ? $mine : $post;
@@ -420,9 +456,7 @@ class GoodsFlow
                 'kilos' => $sender->kilos,
             ]);
         } catch (UniqueConstraintViolationException) {
-            $this->say($requester, 'goods_already_asked');
-
-            return;
+            return 'already';
         }
 
         $owner = $post->member;
@@ -439,12 +473,29 @@ class GoodsFlow
             ]]]);
         } catch (\Throwable) {
             $match->forceFill(['status' => 'cancelled', 'closed_at' => now()])->save();
-            $this->say($requester, 'goods_request_unreachable', ['name' => e($owner->display_name)]);
 
-            return;
+            return 'unreachable';
         }
 
-        $this->say($requester, 'goods_request_sent', ['name' => e($owner->display_name)]);
+        return 'sent';
+    }
+
+    /** The bot's words for what ask() or followUp() answered. "Accepted" has spoken already. */
+    private function sayStatus(Member $member, string $status, GoodsPost $post): void
+    {
+        $name = ['name' => e((string) $post->member?->display_name)];
+
+        match ($status) {
+            'sent' => $this->say($member, 'goods_request_sent', $name),
+            'unreachable' => $this->say($member, 'goods_request_unreachable', $name),
+            'limit' => $this->say($member, 'goods_requests_limit', ['count' => GoodsMatch::REQUESTS_PER_DAY]),
+            'already' => $this->say($member, 'goods_already_asked'),
+            'own' => $this->say($member, 'goods_own_post'),
+            'blocked' => $this->say($member, 'goods_blocked'),
+            'mismatch' => $this->say($member, 'goods_interest_mismatch'),
+            'closed' => $this->say($member, 'goods_post_closed'),
+            default => null,
+        };
     }
 
     private function accept(Member $owner, GoodsMatch $match): void
@@ -939,12 +990,14 @@ class GoodsFlow
 
     private function close(Member $member, int $postId): void
     {
-        $post = GoodsPost::query()->find($postId);
+        $this->say($member, $this->closePost($member, GoodsPost::query()->find($postId)) ? 'goods_closed' : 'goods_post_closed');
+    }
 
+    /** A member closes their own open post, from the bot or the website; requests still waiting on it are cancelled. */
+    public function closePost(Member $member, ?GoodsPost $post): bool
+    {
         if (! $post || $post->member_id !== $member->id || $post->status !== 'open') {
-            $this->say($member, 'goods_post_closed');
-
-            return;
+            return false;
         }
 
         $post->forceFill(['status' => 'closed'])->save();
@@ -954,7 +1007,8 @@ class GoodsFlow
 
         AuditLog::record(null, 'goods.closed', 'goods_post', $post->id, null, ['by' => $member->id]);
         $this->refreshGroupCard($post);
-        $this->say($member, 'goods_closed');
+
+        return true;
     }
 
     // ---- buttons ----------------------------------------------------------------------------------
@@ -1108,6 +1162,7 @@ class GoodsFlow
     {
         $categories = array_map(fn (string $c) => Choices::label(Choices::GOODS_CATEGORIES, $c, $l), (array) $post->categories);
         $notes = $post->description ? "\n📝 ".e($short ? Str::limit($post->description, 120) : $post->description) : '';
+        $notes = ($post->mode === 'request' ? "\n".$this->messages->text('goods_mode_request', $l) : '').$notes.$this->feeLine($post, $l);
 
         return $this->messages->text($post->isTraveller() ? 'goods_card_traveller' : 'goods_card_sender', $l, [
             'route' => e($this->route($post, $l)),
@@ -1116,6 +1171,22 @@ class GoodsFlow
             'categories' => e(implode(', ', $categories)),
             'notes' => $notes,
             'badge' => $this->badge($post->member, $l),
+        ]);
+    }
+
+    /** The carry fee, when one was set: per kilo for a trip, an offer for a parcel, or free. */
+    private function feeLine(GoodsPost $post, string $l): string
+    {
+        if ($post->price === null) {
+            return '';
+        }
+        if ((int) $post->price === 0) {
+            return "\n".$this->messages->text('goods_fee_free', $l);
+        }
+
+        return "\n".$this->messages->text($post->isTraveller() ? 'goods_fee_per_kg' : 'goods_fee_total', $l, [
+            'amount' => number_format((int) $post->price),
+            'currency' => (string) $post->currency,
         ]);
     }
 

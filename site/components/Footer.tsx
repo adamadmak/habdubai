@@ -34,6 +34,7 @@ export function Footer({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
           <Link className={link} href={`/${lang}/jobs`}>{d.nav.jobs}</Link>
           <Link className={link} href={`/${lang}/directory`}>{d.nav.directory}</Link>
           <Link className={link} href={`/${lang}/news`}>{d.nav.news}</Link>
+          <Link className={link} href={`/${lang}/goods`}>{d.nav.goods}</Link>
           <Link className={link} href={`/${lang}/about`}>{d.nav.about}</Link>
         </nav>
         <div className="flex flex-col gap-3 text-sm">

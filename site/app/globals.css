@@ -612,9 +612,345 @@
   .tile-link:hover .tile-arrow {
     translate: 3px 0;
   }
+  .pass {
+    transition: box-shadow 220ms var(--ease-fluid), border-color 220ms var(--ease-fluid);
+  }
+  .pass:has(.pass-link):hover {
+    box-shadow: 0 16px 36px -18px color-mix(in oklab, var(--color-night) 45%, transparent);
+    border-color: color-mix(in oklab, var(--color-line) 55%, var(--cover-b) 45%);
+  }
 }
 .tile-arrow {
   transition: translate 220ms var(--ease-fluid);
+}
+
+/*
+ * The goods board. Every post is a boarding pass: a band in its kind's
+ * colours, the route in big letters, a perforation, then the stub with the
+ * kilos, the fee and the member's badge. Trips are the Nile blue, parcels to
+ * send the kraft of a parcel, things to be brought the green of home. The
+ * kind's pair is set as --cover-a/--cover-b, so .cover draws the band.
+ */
+.goods-traveller {
+  --cover-a: #1b4ddb;
+  --cover-b: #3a2fb8;
+  --kind-ink: #1b4ddb;
+  --kind-soft: #e8eefd;
+}
+.goods-send {
+  --cover-a: #8a3a14;
+  --cover-b: #c45a1c;
+  --kind-ink: #9a4318;
+  --kind-soft: #fbeadf;
+}
+.goods-request {
+  --cover-a: #0c4f42;
+  --cover-b: #138a6a;
+  --kind-ink: #0f7259;
+  --kind-soft: #ddf2ea;
+}
+@media (prefers-color-scheme: dark) {
+  .goods-traveller {
+    --kind-ink: #8aa4ff;
+    --kind-soft: #16224d;
+  }
+  .goods-send {
+    --kind-ink: #f4a77a;
+    --kind-soft: #3a1f12;
+  }
+  .goods-request {
+    --kind-ink: #6fd9b5;
+    --kind-soft: #0f2e27;
+  }
+}
+
+.pass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--color-elevated);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+/* The whole pass opens its page; the link's ring is drawn around the pass. */
+.pass-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.pass-link:focus-visible {
+  outline: none;
+}
+.pass:has(.pass-link:focus-visible) {
+  outline: 2.5px solid var(--color-primary);
+  outline-offset: 2px;
+}
+/* The tear line between the pass and its stub, with a notch punched at each edge. */
+.pass-perf {
+  position: relative;
+  height: 0;
+  margin-inline: 1rem;
+  border-top: 2px dashed var(--color-line);
+}
+.pass-perf::before,
+.pass-perf::after {
+  content: "";
+  position: absolute;
+  top: -0.6875rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--perf-bg, var(--color-bg));
+  border: 1px solid var(--color-line);
+}
+.pass-perf::before {
+  left: calc(-1rem - 0.6875rem);
+}
+.pass-perf::after {
+  right: calc(-1rem - 0.6875rem);
+}
+/* The route's arc between the two codes; the kind's icon rides on top. */
+.pass-arc {
+  display: block;
+  height: 1.375rem;
+  border: 2px dashed color-mix(in oklab, var(--cover-b) 55%, transparent);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0 / 100% 100% 0 0;
+}
+
+/* A suitcase on its side: the kilos still free on a trip, the weight of a parcel. Ribs every five kilos. */
+.gauge-case {
+  position: relative;
+  display: block;
+  padding-top: 0.3125rem;
+}
+.gauge-case::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1.25rem;
+  height: 0.5rem;
+  margin-left: -0.625rem;
+  border: 2px solid var(--color-line);
+  border-bottom: 0;
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+.gauge {
+  position: relative;
+  display: block;
+  height: 0.875rem;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.gauge > span {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: calc(var(--share, 0) * 100%);
+  background: linear-gradient(90deg, var(--cover-a), var(--cover-b));
+}
+.gauge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(100% / var(--ticks, 4) - 1.5px),
+    color-mix(in oklab, var(--color-elevated) 75%, transparent) calc(100% / var(--ticks, 4) - 1.5px) calc(100% / var(--ticks, 4))
+  );
+}
+
+/* The action on a pass, in the pass's own colours. */
+.btn-kind {
+  color: #fff;
+  background: linear-gradient(135deg, var(--cover-a), var(--cover-b));
+  box-shadow: 0 8px 20px -12px var(--cover-a);
+}
+.btn-kind:hover {
+  background: var(--cover-a);
+}
+
+/* Toggle buttons on paper, a lit thumb under the pressed one (the night version is the front page's search). */
+.toggle-group {
+  position: relative;
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  border-radius: 999px;
+  background: var(--color-surface);
+  padding: 0.25rem;
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.toggle-group > button {
+  position: relative;
+  z-index: 1;
+  min-height: 2.5rem;
+  border-radius: 999px;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-muted);
+  transition: color 160ms var(--ease-fluid);
+}
+.toggle-group > button:hover {
+  color: var(--color-fg);
+}
+.toggle-group > button[aria-pressed="true"] {
+  color: #fff;
+}
+.toggle-thumb {
+  position: absolute;
+  inset-block: 0.25rem;
+  left: 0.25rem;
+  border-radius: 999px;
+  background: var(--color-night);
+  box-shadow: 0 6px 16px -8px rgb(6 12 36 / 0.6);
+  transition: translate 300ms var(--ease-fluid);
+}
+@media (prefers-color-scheme: dark) {
+  .toggle-group > button[aria-pressed="true"] {
+    color: #10142b;
+  }
+  .toggle-thumb {
+    background: var(--color-accent);
+  }
+}
+
+/* A choice in the goods form: a big card that lights up in its kind's colours when picked. */
+.choice {
+  position: relative;
+  display: flex;
+  cursor: pointer;
+  border-radius: 1.25rem;
+  border: 1.5px solid var(--color-line);
+  background: var(--color-elevated);
+  transition: border-color 160ms var(--ease-fluid), box-shadow 160ms var(--ease-fluid), background-color 160ms var(--ease-fluid);
+}
+.choice:has(:checked) {
+  border-color: var(--cover-b, var(--color-fg));
+  background: var(--kind-soft, var(--color-surface));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--cover-b, var(--color-fg)) 22%, transparent);
+}
+.choice:has(:focus-visible) {
+  outline: 2.5px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.choice:has(:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* The kilos slider: the kind's colours up to the thumb, a fingertip-sized thumb. */
+.kilo-range {
+  width: 100%;
+  height: 2.75rem;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.kilo-range::-webkit-slider-runnable-track {
+  height: 0.625rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cover-a) 0, var(--cover-b) var(--fill, 0%), var(--color-surface) var(--fill, 0%));
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.kilo-range::-moz-range-track {
+  height: 0.625rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.kilo-range::-moz-range-progress {
+  height: 0.625rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cover-a), var(--cover-b));
+}
+.kilo-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.5625rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--cover-b);
+  box-shadow: 0 4px 12px -4px rgb(6 12 36 / 0.45);
+}
+.kilo-range::-moz-range-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--cover-b);
+  box-shadow: 0 4px 12px -4px rgb(6 12 36 / 0.45);
+}
+.kilo-range:focus-visible {
+  outline: none;
+}
+.kilo-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 35%, transparent);
+}
+.kilo-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 35%, transparent);
+}
+
+/*
+ * The flight path in the goods board's night band. The plane flies the arc
+ * once (an SVG animateMotion, components/goods/FlightPath.tsx) while the gold
+ * trail draws in behind it on the same curve; neither loops.
+ */
+.flight-trail {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0.07;
+  animation: flight-trail 2.6s var(--ease-fluid) both;
+}
+@keyframes flight-trail {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+/* At rest: the trail drawn to the middle, where the plane waits. */
+.flight-trail-rest {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0.5;
+}
+.flight-still {
+  display: none;
+}
+
+/* A new post lands on the board, and a gold thread runs out under it. */
+@keyframes land {
+  from {
+    opacity: 0;
+    translate: 0 -2.5rem;
+    rotate: -2.5deg;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 1;
+  }
+}
+.land {
+  animation: land 760ms var(--ease-fluid) both;
+}
+@keyframes thread {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.thread {
+  animation: thread 900ms var(--ease-fluid) 520ms both;
 }
 
 /*
@@ -626,11 +962,15 @@
 .lift:active,
 .press:active,
 .tile-link:active,
-.seg:active {
+.seg:active,
+.toggle-group > button:active,
+.choice:active,
+.pass:has(.pass-link:active) {
   scale: 0.97;
   transition: scale 90ms ease-out;
 }
-.tile-link:active {
+.tile-link:active,
+.pass:has(.pass-link:active) {
   scale: 0.985;
 }
 
@@ -723,12 +1063,34 @@ html[data-reveal] .reveal:not([data-in]) {
   .lift:active,
   .press:active,
   .tile-link:active,
-  .seg:active {
+  .seg:active,
+  .toggle-group > button:active,
+  .choice:active,
+  .pass:has(.pass-link:active) {
     scale: none;
   }
   .tile-arrow,
-  .seg-thumb {
+  .seg-thumb,
+  .toggle-thumb {
     transition: none !important;
+  }
+  /* The flight: the plane rests mid-arc instead of flying, the trail is drawn to it. */
+  .flight-trail {
+    animation: none;
+    stroke-dashoffset: 0.5;
+  }
+  .flight-moving {
+    display: none;
+  }
+  .flight-still {
+    display: inline;
+  }
+  /* A new post fades in where it lands; the thread is simply there. */
+  .land {
+    animation: settle-fade 300ms ease both;
+  }
+  .thread {
+    animation: none;
   }
   html {
     scroll-behavior: auto;
@@ -788,5 +1150,21 @@ html[data-reveal] .reveal:not([data-in]) {
   }
   .sky-word {
     display: none;
+  }
+  /* The goods board: the tear line, the suitcase and the toggles get firm edges. */
+  .pass-perf {
+    border-top-color: var(--color-fg);
+  }
+  .gauge {
+    box-shadow: inset 0 0 0 1.5px var(--color-fg);
+  }
+  .toggle-group {
+    box-shadow: inset 0 0 0 1.5px var(--color-fg);
+  }
+  .toggle-group > button {
+    color: var(--color-fg);
+  }
+  .choice {
+    border-color: var(--color-fg);
   }
 }

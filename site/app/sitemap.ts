@@ -25,6 +25,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/jobs", changeFrequency: "daily", priority: 0.9 },
     { path: "/directory", changeFrequency: "daily", priority: 0.9 },
     { path: "/news", changeFrequency: "daily", priority: 0.8 },
+    // The board only: a single trip or parcel lasts days and names a member, so its page is shared by link and never indexed.
+    { path: "/goods", changeFrequency: "daily", priority: 0.8 },
     { path: "/business", changeFrequency: "weekly", priority: 0.6 },
     { path: "/about", changeFrequency: "weekly", priority: 0.4 },
     { path: "/privacy", changeFrequency: "monthly", priority: 0.2, modified: LEGAL_UPDATED },

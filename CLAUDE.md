@@ -112,9 +112,19 @@ exchange or transfer is deliberately not one of them.
 
 ## Goods board: trust only, nothing carried by us
 
-`App\Bot\GoodsFlow` (`/travel`, `/send`, `/goods`, `/mygoods`, buttons `g:…`).
-No money moves through the platform and `goods_posts.price` stays null in
-phase one. Rules that are easy to break:
+`App\Bot\GoodsFlow` (`/travel`, `/send`, `/goods`, `/mygoods`, buttons `g:…`),
+and the same rules on the website (`/[lang]/goods`, `Owner\GoodsController`,
+`Public\GoodsController`), which call `GoodsFlow::refusal()`, `create()`,
+`ask()`, `followUp()` and `closePost()` rather than re-implementing them;
+accepting, agreeing and the check-in stay in Telegram.
+
+No money moves through the platform. Since 3 Nov 2026 a post may state a
+carry fee that the members pay each other directly (`price` + `currency`,
+AED or ETB): a traveller's price per kilo, 0 for free, or a sender's offer
+for the parcel; null means "to agree". A parcel is either sent by its owner
+(`mode` `send`) or handed to the traveller at the other end for the member
+who asked (`request`). `GET /api/public/goods/fit` shows the posts a new
+one would pair with before it is made. Rules that are easy to break:
 
 - **Interest needs your own post on the other side.** "Interested" on a trip
   without a parcel post starts `/send` and sends the request the moment it is

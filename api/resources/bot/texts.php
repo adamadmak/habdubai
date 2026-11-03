@@ -1524,6 +1524,28 @@ return [
         'ti' => 'ስምምዓት፡ {count}',
         'en' => 'deals: {count}',
     ],
+    // A parcel handed to the traveller at the other end, for the member who asked for it.
+    'goods_mode_request' => [
+        'am' => '🛍 ጥያቄ፦ ዕቃው በሌላኛው ወገን ለተጓዡ ይሰጣል',
+        'ti' => '🛍 ሕቶ፦ እቲ ኣቕሓ ኣብ ካልእ ወገን ንገያሻይ ይወሃብ',
+        'en' => '🛍 Request: handed to the traveller at the other end',
+    ],
+    // The carry fee the two agree and pay each other directly; the platform never holds money.
+    'goods_fee_per_kg' => [
+        'am' => '💵 {amount} {currency} በኪሎ',
+        'ti' => '💵 {amount} {currency} ብኪሎ',
+        'en' => '💵 {currency} {amount} per kg',
+    ],
+    'goods_fee_total' => [
+        'am' => '💵 የቀረበ ክፍያ፦ {amount} {currency}',
+        'ti' => '💵 ዝቐረበ ክፍሊት፦ {amount} {currency}',
+        'en' => '💵 Offer: {currency} {amount}',
+    ],
+    'goods_fee_free' => [
+        'am' => '💵 በነጻ',
+        'ti' => '💵 ብናጻ',
+        'en' => '💵 Free',
+    ],
     'goods_badge_new' => [
         'am' => 'በሰሌዳው አዲስ',
         'ti' => 'ኣብ ሰሌዳ ሓድሽ',

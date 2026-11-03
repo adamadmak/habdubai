@@ -20,8 +20,10 @@ use App\Http\Controllers\Admin\ModerationController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Owner\AuthController as OwnerAuth;
 use App\Http\Controllers\Owner\BusinessController as OwnerBusinesses;
+use App\Http\Controllers\Owner\GoodsController as OwnerGoods;
 use App\Http\Controllers\Public\AnnouncementController as PublicAnnouncements;
 use App\Http\Controllers\Public\DirectoryController as PublicDirectory;
+use App\Http\Controllers\Public\GoodsController as PublicGoods;
 use App\Http\Controllers\Public\HomeController as PublicHome;
 use App\Http\Controllers\Public\JobController as PublicJobs;
 use App\Http\Controllers\Public\MediaController as PublicMedia;
@@ -66,6 +68,10 @@ Route::prefix('public')->name('public.')->middleware('throttle:public')->group(f
     Route::get('announcements/{announcement}/photo', [PublicMedia::class, 'announcement'])->name('announcements.photo');
     Route::get('photos/{photo}', [PublicMedia::class, 'photo'])->name('photo');
     Route::get('photos/{photo}/preview', [PublicMedia::class, 'preview'])->middleware('signed:relative')->name('photo.preview');
+    // The goods board: open trips and parcels, and what a post would match before it is made.
+    Route::get('goods', [PublicGoods::class, 'index'])->name('goods');
+    Route::get('goods/fit', [PublicGoods::class, 'fit'])->name('goods.fit');
+    Route::get('goods/{post}', [PublicGoods::class, 'show'])->name('goods.show');
     // A page seen on the website, sent by its server: counted per day and path, nobody identified.
     Route::post('pageview', [PublicPageViews::class, 'store'])->name('pageview');
 });
@@ -87,6 +93,11 @@ Route::prefix('owner')->name('owner.')->middleware('locale')->group(function ():
         Route::delete('businesses/{business}', [OwnerBusinesses::class, 'destroy'])->name('businesses.destroy');
         Route::post('businesses/{business}/photo', [OwnerBusinesses::class, 'photo'])->name('businesses.photo');
         Route::post('businesses/{business}/claim', [OwnerBusinesses::class, 'claim'])->name('businesses.claim');
+        // The goods board for members: same rules as the bot, deals finish in Telegram.
+        Route::get('goods', [OwnerGoods::class, 'index'])->name('goods.index');
+        Route::post('goods', [OwnerGoods::class, 'store'])->middleware('throttle:20,1')->name('goods.store');
+        Route::post('goods/{post}/close', [OwnerGoods::class, 'close'])->name('goods.close');
+        Route::post('goods/{post}/interest', [OwnerGoods::class, 'interest'])->middleware('throttle:30,1')->name('goods.interest');
     });
 });
 

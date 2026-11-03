@@ -19,6 +19,12 @@ class GoodsPost extends Model
 
     public const DIRECTIONS = ['to_et', 'to_ae'];
 
+    /** A parcel its owner sends, or one handed over at the other end for the member who asked. */
+    public const MODES = ['send', 'request'];
+
+    /** Currencies a carry fee may be stated in; members pay each other directly. */
+    public const CURRENCIES = ['AED', 'ETB'];
+
     /** Open posts of each kind one member may have at once. */
     public const MAX_OPEN = 3;
 
@@ -29,8 +35,8 @@ class GoodsPost extends Model
     public const MAX_DAYS_AHEAD = 120;
 
     protected $fillable = [
-        'member_id', 'kind', 'direction', 'date', 'city_from', 'city_to', 'kilos', 'kilos_left',
-        'categories', 'description', 'price', 'status', 'group_message_id', 'hidden_reason',
+        'member_id', 'kind', 'mode', 'direction', 'date', 'city_from', 'city_to', 'kilos', 'kilos_left',
+        'categories', 'description', 'price', 'currency', 'status', 'group_message_id', 'hidden_reason',
     ];
 
     protected function casts(): array

@@ -12,6 +12,8 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public errors: Record<string, string[]> = {},
+    /** Why a 403 refused, where the API says (the goods board: not_member, blocked, max_open). */
+    public code: string | null = null,
   ) {
     super(message);
   }
@@ -69,13 +71,13 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   }
 
   if (!response.ok) {
-    let data: { message?: string; errors?: Record<string, string[]> } = {};
+    let data: { message?: string; errors?: Record<string, string[]>; code?: string } = {};
     try {
       data = await response.json();
     } catch {
       // Not JSON: keep the status text.
     }
-    throw new ApiError(response.status, data.message ?? response.statusText, data.errors ?? {});
+    throw new ApiError(response.status, data.message ?? response.statusText, data.errors ?? {}, typeof data.code === "string" ? data.code : null);
   }
 
   // A count or a sign-out answers with no body at all.
@@ -258,4 +260,108 @@ export interface OwnerChoices {
   cities: { id: number; key: string; name: Labels }[];
   languages: LabelList;
   limits: { listings: number; pending: number; photo_kb: number };
+}
+
+// ---- the goods board -----------------------------------------------------------------
+
+export type GoodsKind = "traveller" | "sender";
+export type GoodsDirection = "to_et" | "to_ae";
+/** What a parcel post is for: carry what I have here, or bring me what is over there. Null on a trip. */
+export type GoodsMode = "send" | "request";
+export type GoodsCurrency = "AED" | "ETB";
+
+export const GOODS_KINDS: readonly GoodsKind[] = ["traveller", "sender"];
+export const GOODS_DIRECTIONS: readonly GoodsDirection[] = ["to_et", "to_ae"];
+export const GOODS_MODES: readonly GoodsMode[] = ["send", "request"];
+export const GOODS_CURRENCIES: readonly GoodsCurrency[] = ["AED", "ETB"];
+
+export interface GoodsMemberBadge {
+  name: string;
+  /** "2025-03": the month the member proved their phone number to the bot. */
+  verified_since: string | null;
+  rating: number | null;
+  ratings: number;
+  deals: number;
+}
+
+/** One open post on the board: a trip with spare kilos, or a parcel. */
+export interface GoodsCard {
+  id: number;
+  kind: GoodsKind;
+  mode: GoodsMode | null;
+  direction: GoodsDirection;
+  date: string;
+  from: { key: string; name: Labels };
+  to: { key: string; name: Labels };
+  /** The trip's spare kilos in all, or the parcel's weight. */
+  kilos: number;
+  /** The trip's room still free; null on a parcel. */
+  kilos_left: number | null;
+  categories: { key: string; name: Labels }[];
+  description: string | null;
+  /** The carry fee, paid member to member: per kilo on a trip, a total offer on a parcel. 0 is free, null is "to agree". */
+  price: number | null;
+  currency: GoodsCurrency | null;
+  price_basis: "per_kg" | "total" | null;
+  member: GoodsMemberBadge;
+  created_at: string;
+}
+
+export interface GoodsChoices {
+  directions: Record<GoodsDirection, Labels>;
+  cities: Record<GoodsDirection, { from: LabelList; to: LabelList }>;
+  categories: LabelList;
+  max_kilos: number;
+  kilos_traveller: number[];
+  kilos_sender: number[];
+  max_days_ahead: number;
+  max_open: number;
+}
+
+export interface GoodsBoard extends Page<GoodsCard> {
+  stats: { trips: number; parcels: number; deals: number; kilos: number };
+  choices: GoodsChoices;
+}
+
+export type GoodsPostStatus = "open" | "matched" | "expired" | "closed" | "hidden";
+
+export type MyGoodsPost = GoodsCard & { status: GoodsPostStatus; open: boolean; requests: number };
+
+export interface GoodsDeal {
+  id: number;
+  status: string;
+  role: "owner" | "requester";
+  other_name: string;
+  route: { from: Labels; to: Labels };
+  date: string;
+  kilos: number | null;
+}
+
+export interface MyGoods {
+  /** Null when the account is not a community member yet: membership is proved in the bot. */
+  member: (GoodsMemberBadge & { active: boolean; blocked: boolean }) | null;
+  bot_link: string | null;
+  posts: MyGoodsPost[];
+  deals: GoodsDeal[];
+  limits: { max_open: number; open_traveller: number; open_sender: number };
+}
+
+export type GoodsInterestStatus = "sent" | "accepted" | "already" | "need_post" | "closed" | "own" | "blocked" | "limit" | "unreachable";
+
+export interface GoodsInterestResult {
+  status: GoodsInterestStatus;
+  message: string;
+  need?: { kind: GoodsKind; direction: GoodsDirection; date: string };
+}
+
+export interface GoodsCreated {
+  post: MyGoodsPost;
+  request: { status: string; message: string } | null;
+  matches: GoodsCard[];
+}
+
+/** The open posts a post like the one being written would pair with, before it is posted. */
+export interface GoodsFit {
+  count: number;
+  posts: GoodsCard[];
 }

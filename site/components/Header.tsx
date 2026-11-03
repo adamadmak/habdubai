@@ -31,9 +31,10 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
               <LangSwitch lang={lang} label={d.language} />
             </Suspense>
             {join && (
-              <a href={join} target="_blank" rel="noopener noreferrer" className="btn btn-gold hidden min-h-10 rounded-full px-4 text-sm sm:inline-flex">
+              // On a tablet the links take the room, so the button keeps only its icon there (its words stay for screen readers).
+              <a href={join} target="_blank" rel="noopener noreferrer" className="btn btn-gold hidden min-h-10 rounded-full px-4 text-sm sm:inline-flex md:max-lg:px-3">
                 <Send className="size-4" aria-hidden="true" />
-                {d.join}
+                <span className="md:max-lg:sr-only">{d.join}</span>
               </a>
             )}
           </div>

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { BadgeCheck, BedDouble, MapPin, MessageCircle, Navigation, Phone, Stamp } from "lucide-react";
 import { dict, fill, label, pick, type Locale } from "@/lib/i18n";
-import { dayAndMonth, ethiopianDate, formatDate, relative, weekday } from "@/lib/format";
+import { ethiopianDate, formatDate, relative, weekday } from "@/lib/format";
 import type { Announcement, Business, Job, Meta } from "@/lib/api";
 import { photoSrcSet } from "@/lib/photos";
 import { Cover, KindBadge } from "./Cover";
+import { DateLeaf } from "./DateLeaf";
 
 /** A job: the title leads, then who and where; the pay is set large, and the two facts that matter most sit beside it. */
 export function JobCard({ job, lang, meta, compact = false }: { job: Job; lang: Locale; meta: Meta | null; compact?: boolean }) {
@@ -91,16 +92,7 @@ export function BusinessCard({ business, lang, meta }: { business: Business; lan
   );
 }
 
-/** A calendar leaf in gold: the day large, the month above it. */
-export function DateLeaf({ date, lang, size = "md" }: { date: string; lang: Locale; size?: "md" | "lg" }) {
-  const { day, month } = dayAndMonth(date, lang);
-  return (
-    <div className={`flex shrink-0 flex-col overflow-hidden rounded-2xl border border-accent/40 bg-elevated text-center shadow-[0_6px_18px_-12px_rgb(133_95_0/0.6)] ${size === "lg" ? "w-20" : "w-14"}`}>
-      <span className="bg-accent py-0.5 text-[0.6875rem] font-bold text-[#10142b]">{month}</span>
-      <span className={`headline py-1 tabular ${size === "lg" ? "text-[2.25rem]" : "text-[1.375rem]"}`}>{day}</span>
-    </div>
-  );
-}
+export { DateLeaf };
 
 export function EventCard({ item, lang }: { item: Announcement; lang: Locale }) {
   const text = item.text[lang] || item.text.en;

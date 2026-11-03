@@ -498,3 +498,126 @@ test('the goods admin is for admins only', function (): void {
     $this->getJson('/api/admin/goods/posts')->assertUnauthorized();
     $this->getJson('/api/admin/goods/matches')->assertUnauthorized();
 });
+
+// ---- the website ------------------------------------------------------------------------
+
+/** "Continue with Telegram" on the website for this person; returns the account token. */
+function siteAccount(int $userId): string
+{
+    $start = test()->postJson('/api/owner/login/start')->assertOk()->json();
+    say($userId, '/start login_'.$start['ref'], ['language_code' => 'en']);
+    pressG($userId, 'lg:ok:'.\App\Models\OwnerLoginRequest::query()->where('ref', $start['ref'])->value('id'));
+    preg_match('/<b>(\d{6})<\/b>/', lastTo($userId)['text'], $code);
+
+    return test()->postJson('/api/owner/login/verify', ['ref' => $start['ref'], 'secret' => $start['secret'], 'code' => $code[1]])->assertOk()->json('token');
+}
+
+function asAccount(string $token)
+{
+    app('auth')->forgetGuards();
+
+    return test()->withToken($token);
+}
+
+function tripForm(array $overrides = []): array
+{
+    return array_merge(['kind' => 'traveller', 'direction' => 'to_et', 'date' => '2026-11-20', 'from' => 'dubai', 'to' => 'addis_ababa', 'kilos' => 10, 'categories' => ['clothes', 'documents']], $overrides);
+}
+
+test('the public board shows open posts with a trust badge and nothing that reaches the member', function (): void {
+    goodsMember(811, 'Abebe K');
+    $trip = postTrip(811);
+
+    $board = $this->getJson('/api/public/goods?direction=to_et')->assertOk()->json();
+    expect($board['data'])->toHaveCount(1)
+        ->and($board['data'][0])->toMatchArray(['id' => $trip->id, 'kind' => 'traveller', 'mode' => null, 'kilos_left' => 10, 'price' => null])
+        ->and($board['data'][0]['member'])->toMatchArray(['name' => 'Abebe K', 'deals' => 0, 'rating' => null])
+        ->and(json_encode($board))->not->toContain('811')->not->toContain('+9715')
+        ->and($board['stats'])->toMatchArray(['trips' => 1, 'parcels' => 0, 'kilos' => 10])
+        ->and($board['choices']['cities']['to_et']['from'])->toHaveKey('dubai');
+
+    $this->getJson('/api/public/goods?direction=to_ae')->assertOk()->assertJsonPath('meta.total', 0);
+    $this->getJson('/api/public/goods/'.$trip->id)->assertOk()->assertJsonPath('post.id', $trip->id);
+
+    // Before posting a parcel, the site shows who flies around that date.
+    $this->getJson('/api/public/goods/fit?kind=sender&direction=to_et&date=2026-11-22&kilos=5')->assertOk()
+        ->assertJsonPath('count', 1)->assertJsonPath('posts.0.id', $trip->id);
+    $this->getJson('/api/public/goods/fit?kind=sender&direction=to_et&date=2026-11-30&kilos=5')->assertOk()->assertJsonPath('count', 0);
+    $this->getJson('/api/public/goods/fit?kind=sender&direction=to_et&date=2026-11-21&kilos=20')->assertOk()->assertJsonPath('count', 0);
+});
+
+test('a member registers a trip on the website: checked like the bot, put on the group, shown on the board', function (): void {
+    goodsMember(812, 'Hanna M');
+    PlatformSetting::put('community_language', 'en'); // the group card's labels
+    $token = siteAccount(812);
+
+    asAccount($token)->getJson('/api/owner/goods')->assertOk()
+        ->assertJsonPath('member.name', 'Hanna M')->assertJsonPath('member.active', true)->assertJsonPath('limits.open_traveller', 0);
+
+    asAccount($token)->withHeader('X-Locale', 'am')->postJson('/api/owner/goods', tripForm(['date' => '2026-01-01', 'to' => 'dubai']))
+        ->assertStatus(422)->assertJsonPath('errors.date.0', 'ከዛሬ ጀምሮ እስከ 120 ቀናት ድረስ ያለ ቀን ይምረጡ።')->assertJsonPath('errors.to.0', 'የተመረጠው መድረሻ ከተማ ትክክል አይደለም።');
+    $this->flushHeaders();
+
+    $post = asAccount($token)->postJson('/api/owner/goods', tripForm(['price' => 25, 'currency' => 'AED']))->assertCreated()->json('post');
+    expect($post)->toMatchArray(['kind' => 'traveller', 'status' => 'open', 'open' => true, 'price' => 25, 'currency' => 'AED', 'price_basis' => 'per_kg'])
+        ->and(collect(sentMessages())->firstWhere('chat_id', GGROUP)['text'])->toContain('Traveller')->toContain('AED 25 per kg');
+
+    $this->getJson('/api/public/goods')->assertOk()->assertJsonPath('data.0.id', $post['id']);
+});
+
+test('a request from the other end, with an offer, is a parcel whose card says so', function (): void {
+    goodsMember(813, 'Yonas G');
+    PlatformSetting::put('community_language', 'en');
+    $token = siteAccount(813);
+    $parcel = ['kind' => 'sender', 'direction' => 'to_ae', 'from' => 'addis_ababa', 'to' => 'dubai', 'kilos' => 3, 'categories' => ['food']];
+
+    asAccount($token)->postJson('/api/owner/goods', tripForm($parcel + ['description' => 'gold necklace from my sister']))
+        ->assertStatus(422)->assertJsonPath('errors.description.0', fn ($m) => str_contains($m, 'gold or jewellery'));
+    asAccount($token)->postJson('/api/owner/goods', tripForm($parcel + ['description' => 'Berbere and shiro from my mother', 'price' => 1500]))
+        ->assertStatus(422)->assertJsonValidationErrors('currency');
+
+    $made = asAccount($token)->postJson('/api/owner/goods', tripForm($parcel + ['mode' => 'request', 'description' => 'Berbere and shiro from my mother', 'price' => 1500, 'currency' => 'ETB']))
+        ->assertCreated()->json('post');
+
+    expect($made)->toMatchArray(['mode' => 'request', 'price' => 1500, 'currency' => 'ETB', 'price_basis' => 'total'])
+        ->and(collect(sentMessages())->firstWhere('chat_id', GGROUP)['text'])->toContain('handed to the traveller at the other end')->toContain('Offer: ETB 1,500');
+    $this->getJson('/api/public/goods?mode=request')->assertOk()->assertJsonPath('meta.total', 1);
+    $this->getJson('/api/public/goods?mode=send')->assertOk()->assertJsonPath('meta.total', 0);
+});
+
+test('interested on the website: first your own post, then the request goes to the owner in Telegram', function (): void {
+    goodsMember(814, 'Abebe K');
+    goodsMember(815, 'Sara T');
+    $trip = postTrip(814);
+    $token = siteAccount(815);
+
+    asAccount($token)->postJson("/api/owner/goods/{$trip->id}/interest")->assertOk()
+        ->assertJsonPath('status', 'need_post')->assertJsonPath('need', ['kind' => 'sender', 'direction' => 'to_et', 'date' => '2026-11-20'])
+        ->assertJsonPath('message', 'Add your parcel first. The request goes out the moment it is posted.');
+
+    $answer = asAccount($token)->postJson('/api/owner/goods', tripForm(['kind' => 'sender', 'kilos' => 4, 'categories' => ['clothes'], 'description' => 'Two dresses for my mother', 'interest' => $trip->id]))
+        ->assertCreated()->json();
+
+    expect($answer['request'])->toBe(['status' => 'sent', 'message' => 'Request sent to Abebe K. They answer in Telegram, and the bot tells you.'])
+        ->and(GoodsMatch::query()->sole()->only(['status', 'kilos']))->toMatchArray(['status' => 'requested', 'kilos' => 4])
+        ->and(lastTo(814)['text'])->toContain('Sara T')->toContain('Two dresses');
+
+    asAccount($token)->postJson("/api/owner/goods/{$trip->id}/interest")->assertOk()->assertJsonPath('status', 'already');
+    asAccount($token)->getJson('/api/owner/goods')->assertOk()->assertJsonPath('deals.0.status', 'requested')->assertJsonPath('deals.0.other_name', 'Abebe K');
+});
+
+test('a website account that is not a member is told how to join; members close only their own posts', function (): void {
+    $stranger = siteAccount(816);
+    asAccount($stranger)->getJson('/api/owner/goods')->assertOk()->assertJsonPath('member', null)->assertJsonPath('bot_link', 'https://t.me/HabeshaDubaiBot');
+    asAccount($stranger)->postJson('/api/owner/goods', tripForm())->assertStatus(403)->assertJsonPath('code', 'not_member');
+
+    goodsMember(817, 'Meron T');
+    $other = postTrip(817);
+    goodsMember(818, 'Daniel A');
+    $token = siteAccount(818);
+    $mine = asAccount($token)->postJson('/api/owner/goods', tripForm())->json('post.id');
+
+    asAccount($token)->postJson("/api/owner/goods/{$other->id}/close")->assertNotFound();
+    asAccount($token)->postJson("/api/owner/goods/{$mine}/close")->assertOk()->assertJsonPath('post.status', 'closed')->assertJsonPath('post.open', false);
+    expect($other->fresh()->status)->toBe('open');
+});

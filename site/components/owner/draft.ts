@@ -6,7 +6,7 @@
  */
 const PREFIX = "hd:draft:";
 
-type Draft = Record<string, string[]>;
+export type Draft = Record<string, string[]>;
 
 export function keepDraft(key: string, form: HTMLFormElement): void {
   const data: Draft = {};
@@ -20,16 +20,20 @@ export function keepDraft(key: string, form: HTMLFormElement): void {
   }
 }
 
-/** Puts a kept draft back into the form, once: it is removed as it is read. */
-export function restoreDraft(key: string, form: HTMLFormElement): void {
-  let data: Draft | null = null;
+/** A kept draft, once: it is removed as it is read. For a form whose fields live in React state (the goods form). */
+export function takeDraft(key: string): Draft | null {
   try {
     const raw = sessionStorage.getItem(PREFIX + key);
     sessionStorage.removeItem(PREFIX + key);
-    data = raw ? (JSON.parse(raw) as Draft) : null;
+    return raw ? (JSON.parse(raw) as Draft) : null;
   } catch {
-    return;
+    return null;
   }
+}
+
+/** Puts a kept draft back into the form, once: it is removed as it is read. */
+export function restoreDraft(key: string, form: HTMLFormElement): void {
+  const data = takeDraft(key);
   if (!data) return;
 
   for (const element of Array.from(form.elements)) {
