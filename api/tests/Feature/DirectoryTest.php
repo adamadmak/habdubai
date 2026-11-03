@@ -4,6 +4,7 @@ use App\Models\Business;
 use App\Models\BusinessReport;
 use App\Models\Conversation;
 use App\Models\DirectoryCity;
+use App\Models\PlatformSetting;
 use App\Support\MapLocation;
 use Laravel\Sanctum\Sanctum;
 
@@ -168,6 +169,75 @@ function sendBusinessPhoto(int $userId, string $fileId): void
         'photo' => [['file_id' => 'small-'.$fileId, 'width' => 90, 'height' => 60], ['file_id' => $fileId, 'width' => 900, 'height' => 600]],
     ]))->assertOk();
 }
+
+test('a photo too small to use tells the member; the suggestion still goes through', function (): void {
+    joinMember(308);
+    say(308, '/addbusiness');
+    say(308, 'Tiny Photo Place');
+    say(308, 'Dubai');
+    say(308, '🍽 Restaurant');
+    say(308, 'Deira');
+    sharePin(308, 25.27, 55.31);
+    say(308, '⏭ Skip');
+    say(308, '⏭ Skip');
+    TelegramFake::$results['getFile'] = ['file_id' => 'tiny', 'file_path' => 'photos/tiny.jpg'];
+    TelegramFake::$files['tiny.jpg'] = jpegBytes(120, 90);
+    sendBusinessPhoto(308, 'tiny');
+    say(308, '✅ Send');
+
+    $b = Business::query()->where('name', 'Tiny Photo Place')->sole();
+    expect($b->status)->toBe('pending')->and($b->photos()->count())->toBe(0)
+        ->and(implode("\n", textsTo(308)))->toContain('The photo could not be used');
+});
+
+test('a listing with a photo shows it in the bot, and the words still arrive if Telegram refuses it', function (): void {
+    PlatformSetting::put('public_url', 'https://api.habesha.example');
+    joinMember(309);
+    $b = business(['name' => 'Photo Cafe']);
+    app(\App\Directory\PhotoStore::class)->store($b, jpegBytes(800, 600));
+    app(\App\Directory\PhotoStore::class)->approvePending($b);
+
+    dirTap(309, 'd:b:'.$b->id);
+    $photo = collect(telegramCalls('sendPhoto'))->last();
+    expect($photo['photo'])->toStartWith('https://api.habesha.example/api/public/photos/')
+        ->and($photo['caption'])->toContain('Photo Cafe')
+        ->and(collect($photo['reply_markup']['inline_keyboard'])->flatten(1)->pluck('callback_data'))->toContain('d:rep:'.$b->id);
+
+    TelegramFake::$errors['sendPhoto'] = [400, 'Bad Request: failed to get HTTP URL content'];
+    $before = count(sentMessages());
+    dirTap(309, 'd:b:'.$b->id);
+    expect(count(sentMessages()))->toBe($before + 1)->and(lastText())->toContain('Photo Cafe');
+});
+
+test('a new photo on a live listing goes on its channel post; a post Telegram will not edit is replaced', function (): void {
+    PlatformSetting::put('public_url', 'https://api.habesha.example');
+    $channel = jobsChannel();
+    Sanctum::actingAs(admin(), ['admin']);
+    $b = business(['status' => 'approved']);
+    $b->forceFill(['channel_message_id' => 501])->save();
+    $photo = fn () =>['photo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('front.jpg', jpegBytes(1200, 800))];
+
+    $this->post("/api/admin/businesses/{$b->id}/photo", $photo())->assertOk();
+    $edit = collect(telegramCalls('editMessageMedia'))->last();
+    expect($edit['chat_id'])->toBe($channel)->and($edit['message_id'])->toBe(501)
+        ->and($edit['media']['media'])->toStartWith('https://api.habesha.example/api/public/photos/')
+        ->and($edit['media']['caption'])->toContain($b->name)
+        ->and(telegramCalls('deleteMessage'))->toBe([]);
+
+    // Telegram refuses the edit: the old post goes and a new one with the photo takes its place.
+    TelegramFake::$errors['editMessageMedia'] = [400, 'Bad Request: there is no media in the message to edit'];
+    TelegramFake::$results['sendPhoto'] = ['message_id' => 777];
+    $this->post("/api/admin/businesses/{$b->id}/photo", $photo())->assertOk();
+    expect(collect(telegramCalls('deleteMessage'))->last()['message_id'])->toBe(501)
+        ->and(collect(telegramCalls('sendPhoto'))->last()['chat_id'])->toBe($channel)
+        ->and($b->fresh()->channel_message_id)->toBe(777);
+
+    // The photo taken down: the post is replaced by words alone, not left showing it.
+    TelegramFake::$results['sendMessage'] = ['message_id' => 888];
+    $this->deleteJson("/api/admin/businesses/{$b->id}/photo")->assertOk();
+    expect(collect(telegramCalls('deleteMessage'))->last()['message_id'])->toBe(777)
+        ->and($b->fresh()->channel_message_id)->toBe(888);
+});
 
 test('a moderator sets a listing photo from the admin, live at once, and can take it down', function (): void {
     Sanctum::actingAs(admin(), ['admin']);

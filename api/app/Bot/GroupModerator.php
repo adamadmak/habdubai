@@ -133,6 +133,12 @@ class GroupModerator
         return true;
     }
 
+    /** Nine to fifteen digits, written any usual way: a phone number, not a sum of money or a date. */
+    public static function hasPhoneNumber(string $text): bool
+    {
+        return preg_match('/\+?\d(?:[\s-]?\d){8,14}(?!\d)/', $text) === 1;
+    }
+
     /** The text key explaining the removal, or null when the message is fine. */
     private function violation(Member $member, string $text, string $chatId, bool $hiddenLink = false): ?string
     {
@@ -143,7 +149,7 @@ class GroupModerator
         $lower = mb_strtolower($text);
         $isNew = $member->verified_at === null || $member->verified_at->greaterThan(now()->subDays(self::NEW_MEMBER_DAYS));
 
-        if ($isNew && ($hiddenLink || preg_match('#(https?://|www\.|t\.me/|\b[a-z0-9-]+\.(com|net|org|ae|et|io|me)\b)#i', $text) || preg_match('/\+?\d(?:[\s-]?\d){8,14}(?![\d])/', $text))) {
+        if ($isNew && ($hiddenLink || preg_match('#(https?://|www\.|t\.me/|\b[a-z0-9-]+\.(com|net|org|ae|et|io|me)\b)#i', $text) || self::hasPhoneNumber($text))) {
             return 'mod_removed_link';
         }
 

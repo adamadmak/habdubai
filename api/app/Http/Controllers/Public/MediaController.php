@@ -45,13 +45,29 @@ class MediaController extends Controller
     {
         abort_unless($announcement->status === 'published' && $announcement->photo_file_id, 404);
 
-        $encoded = Cache::get('public.announcement-photo.'.$announcement->id);
+        $key = 'public.announcement-photo.'.$announcement->id;
+        $encoded = Cache::get($key);
         if ($encoded === null) {
-            $bytes = $telegram->downloadFile($announcement->photo_file_id);
-            abort_if($bytes === null, 404);
-            $encoded = base64_encode($bytes);
-            Cache::put('public.announcement-photo.'.$announcement->id, $encoded, now()->addDays(7));
+            // One fetch from Telegram at a time for a photo, and a photo Telegram no longer has
+            // is remembered as gone for a while, so a busy page cannot tie up the workers on it.
+            try {
+                $encoded = Cache::lock($key.'.fetch', 30)->block(8, function () use ($key, $announcement, $telegram): string {
+                    $fetched = Cache::get($key);
+                    if ($fetched !== null) {
+                        return $fetched;
+                    }
+
+                    $bytes = $telegram->downloadFile($announcement->photo_file_id);
+                    $fetched = $bytes === null ? '' : base64_encode($bytes);
+                    Cache::put($key, $fetched, $bytes === null ? now()->addMinutes(10) : now()->addDays(7));
+
+                    return $fetched;
+                });
+            } catch (\Illuminate\Contracts\Cache\LockTimeoutException) {
+                abort(503);
+            }
         }
+        abort_if($encoded === '', 404);
 
         $bytes = (string) base64_decode($encoded, true);
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: 'image/jpeg';

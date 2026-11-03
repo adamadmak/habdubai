@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Support\RuntimeEnv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -11,11 +12,20 @@ use Illuminate\Support\Facades\Schema;
  * What the running API can see, as yes/no only: no value, length or hint of
  * any secret. This host passes environment variables in ways that are easy
  * to get wrong (see CLAUDE.md), and this is the one place that shows it.
+ *
+ * Open only while the first administrator is being set up. After that it is
+ * theirs alone: which secrets are set is nobody else's business, and the
+ * admin's Launch page says the same thing in words.
  */
 class SystemStatusController extends Controller
 {
     public function __invoke(): JsonResponse
     {
+        if ($this->hasAdmin()) {
+            $user = auth('sanctum')->user();
+            abort_unless($user instanceof User && $user->tokenCan('admin'), 404);
+        }
+
         $seen = fn (?string $config, string $env): array => [
             'config' => $config !== null && trim((string) config($config)) !== '',
             'getenv' => (getenv($env) ?: '') !== '',
@@ -50,5 +60,14 @@ class SystemStatusController extends Controller
             'site_api_key' => $seen('services.host.site_api_key', 'SITE_API_KEY') + ['setting' => $setting('site_api_key')],
             'db_url' => $seen(null, 'DB_HOST'),
         ])->header('Cache-Control', 'no-store');
+    }
+
+    private function hasAdmin(): bool
+    {
+        try {
+            return Schema::hasTable('users') && User::query()->exists();
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

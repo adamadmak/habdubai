@@ -93,9 +93,10 @@ class Onboarding
         $member = Member::findByTelegramUser($in->userId);
 
         if ($member) {
-            // A verified member who left and came back, or who started again:
-            // the number is already proven, carry on from the name.
-            $member->forceFill(['language' => $language, 'left_at' => null, 'chat_id' => $conversation->chat_id])->save();
+            // A verified member who left and came back, or who started again: the number is
+            // already proven, carry on from the name. They stay "left" until they agree to the
+            // rules again at the end, so nothing reaches them half-way back in.
+            $member->forceFill(['language' => $language, 'chat_id' => $conversation->chat_id])->save();
             $conversation->moveTo('name');
             $this->askName($conversation, $in);
 
@@ -313,7 +314,7 @@ class Onboarding
             return;
         }
 
-        $member->forceFill(['agreed_rules_at' => now()])->save();
+        $member->forceFill(['agreed_rules_at' => now(), 'left_at' => null])->save();
         $conversation->reset();
 
         // The welcome card, the links as buttons and the menu: App\Bot\Home.

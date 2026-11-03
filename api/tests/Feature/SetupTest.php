@@ -70,6 +70,19 @@ test('the database password stops opening setup once the first administrator exi
         ->assertStatus(404);
 });
 
+test('once an administrator exists the status page is theirs alone', function (): void {
+    $admin = admin();
+
+    $this->getJson('/api/system/status')->assertNotFound();
+
+    $owner = \App\Models\BusinessOwner::query()->create(['telegram_user_id' => 77, 'display_name' => 'Owner', 'language' => 'en']);
+    app('auth')->forgetGuards();
+    $this->withToken($owner->createToken('site', ['owner'])->plainTextToken)->getJson('/api/system/status')->assertNotFound();
+
+    app('auth')->forgetGuards();
+    $this->withToken($admin->createToken('admin', ['admin'])->plainTextToken)->getJson('/api/system/status')->assertOk()->assertJsonPath('database', 'sqlite');
+});
+
 test('the status page says what the app can see, in yes and no only', function (): void {
     $status = $this->getJson('/api/system/status')->assertOk()->json();
 

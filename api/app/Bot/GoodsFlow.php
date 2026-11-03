@@ -434,8 +434,10 @@ class GoodsFlow
             return 'accepted';
         }
 
+        // A request that fell through (the owner could not be reached, someone dropped out) may
+        // be made again; a "no" stays a no, and a deal already done is done.
         $known = GoodsMatch::query()->where(function ($q) use ($post, $member): void {
-            $q->where(fn ($a) => $a->where('post_id', $post->id)->where('requester_id', $member->id))
+            $q->where(fn ($a) => $a->where('post_id', $post->id)->where('requester_id', $member->id)->where('status', '!=', 'cancelled'))
                 ->orWhere(fn ($b) => $b->where('requester_post_id', $post->id)->where('owner_id', $member->id)->whereIn('status', ['introduced', 'agreed', 'disputed']));
         })->exists();
         if ($known) {
@@ -455,22 +457,47 @@ class GoodsFlow
      */
     private function sendRequest(Member $requester, GoodsPost $post, GoodsPost $mine): string
     {
-        $today = GoodsMatch::query()->where('requester_id', $requester->id)->where('created_at', '>=', now()->startOfDay())->count();
+        $today = GoodsMatch::query()->where('requester_id', $requester->id)->where('created_at', '>=', now('Asia/Dubai')->startOfDay()->utc())->count();
         if ($today >= GoodsMatch::REQUESTS_PER_DAY) {
             return 'limit';
         }
 
         $sender = $post->isTraveller() ? $mine : $post;
 
+        // One row per post and person for life (a unique key): asking again after a request fell
+        // through starts that row over, and counts towards today's limit like any other.
+        $fallen = GoodsMatch::query()->where('post_id', $post->id)->where('requester_id', $requester->id)->where('status', 'cancelled')->first();
+
         try {
-            $match = GoodsMatch::query()->create([
-                'post_id' => $post->id,
-                'requester_post_id' => $mine->id,
-                'owner_id' => $post->member_id,
-                'requester_id' => $requester->id,
-                'status' => 'requested',
-                'kilos' => $sender->kilos,
-            ]);
+            if ($fallen !== null) {
+                $fallen->forceFill([
+                    'requester_post_id' => $mine->id,
+                    'status' => 'requested',
+                    'kilos' => $sender->kilos,
+                    'introduced_at' => null,
+                    'agreed_owner_at' => null,
+                    'agreed_requester_at' => null,
+                    'agreed_at' => null,
+                    'checkin_on' => null,
+                    'checkin_sent_at' => null,
+                    'checkin_owner' => null,
+                    'checkin_requester' => null,
+                    'closed_at' => null,
+                    'failed_member_id' => null,
+                    'moderator_note' => null,
+                    'created_at' => now(),
+                ])->save();
+                $match = $fallen;
+            } else {
+                $match = GoodsMatch::query()->create([
+                    'post_id' => $post->id,
+                    'requester_post_id' => $mine->id,
+                    'owner_id' => $post->member_id,
+                    'requester_id' => $requester->id,
+                    'status' => 'requested',
+                    'kilos' => $sender->kilos,
+                ]);
+            }
         } catch (UniqueConstraintViolationException) {
             return 'already';
         }

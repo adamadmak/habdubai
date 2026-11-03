@@ -106,25 +106,104 @@ test('someone who left gets no menu back on cancel', function (): void {
     expect(lastMessage()['reply_markup'])->toBe(['remove_keyboard' => true]);
 });
 
-test('a command interrupts a flow, so the next message is never taken as the flow\'s answer', function (): void {
+/** The chat's state as the bot holds it. */
+function stateOf(int $userId): string
+{
+    return (string) \App\Models\Conversation::query()->where('telegram_user_id', $userId)->value('state');
+}
+
+test('a command stops a flow left half-way, says so, and takes the flow\'s buttons off the screen', function (): void {
     joinMember(37);
 
-    say(37, '/ask');
-    say(37, '/start');
-    expect(\App\Models\Conversation::query()->where('telegram_user_id', 37)->value('state'))->toBe('idle');
+    say(37, '/addbusiness');
+    expect(stateOf(37))->toBe('biz_name');
 
-    say(37, '/jobs');
-    $jobs = lastText();
-    say(37, '/ask');
-    say(37, '💼 Jobs');
-    expect(lastText())->toBe($jobs);
+    say(37, '/help');
+    $sent = sentMessages();
+    expect(stateOf(37))->toBe('idle')
+        ->and($sent[count($sent) - 2]['text'])->toContain('I stopped what you were doing')
+        ->and(keyboardRows($sent[count($sent) - 2]['reply_markup']))->toHaveCount(2)
+        ->and(lastText())->toContain('Commands:');
+
+    // What the member writes next is a question for the assistant, not the business's name.
+    say(37, 'Abyssinia Spices');
+    expect(\App\Models\Business::query()->count())->toBe(0);
+});
+
+test('a menu button stops a flow too, and does what it says', function (): void {
+    joinMember(38);
+
+    say(38, '/directory');
+    $directory = lastText();
+
+    say(38, '/addbusiness');
+    say(38, '📍 Places');
+    expect(stateOf(38))->toBe('idle')->and(lastText())->toBe($directory);
+});
+
+test('a website sign-in does not disturb a flow; /cancel still says cancelled and nothing else', function (): void {
+    PlatformSetting::put('telegram_bot_username', 'HabeshaDubaiBot');
+    joinMember(39);
+    say(39, '/addbusiness');
+
+    $start = test()->postJson('/api/owner/login/start')->assertOk()->json();
+    say(39, '/start login_'.$start['ref']);
+    expect(stateOf(39))->toBe('biz_name')->and(lastText())->toContain('Sign in to the Habesha Dubai website');
+
+    $before = count(sentMessages());
+    say(39, '/cancel');
+    expect(stateOf(39))->toBe('idle')->and(count(sentMessages()))->toBe($before + 1)->and(lastText())->toBe('Cancelled.');
+});
+
+test('a slash word the bot does not know is an answer inside a flow and a typo outside one', function (): void {
+    joinMember(40);
+
+    say(40, '/addbusiness');
+    say(40, '/ 24 Hour Cafe');
+    expect(stateOf(40))->not->toBe('idle');
+
+    say(40, '/cancel');
+    say(40, '/wrongcommand');
+    expect(lastText())->toContain('I did not understand that')
+        ->and(\App\Models\AssistantMessage::query()->count())->toBe(0);
+});
+
+test('someone who left stays left until they have agreed to the rules again', function (): void {
+    $member = joinMember(41);
+    say(41, '/leave');
+    say(41, 'Yes, leave');
+
+    say(41, '/start');
+    say(41, 'English');
+    say(41, 'Abebe K');
+    expect($member->fresh()->hasLeft())->toBeTrue()->and($member->fresh()->isActive())->toBeFalse();
+
+    say(41, 'Dubai');
+    say(41, 'Driver');
+    say(41, '✅ Done');
+    expect($member->fresh()->hasLeft())->toBeTrue();
+
+    say(41, '✅ I agree');
+    expect($member->fresh()->hasLeft())->toBeFalse()->and($member->fresh()->isActive())->toBeTrue()
+        ->and(substr_count(implode("\n", textsTo(41)), 'You are in, Abebe K'))->toBe(2);
 });
 
 test('"Interested" on a post that no longer exists gets a plain answer, not a failed update', function (): void {
-    joinMember(38);
+    joinMember(42);
 
-    say(38, '/start g999999')->assertOk();
+    say(42, '/start g999999')->assertOk();
 
     expect(lastText())->toBe(app(\App\Bot\BotMessages::class)->text('goods_post_closed', 'en'))
-        ->and(\App\Models\TelegramUpdate::query()->where('status', 'failed')->count())->toBe(0);
+        ->and(\App\Models\TelegramUpdate::query()->whereNotNull('error')->count())->toBe(0);
 });
+
+test('a phone number is a phone number; a sum of money is not', function (string $text, bool $phone): void {
+    expect(\App\Bot\GroupModerator::hasPhoneNumber($text))->toBe($phone);
+})->with([
+    ['Paid 1 200 000 birr', false],
+    ['The flight is 2026 11 20', false],
+    ['Rent is 2500 a month', false],
+    ['call 050 123 4567', true],
+    ['+971 50 123 4567', true],
+    ['0501234567', true],
+]);

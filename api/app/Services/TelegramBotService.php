@@ -185,13 +185,7 @@ class TelegramBotService
         return $result;
     }
 
-    /** A photo Telegram fetches itself from a public https address, with an HTML caption of at most 1024 characters. */
-    public function sendPhoto(int|string $chatId, string $url, string $caption = '', ?array $replyMarkup = null): array
-    {
-        return $this->sendPhotoById($chatId, $url, $caption, $replyMarkup);
-    }
-
-    /** A photo already on Telegram (by file_id), with an HTML caption of at most 1024 characters. */
+    /** A photo by Telegram file_id or a public https address, with an HTML caption of at most 1024 characters. */
     public function sendPhotoById(int|string $chatId, string $fileId, string $caption = '', ?array $replyMarkup = null): array
     {
         return $this->post('sendPhoto', array_filter([
@@ -246,6 +240,23 @@ class TelegramBotService
                 'message_id' => $messageId,
                 'caption' => TelegramText::clip($caption, TelegramText::MAX_CAPTION),
                 'parse_mode' => 'HTML',
+                'reply_markup' => $replyMarkup,
+            ], fn ($value) => $value !== null), retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    /** Put another photo (a public https address) on a message, with its caption. False when Telegram refuses. */
+    public function editPhoto(int|string $chatId, int $messageId, string $url, string $caption, ?array $replyMarkup = null): bool
+    {
+        try {
+            $this->post('editMessageMedia', array_filter([
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+                'media' => ['type' => 'photo', 'media' => $url, 'caption' => TelegramText::clip($caption, TelegramText::MAX_CAPTION), 'parse_mode' => 'HTML'],
                 'reply_markup' => $replyMarkup,
             ], fn ($value) => $value !== null), retry: false);
 

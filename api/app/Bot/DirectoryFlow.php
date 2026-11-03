@@ -113,7 +113,7 @@ class DirectoryFlow
         $this->show($member, $text, ['inline_keyboard' => $rows], $editMessageId);
     }
 
-    /** One business: a map pin with its details when we have a pin, a text card otherwise. */
+    /** One business: a map pin when we have one, then its details, on its photo when it has one. */
     public function card(Member $member, Business $business): void
     {
         $l = $member->language;
@@ -132,6 +132,18 @@ class DirectoryFlow
                 $this->telegram->sendVenue($member->chat_id, $business->latitude, $business->longitude, $business->name, $this->address($business, $l));
             } catch (\Throwable) {
                 // A venue the client refuses is still worth showing as text.
+            }
+        }
+
+        // Telegram fetches the photo itself, so it must be on a public address; a refusal still shows the words.
+        $cover = $business->cover();
+        if ($cover && \App\Support\PublicUrls::apiIsPublic()) {
+            try {
+                $this->telegram->sendPhotoById($member->chat_id, $cover->url(), $this->cardText($business, $l), $keyboard);
+
+                return;
+            } catch (\Throwable) {
+                // Falls through to the text card.
             }
         }
 

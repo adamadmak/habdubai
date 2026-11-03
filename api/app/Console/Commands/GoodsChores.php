@@ -8,9 +8,10 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Hourly upkeep for the goods board: posts past their date close, the day
- * after a flight both sides are asked whether the parcel arrived (only in
- * Dubai waking hours), and ratings older than a week become visible.
+ * Upkeep for the goods board, every few minutes and only what is due: posts
+ * past their date close, the day after a flight both sides are asked whether
+ * the parcel arrived (only in Dubai waking hours), and ratings older than a
+ * week become visible.
  */
 class GoodsChores extends Command
 {

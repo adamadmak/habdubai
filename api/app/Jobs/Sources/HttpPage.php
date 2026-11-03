@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Sources;
 
+use App\Support\PublicAddress;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -13,12 +14,25 @@ final class HttpPage
 
     public static function get(string $url): string
     {
+        if (! PublicAddress::allows($url)) {
+            throw new RuntimeException('Could not use '.parse_url($url, PHP_URL_HOST).': it is not an address on the public internet.');
+        }
+
         try {
             $response = Http::withHeaders([
                 'User-Agent' => 'HabeshaDubaiBot/1.0 (+community job alerts; summary and link only)',
                 'Accept' => 'text/html,application/xhtml+xml,application/rss+xml,application/atom+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language' => 'en',
-            ])->timeout(20)->connectTimeout(8)->retry(1, 1500, throw: false)->get($url);
+            ])->withOptions(['allow_redirects' => [
+                'max' => 3,
+                'protocols' => ['http', 'https'],
+                // A public page must not be able to send the fetch somewhere private.
+                'on_redirect' => function ($request, $response, $uri): void {
+                    if (! PublicAddress::allows((string) $uri)) {
+                        throw new RuntimeException('The page redirects to an address that is not on the public internet.');
+                    }
+                },
+            ]])->timeout(20)->connectTimeout(8)->retry(1, 1500, throw: false)->get($url);
         } catch (ConnectionException $e) {
             throw new RuntimeException('Could not reach '.parse_url($url, PHP_URL_HOST).': '.$e->getMessage());
         }

@@ -38,6 +38,8 @@ pest()->extend(TestCase::class)
         }]);
         \App\Bot\BotMessages::flush();
         \App\Models\PlatformSetting::flushValueCache();
+        // No DNS under test: every name is a public address unless a test says otherwise.
+        \App\Support\PublicAddress::$resolver = fn (string $host): array => ['93.184.216.34'];
     })
     ->in('Feature');
 

@@ -18,6 +18,12 @@ use App\Support\RuntimeEnv;
  */
 class Router
 {
+    /** What the bot answers in a private chat. Any other word after a slash is just text: an answer to a flow, or not understood. */
+    private const COMMANDS = [
+        'start', 'jobs', 'saved', 'ask', 'announce', 'topics', 'myquestions', 'faq', 'safe', 'directory', 'businesses',
+        'addbusiness', 'goods', 'travel', 'send', 'mygoods', 'help', 'profile', 'language', 'leave', 'cancel',
+    ];
+
     public function __construct(
         private readonly TelegramBotService $telegram,
         private readonly BotMessages $messages,
@@ -84,7 +90,7 @@ class Router
         $conversation = Conversation::forUser($in->userId, $in->chatId, $in->languageCode);
         $member = Member::findByTelegramUser($in->userId);
 
-        if ($member && $member->chat_id !== $in->chatId) {
+        if ($member && (int) $member->chat_id !== $in->chatId) {
             $member->forceFill(['chat_id' => $in->chatId])->save();
         }
 
@@ -110,13 +116,20 @@ class Router
             return;
         }
 
-        // A command always wins over a flow left half-way: what the member types next is never
-        // taken as that flow's answer. The join flow is the exception, /start picks it up where it was.
-        if ($in->command() !== null && $in->command() !== 'cancel' && $conversation->state !== 'idle' && ! in_array($conversation->state, Onboarding::STATES, true)) {
+        // A command or a menu button wins over a flow left half-way: what comes next is never taken
+        // as that flow's answer, and the flow's own buttons leave the screen, with a word saying so.
+        // Two exceptions: the join flow, which /start picks up where it stopped, and a website
+        // sign-in, which only asks a question and leaves the chat as it was.
+        $command = in_array($in->command(), self::COMMANDS, true) ? $in->command() : null;
+        $signingIn = $command === 'start' && str_starts_with($in->commandArgument(), 'login_');
+        $interrupts = ($command !== null && $command !== 'cancel' && ! $signingIn) || ($member?->isActive() && $this->home->commandFor($in->text) !== null);
+
+        if ($interrupts && $conversation->state !== 'idle' && ! in_array($conversation->state, Onboarding::STATES, true)) {
             $conversation->reset();
+            $this->reply($conversation, 'flow_stopped', [], $this->menuOrNone($member, $language));
         }
 
-        switch ($in->command()) {
+        switch ($command) {
             case 'start':
                 // "Continue with Telegram" on the website: anyone may sign in, member or not.
                 if (str_starts_with($in->commandArgument(), 'login_')) {
@@ -317,7 +330,8 @@ class Router
         }
 
         // Free text from a member, outside any flow, is a question for the assistant.
-        if ($member?->isActive() && $conversation->state === 'idle' && $in->text !== null && trim($in->text) !== '') {
+        // A slash word the bot does not know is a typo, not a question worth a call to Claude.
+        if ($member?->isActive() && $conversation->state === 'idle' && $in->text !== null && trim($in->text) !== '' && $in->command() === null) {
             $this->assistant->ask($member, $in->text);
 
             return;
@@ -424,8 +438,7 @@ class Router
             return;
         }
 
-        // Leaving also takes back the agreement to the rules: coming back goes through them again before the groups.
-        $member->forceFill(['left_at' => now(), 'agreed_rules_at' => null])->save();
+        $member->forceFill(['left_at' => now()])->save();
         AuditLog::record(null, 'member.left', 'member', $member->id);
         $conversation->reset();
 

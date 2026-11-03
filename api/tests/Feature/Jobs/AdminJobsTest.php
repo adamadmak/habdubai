@@ -133,7 +133,7 @@ test('jobs:close-stale closes old jobs and jobs whose page is gone', function ()
     $alive = ingest(['url' => 'https://jobs.example.com/view/alive']);
 
     $old->forceFill(['published_at' => now()->subDays(15)])->save();
-    Job::query()->whereIn('id', [$gone->id, $alive->id])->update(['published_at' => now()->subDays(3)]);
+    Job::query()->whereIn('id', [$gone->id, $alive->id])->update(['published_at' => now()->subDays(3), 'updated_at' => now()->subHours(7)]);
 
     Http::fake([
         'jobs.example.com/view/gone' => Http::response('', 404),
@@ -146,6 +146,40 @@ test('jobs:close-stale closes old jobs and jobs whose page is gone', function ()
         ->and($gone->fresh()->status)->toBe('closed')
         ->and($alive->fresh()->status)->toBe('published')
         ->and(count(telegramCalls('editMessageText')))->toBe(2);
+});
+
+test('jobs:close-stale runs often but asks about a link at most every six hours, a few at a time', function (): void {
+    jobsChannel();
+    $jobs = collect(range(1, 12))->map(fn (int $i) => ingest(['url' => "https://jobs.example.com/view/{$i}", 'title' => "Driver number {$i} wanted in Dubai"]));
+    Job::query()->whereIn('id', $jobs->pluck('id'))->update(['published_at' => now()->subDays(3), 'updated_at' => now()->subHours(7)]);
+
+    $asked = 0;
+    Http::fake(['jobs.example.com/*' => function () use (&$asked) {
+        $asked++;
+
+        return Http::response('', 200);
+    }]);
+
+    $this->artisan('jobs:close-stale')->assertSuccessful();
+    expect($asked)->toBe(10);
+
+    // Fifteen minutes later: only the two it did not reach.
+    $this->artisan('jobs:close-stale')->assertSuccessful();
+    expect($asked)->toBe(12);
+
+    $this->artisan('jobs:close-stale')->assertSuccessful();
+    expect($asked)->toBe(12);
+});
+
+test('a link inside a listing is never followed to a private address', function (): void {
+    $private = ingest(['url' => 'http://habesha-dubai-rw.db-17.svc.cluster.local:5432/x']);
+    Job::query()->whereKey($private->id)->update(['published_at' => now()->subDays(3), 'updated_at' => now()->subHours(7)]);
+
+    Http::fake(['*.local*' => Http::response('', 404)]);
+    $this->artisan('jobs:close-stale')->assertSuccessful();
+
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'cluster.local'));
+    expect($private->fresh()->status)->toBe('published');
 });
 
 test('the tick needs its token and runs the scheduler', function (): void {

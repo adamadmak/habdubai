@@ -136,7 +136,7 @@ class BusinessController extends Controller
         $photos->approvePending($business);
 
         if ($business->status === 'approved') {
-            $this->publisher->refresh($business);
+            $this->publisher->photoChanged($business);
         }
         AuditLog::record($request->user()->id, 'directory.photo_set', 'business', $business->id);
 
@@ -149,7 +149,7 @@ class BusinessController extends Controller
         $business->photos()->where('kind', 'cover')->delete();
 
         if ($business->status === 'approved') {
-            $this->publisher->refresh($business);
+            $this->publisher->photoChanged($business);
         }
         AuditLog::record($request->user()->id, 'directory.photo_removed', 'business', $business->id);
 
@@ -157,16 +157,10 @@ class BusinessController extends Controller
     }
 
     /** Approve a suggestion or a submission, or put a hidden listing back. Clears reports that took it down. */
-    public function approve(Request $request, Business $business, PhotoStore $photos): JsonResponse
+    public function approve(Request $request, Business $business): JsonResponse
     {
         $wasHidden = $business->status === 'hidden';
-        $wasPending = $business->status === 'pending';
         $this->publisher->approve($business, $request->user()->id);
-
-        // A suggestion's photo (from the bot) was seen in the review; it goes live with the listing.
-        if ($wasPending) {
-            $photos->approvePending($business);
-        }
 
         if ($wasHidden) {
             BusinessReport::query()->where('business_id', $business->id)->delete();

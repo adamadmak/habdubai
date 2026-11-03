@@ -88,14 +88,15 @@ class BusinessPublisher
         $changes = array_intersect_key($business->pending_changes ?? [], array_flip(Business::OWNER_FIELDS));
         $before = $business->only(array_keys($changes));
 
-        DB::transaction(function () use ($business, $changes, $adminId): void {
+        $newPhoto = DB::transaction(function () use ($business, $changes, $adminId): bool {
             $business->fill($changes);
             $business->forceFill(['pending_changes' => null, 'changes_submitted_at' => null, 'reviewed_by' => $adminId, 'reviewed_at' => now()])->save();
-            $this->photos->approvePending($business);
+
+            return $this->photos->approvePending($business);
         });
 
         AuditLog::record($adminId, 'directory.changes_approved', 'business', $business->id, $before, $changes);
-        $this->refresh($business);
+        $newPhoto ? $this->photoChanged($business) : $this->refresh($business);
         $this->tellOwner($business, 'owner_changes_live', ['name' => e($business->name), 'link' => $this->listingLink($business)]);
     }
 
@@ -212,6 +213,31 @@ class BusinessPublisher
         // The post is a photo with a caption or a plain message; one of the two edits applies.
         if (! $this->telegram->editText($channel, (int) $business->channel_message_id, $text, $this->keyboard($business))) {
             $this->telegram->editCaption($channel, (int) $business->channel_message_id, \App\Support\TelegramText::clip($text, 1024), $this->keyboard($business));
+        }
+    }
+
+    /**
+     * The listing's photo changed or went: the channel post follows. A new photo is put on the
+     * post where Telegram allows it; otherwise (a post with no photo left to show, or one Telegram
+     * will not edit) the post is replaced, or stays and is logged if it cannot be removed.
+     */
+    public function photoChanged(Business $business): void
+    {
+        $channel = JobSettings::channel();
+        if ($channel === '' || ! $business->channel_message_id) {
+            return;
+        }
+
+        $business->unsetRelation('photos');
+        $cover = $business->cover();
+
+        if ($cover && PublicUrls::apiIsPublic() && $this->telegram->editPhoto($channel, (int) $business->channel_message_id, $cover->url(), $this->channelText($business), $this->keyboard($business))) {
+            return;
+        }
+
+        $this->unpost($business);
+        if ($business->channel_message_id === null) {
+            $this->post($business);
         }
     }
 

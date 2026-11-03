@@ -53,7 +53,7 @@ class Home
 
         if ($card !== null) {
             try {
-                $this->telegram->sendPhoto($chatId, $card, $caption, $markup);
+                $this->telegram->sendPhotoById($chatId, $card, $caption, $markup);
                 $sent = true;
             } catch (\Throwable) {
                 // Telegram could not fetch the picture (the website is down, or not public yet): the words still go.

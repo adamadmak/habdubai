@@ -176,6 +176,30 @@ test('the Interested link under the group card opens the bot and asks', function
     expect(lastText())->toBe('You have already asked about this post.');
 });
 
+test('a request that fell through may be made again and counts for today; a "no" stays a no', function (): void {
+    goodsMember(801, 'Abebe K');
+    goodsMember(802, 'Sara T');
+    $trip = postTrip(801);
+    postParcel(802);
+
+    pressG(802, 'g:i:'.$trip->id);
+    $match = GoodsMatch::query()->sole();
+    $match->forceFill(['status' => 'cancelled', 'closed_at' => now(), 'created_at' => now()->subDays(3)])->save();
+
+    pressG(802, 'g:i:'.$trip->id);
+    $match = GoodsMatch::query()->sole();
+    expect($match->status)->toBe('requested')->and($match->closed_at)->toBeNull()
+        ->and($match->created_at->isToday())->toBeTrue()
+        ->and(lastTo(801)['text'])->toContain('Sara T');
+
+    pressG(801, 'g:d:'.$match->id);
+    expect($match->fresh()->status)->toBe('declined');
+
+    pressG(802, 'g:i:'.$trip->id);
+    expect(lastText())->toBe('You have already asked about this post.')
+        ->and($match->fresh()->status)->toBe('declined');
+});
+
 test('nobody can ask about their own post or a closed one', function (): void {
     goodsMember(801, 'Abebe K');
     goodsMember(802, 'Sara T');

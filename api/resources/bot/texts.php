@@ -246,6 +246,12 @@ return [
         'en' => 'Cancelled.',
         'om' => 'Haqameera.',
     ],
+    'flow_stopped' => [
+        'am' => '⏹ የቀደመው ሂደት ቆሟል፤ ምንም አልተቀመጠም።',
+        'ti' => '⏹ እቲ ዝሓለፈ መስርሕ ደው ኢሉ፤ ዝተዓቀበ የለን።',
+        'en' => '⏹ I stopped what you were doing; nothing was saved.',
+        'om' => "⏹ Wanti hojjechaa turtan dhaabbateera; homtuu hin olkaa'amne.",
+    ],
     'left' => [
         'am' => 'ለቀዋል። ለመመለስ በፈለጉ ጊዜ /start ይላኩ።',
         'ti' => 'ገዲፍኩም ኣለኹም። ክትምለሱ እንተደሊኹም /start ስደዱ።',
