@@ -53,9 +53,9 @@ builds at once leave both stuck):
 
 | App | Root | Framework | Env it needs |
 | --- | --- | --- | --- |
-| `habesha-api` | `api` | Laravel | `APP_KEY`, `APP_URL`, `APP_ENV=production`, `APP_DEBUG=false`, `LOG_CHANNEL=stderr`, `TRUSTED_PROXIES=*`, `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `SESSION_DRIVER=array`, `SETUP_TOKEN`, `TICK_TOKEN`, plus the database variables the host injects |
+| `habesha-api` | `api` | Laravel | `APP_KEY`, `APP_URL`, `APP_ENV=production`, `APP_DEBUG=false`, `LOG_CHANNEL=stderr`, `TRUSTED_PROXIES=*`, `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `SESSION_DRIVER=array`, `SETUP_TOKEN`, `TICK_TOKEN`, `SITE_API_KEY`, `SITE_URL`, plus the database variables the host injects. Variables are read at build time only: rebuild after changing one |
 | `habesha` (web) | `web` | Next.js | `NEXT_PUBLIC_API_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` |
-| `habuae` (site) | `site` | Next.js | `API_URL` (the API with `/api`), `SITE_URL` (its own address), and `TICK_URL` + `TICK_TOKEN` so it drives the API scheduler |
+| `habuae-site` (site) | `site` | Next.js | `API_URL` (the API with `/api`), `SITE_URL` (its own address), `SITE_API_KEY` (same as the API), and `TICK_URL` + `TICK_TOKEN` so it drives the API scheduler |
 
 The host has no shell, so the first run goes through two token-guarded
 routes (`SetupController`), with `X-Setup-Token: <SETUP_TOKEN>`:

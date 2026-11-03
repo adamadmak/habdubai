@@ -151,12 +151,25 @@ bot never word them differently.
   is the tibeb band (diamonds, no crosses: it is for everyone). Event dates
   also show the Ethiopian calendar (`lib/format.ts`).
 - **Owners sign in with Telegram** (`App\Directory\OwnerLogin`): the site
-  shows a QR code / button and a 4-digit code; the bot asks the person who
-  opened `/start login_<ref>` to confirm; the site's server polls with a
-  secret the browser never sees and puts the owner token in an httpOnly
-  cookie. Owner tokens carry only the `owner` ability (`EnsureBusinessOwner`),
-  admin tokens only `admin`. Owners need not be members; a member's account
-  is linked.
+  shows a QR code / button; the bot asks the person who opened
+  `/start login_<ref>` to confirm, then sends them a six-digit code that they
+  type on the website (five wrong codes end it). The code travels from
+  Telegram to the website, never the other way: that is what stops a
+  forwarded sign-in link from being phished. The site's server polls and
+  verifies with a secret the browser never sees and puts the owner token in
+  an httpOnly cookie. Owner tokens carry only the `owner` ability
+  (`EnsureBusinessOwner`), admin tokens only `admin`. Owners need not be
+  members; a member's account is linked.
+- **Visitors, not the website, are rate-limited.** The site's server makes
+  the API calls, so it sends `X-Site-Key` (`SITE_API_KEY`, the same value on
+  both apps) with the visitor's address and browser (`App\Support\ClientIp`).
+  Without the key the API cannot tell visitors apart and falls back to
+  generous per-address limits.
+- **Environment variables on this host** are visible while the API builds and
+  empty at runtime. Anything the API reads from the environment must go
+  through a config file (`config/services.php` → `host`), which is cached at
+  build; `getenv()` at runtime returns nothing. A changed variable takes
+  effect only after a rebuild.
 - **Listings.** An owner's new listing waits for review. An edit to a live
   listing waits in `businesses.pending_changes` while the live version stays
   up; photos (base64 in `business_photos`, re-encoded by `PhotoStore`) are
