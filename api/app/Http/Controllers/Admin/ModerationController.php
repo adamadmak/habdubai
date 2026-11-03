@@ -20,12 +20,19 @@ class ModerationController extends Controller
     public function index(): JsonResponse
     {
         $open = GroupReport::query()->with(['reporter:id,display_name', 'reported:id,display_name,role,verified_at,muted_until,banned_at'])
-            ->where('status', 'open')->oldest('id')->get()
+            // Bounded: a spam wave can file thousands; the oldest are decided first anyway.
+            ->where('status', 'open')->oldest('id')->limit(1000)->get()
             ->groupBy(fn (GroupReport $r) => $r->chat_id.':'.$r->message_id);
 
         $groups = [Community::questionsGroup() => 'Questions group', Community::goodsGroup() => 'Goods group'];
 
-        $items = $open->map(function ($reports) use ($groups) {
+        // Strikes in 90 days for everyone in the queue, in one query rather than one per message.
+        $reportedIds = $open->map(fn ($reports) => $reports->first()->reported_member_id)->filter()->unique()->values()->all();
+        $strikeCounts = $reportedIds === [] ? collect() : MemberStrike::query()
+            ->whereIn('member_id', $reportedIds)->where('created_at', '>=', now()->subDays(90))
+            ->selectRaw('member_id, count(*) as n')->groupBy('member_id')->pluck('n', 'member_id');
+
+        $items = $open->map(function ($reports) use ($groups, $strikeCounts) {
             /** @var GroupReport $first */
             $first = $reports->first();
             $reported = $first->reported;
@@ -44,13 +51,13 @@ class ModerationController extends Controller
                     'role' => $reported->role,
                     'muted_until' => $reported->muted_until?->toIso8601String(),
                     'banned' => $reported->banned_at !== null,
-                    'strikes_90d' => MemberStrike::query()->where('member_id', $reported->id)->where('created_at', '>=', now()->subDays(90))->count(),
+                    'strikes_90d' => (int) ($strikeCounts[$reported->id] ?? 0),
                 ] : null,
                 'first_reported_at' => $first->created_at?->toIso8601String(),
             ];
         })->values();
 
-        $strikes = MemberStrike::query()->with(['member:id,display_name', 'member'])->latest('id')->limit(50)->get()->map(fn (MemberStrike $s) => [
+        $strikes = MemberStrike::query()->with('member:id,display_name')->latest('id')->limit(50)->get()->map(fn (MemberStrike $s) => [
             'id' => $s->id,
             'member' => $s->member ? ['id' => $s->member->id, 'name' => $s->member->display_name] : null,
             'kind' => $s->kind,

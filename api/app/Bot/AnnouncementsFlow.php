@@ -23,6 +23,9 @@ class AnnouncementsFlow
 {
     public const STATES = ['ann_topic', 'ann_text', 'ann_photo', 'ann_date', 'ann_place', 'ann_confirm'];
 
+    /** Announcements one leader may send in a day. */
+    public const LEADER_PER_DAY = 5;
+
     public function __construct(
         private readonly TelegramBotService $telegram,
         private readonly BotMessages $messages,
@@ -39,6 +42,19 @@ class AnnouncementsFlow
             $this->say($member, 'ann_no_rights');
 
             return;
+        }
+
+        // Each announcement can reach every subscriber's private chat: a leader posts a few a
+        // day at most. Moderators and admins are not counted.
+        if (! $member->hasRole('moderator', 'admin')) {
+            // A Dubai day; a rejected draft does not use up a turn.
+            $today = Announcement::query()->where('member_id', $member->id)->whereIn('status', ['pending', 'published'])
+                ->where('created_at', '>=', now('Asia/Dubai')->startOfDay()->utc())->count();
+            if ($today >= self::LEADER_PER_DAY) {
+                $this->say($member, 'ann_limit', ['count' => $today]);
+
+                return;
+            }
         }
 
         $conversation->forceFill(['state' => 'ann_topic', 'data' => []])->save();
@@ -108,7 +124,8 @@ class AnnouncementsFlow
                 return;
 
             case 'ann_place':
-                $conversation->moveTo('ann_confirm', ['place' => $skip ? null : mb_substr($text, 0, 160)]);
+                // A sticker or a photo here is no place: none rather than an empty one.
+                $conversation->moveTo('ann_confirm', ['place' => $skip || $text === '' ? null : mb_substr($text, 0, 160)]);
                 $this->preview($member, $conversation);
 
                 return;
@@ -151,6 +168,14 @@ class AnnouncementsFlow
     {
         $data = $conversation->data ?? [];
         $conversation->reset();
+
+        // Checked again at the moment of posting: a moderator may have taken the leader's
+        // right to this topic away, or switched the topic off, since the flow began.
+        if (! AnnouncementTopic::postableBy($member)->contains('id', (int) ($data['topic_id'] ?? 0)) || trim((string) ($data['text'] ?? '')) === '') {
+            $this->say($member, 'ann_no_rights', [], $this->telegram->removeKeyboard());
+
+            return;
+        }
 
         $announcement = $this->draft($member, $data);
         $needsApproval = $announcement->topic->needs_approval && ! $member->hasRole('moderator', 'admin');

@@ -23,14 +23,21 @@ export const authOptions: NextAuthOptions = {
         const { email, password } = (credentials ?? {}) as { email?: string; password?: string };
         if (!email || !password) return null;
 
-        const response = await fetch(`${API_URL}/api/admin/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
+        let response: Response;
+        try {
+          response = await fetch(`${API_URL}/api/admin/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ email, password }),
+            signal: AbortSignal.timeout(15000),
+          });
+        } catch {
+          throw new Error("UNAVAILABLE");
+        }
 
         // next-auth hands a thrown message to the form as `error`; the form words it.
         if (response.status === 429) throw new Error("RATE_LIMITED");
+        if (response.status >= 500) throw new Error("UNAVAILABLE");
         if (!response.ok) return null;
 
         const data = (await response.json()) as { token: string; user: { id: number; name: string; email: string } };

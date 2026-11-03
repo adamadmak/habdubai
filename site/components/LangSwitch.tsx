@@ -63,11 +63,11 @@ function LangLinks({ lang, label, href }: Props & { href: (locale: Locale) => st
       <details ref={menu} className="lang-menu relative xl:hidden">
         <summary
           aria-label={`${label}: ${LOCALE_NAMES[lang]}`}
-          className="press hit flex h-10 cursor-pointer select-none items-center gap-1.5 rounded-full bg-white/8 pl-2.5 pr-2 text-[0.8125rem] font-semibold leading-none ring-1 ring-white/10"
+          className="press hit flex h-10 cursor-pointer select-none items-center gap-1.5 rounded-full border border-fg/10 bg-fg/6 pl-2.5 pr-2 text-[0.8125rem] font-semibold leading-none"
         >
-          <Languages className="size-4 text-white/75" aria-hidden="true" />
+          <Languages className="size-4 text-muted" aria-hidden="true" />
           <span lang={lang}>{LOCALE_SHORT[lang]}</span>
-          <ChevronDown className="lang-chevron size-3.5 text-white/60" aria-hidden="true" />
+          <ChevronDown className="lang-chevron size-3.5 text-muted" aria-hidden="true" />
         </summary>
         <div role="group" aria-label={label} className="lang-menu-panel absolute right-0 top-[calc(100%+0.75rem)] z-50 w-52 rounded-[1.25rem] p-1.5">
           {LOCALES.map((locale) => (
@@ -80,17 +80,17 @@ function LangLinks({ lang, label, href }: Props & { href: (locale: Locale) => st
               scroll={false}
               onClick={close}
               className={`press flex min-h-11 items-center justify-between gap-3 rounded-[0.875rem] px-3.5 text-[0.9375rem] font-semibold transition-colors ${
-                locale === lang ? "bg-white/12 text-white" : "text-white/80 hover:bg-white/8 hover:text-white"
+                locale === lang ? "bg-fg/8 text-fg" : "text-muted hover:bg-fg/5 hover:text-fg"
               }`}
             >
               {LOCALE_NAMES[locale]}
-              {locale === lang && <Check className="size-4 shrink-0 text-accent" aria-hidden="true" />}
+              {locale === lang && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
             </Link>
           ))}
         </div>
       </details>
 
-      <div role="group" aria-label={label} className="hidden rounded-full bg-white/8 p-0.5 ring-1 ring-white/10 xl:flex">
+      <div role="group" aria-label={label} className="hidden rounded-full border border-fg/10 bg-fg/6 p-0.5 xl:flex">
         {LOCALES.map((locale) => (
           <Link
             key={locale}
@@ -101,7 +101,7 @@ function LangLinks({ lang, label, href }: Props & { href: (locale: Locale) => st
             aria-current={locale === lang ? "true" : undefined}
             scroll={false}
             className={`press hit rounded-full px-2.5 py-1.5 text-[0.8125rem] font-semibold leading-none transition-colors ${
-              locale === lang ? "bg-white text-night shadow-sm" : "text-white/75 hover:text-white"
+              locale === lang ? "bg-elevated text-fg shadow-sm" : "text-muted hover:text-fg"
             }`}
           >
             {LOCALE_SHORT[locale]}

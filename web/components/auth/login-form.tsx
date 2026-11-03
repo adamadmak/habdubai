@@ -19,8 +19,9 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
-/** Thrown by `authorize` in lib/auth.ts when the API answers 429. */
+/** Thrown by `authorize` in lib/auth.ts: the API answered 429, or could not be reached / failed. */
 const RATE_LIMITED = "RATE_LIMITED";
+const UNAVAILABLE = "UNAVAILABLE";
 
 /**
  * Where to go after signing in: a page on this site, never another origin.
@@ -43,6 +44,7 @@ const LogInForm = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const params = useSearchParams();
+  const expired = params.get("expired") === "1";
 
   const {
     register,
@@ -58,6 +60,8 @@ const LogInForm = () => {
         window.location.assign(afterSignIn(params.get("next")));
       } else if (response?.error === RATE_LIMITED) {
         setError("Too many sign-in attempts. Wait a minute and try again.");
+      } else if (response?.error === UNAVAILABLE || !response) {
+        setError("The admin API could not be reached. Try again in a minute; if it keeps failing, check that the API is running.");
       } else {
         setError("That email and password do not match an admin account.");
       }
@@ -65,29 +69,34 @@ const LogInForm = () => {
   };
 
   return (
-    <div className="w-full py-10">
-      <div className="text-2xl 2xl:text-3xl font-bold text-default-900">Habesha Dubai</div>
-      <div className="mt-2 text-base text-default-600">Sign in to the admin dashboard.</div>
+    <div className="w-full">
+      <h1 className="font-display text-[32px] leading-tight font-semibold text-default-900">Sign in</h1>
+      <p className="mt-2 text-base text-default-600">To the Habesha Dubai admin.</p>
+      {expired && !error && (
+        <div role="status" className="mt-5 rounded-lg border border-primary/20 bg-primary-50/70 px-3 py-2 text-sm text-default-800">
+          Your session ended. Sign in again to carry on where you were.
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
         <div>
           <Label htmlFor="email" className="mb-2 font-medium text-default-600">Email</Label>
-          <Input disabled={isPending} {...register("email")} type="email" id="email" autoComplete="username" size="lg" className={cn({ "border-destructive": errors.email })} />
+          <Input disabled={isPending} {...register("email")} type="email" id="email" autoComplete="username" size="lg" autoFocus aria-invalid={Boolean(errors.email)} className={cn("bg-card", { "border-destructive": errors.email })} />
           {errors.email && <div className="text-destructive mt-2 text-sm">{errors.email.message}</div>}
         </div>
 
         <div>
           <Label htmlFor="password" className="mb-2 font-medium text-default-600">Password</Label>
           <div className="relative">
-            <Input disabled={isPending} {...register("password")} type={showPassword ? "text" : "password"} id="password" autoComplete="current-password" size="lg" />
-            <button type="button" className="absolute top-1/2 -translate-y-1/2 right-4 text-default-400" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}>
+            <Input disabled={isPending} {...register("password")} type={showPassword ? "text" : "password"} id="password" autoComplete="current-password" size="lg" aria-invalid={Boolean(errors.password)} className="bg-card pr-12" />
+            <button type="button" className="absolute top-1/2 -translate-y-1/2 right-3 rounded p-1 text-default-500 hover:text-default-800" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}>
               <Icon icon={showPassword ? "heroicons:eye-slash" : "heroicons:eye"} className="w-5 h-5" />
             </button>
           </div>
           {errors.password && <div className="text-destructive mt-2 text-sm">{errors.password.message}</div>}
         </div>
 
-        {error && <div className="text-destructive text-sm">{error}</div>}
+        {error && <div role="alert" className="rounded-lg border border-destructive/25 bg-destructive/[0.05] px-3 py-2 text-destructive text-sm">{error}</div>}
 
         <Button className="w-full" disabled={isPending} size="lg">
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

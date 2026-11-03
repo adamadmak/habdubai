@@ -1,15 +1,12 @@
 "use client";
 import React from "react";
-import { SiteLogo } from "@/components/svg";
-import { Loader2 } from "lucide-react";
+import BrandMark from "@/components/brand-mark";
+
 const LayoutLoader = () => {
   return (
-    <div className=" h-screen flex items-center justify-center flex-col space-y-2">
-      <SiteLogo className=" h-10 w-10 text-primary" />
-      <span className=" inline-flex gap-1">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading...
-      </span>
+    <div className="h-screen flex items-center justify-center flex-col gap-3" role="status" aria-live="polite">
+      <BrandMark className="h-12 w-12 motion-safe:animate-pulse" />
+      <span className="text-sm text-default-500">Opening the admin…</span>
     </div>
   );
 };

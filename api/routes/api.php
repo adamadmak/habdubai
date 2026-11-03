@@ -48,6 +48,10 @@ Route::match(['get', 'post'], 'system/tick', SystemTickController::class)->middl
 // Which settings the running API can see, as yes/no (no values).
 Route::get('system/status', \App\Http\Controllers\SystemStatusController::class)->middleware('throttle:20,1')->name('system.status');
 
+// For uptime monitors: up, database, scheduler, queue. Throttled inside (60 a minute), so a
+// database outage still answers 503 rather than failing in the rate limiter.
+Route::get('health', \App\Http\Controllers\HealthController::class)->name('health');
+
 // First run on a host with no shell: see SetupController.
 Route::post('setup/migrate', [SetupController::class, 'migrate'])->middleware('throttle:10,1')->name('setup.migrate');
 Route::post('setup/admin', [SetupController::class, 'admin'])->middleware('throttle:10,1')->name('setup.admin');
@@ -108,6 +112,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('me', [AuthController::class, 'me'])->name('me');
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+        Route::get('readiness', \App\Http\Controllers\Admin\ReadinessController::class)->middleware('throttle:30,1')->name('readiness');
         Route::get('analytics', AnalyticsController::class)->name('analytics');
 
         Route::get('members', [MemberController::class, 'index'])->name('members.index');

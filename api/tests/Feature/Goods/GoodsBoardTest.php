@@ -483,7 +483,13 @@ test('the admin lists goods posts and hides one: the group card goes and the own
     Sanctum::actingAs(admin(), ['admin']);
 
     $this->getJson('/api/admin/goods/posts?kind=traveller')->assertOk()
-        ->assertJsonCount(1, 'data')->assertJsonPath('data.0.route', 'Dubai → Addis Ababa')->assertJsonPath('data.0.member.name', 'Abebe K');
+        ->assertJsonCount(1, 'data')->assertJsonPath('data.0.route', 'Dubai → Addis Ababa')->assertJsonPath('data.0.member.name', 'Abebe K')
+        ->assertJsonPath('data.0.price', null)->assertJsonPath('data.0.mode', null);
+
+    // The carry fee and "handed over at the other end" reach the admin page too.
+    GoodsPost::query()->where('kind', 'sender')->update(['price' => 150, 'currency' => 'AED', 'mode' => 'request']);
+    $this->getJson('/api/admin/goods/posts?kind=sender')->assertOk()
+        ->assertJsonPath('data.0.price', 150)->assertJsonPath('data.0.currency', 'AED')->assertJsonPath('data.0.mode', 'request');
 
     $this->postJson("/api/admin/goods/posts/{$trip->id}/hide", ['reason' => 'Asked for money to carry'])->assertOk()->assertJsonPath('post.status', 'hidden');
 
@@ -620,4 +626,81 @@ test('a website account that is not a member is told how to join; members close 
     asAccount($token)->postJson("/api/owner/goods/{$other->id}/close")->assertNotFound();
     asAccount($token)->postJson("/api/owner/goods/{$mine}/close")->assertOk()->assertJsonPath('post.status', 'closed')->assertJsonPath('post.open', false);
     expect($other->fresh()->status)->toBe('open');
+});
+
+// ---- launch audit: nothing a member does can make the bot message someone over and over --------
+
+test('pressing We agreed again does not nudge the other side again', function (): void {
+    goodsMember(801, 'Abebe K');
+    goodsMember(802, 'Sara T');
+    $trip = postTrip(801);
+    postParcel(802);
+    pressG(802, 'g:i:'.$trip->id);
+    $match = GoodsMatch::query()->sole();
+    pressG(801, 'g:a:'.$match->id);
+
+    foreach (range(1, 3) as $press) {
+        pressG(801, 'g:ok:'.$match->id);
+    }
+
+    $nudges = collect(textsTo(802))->filter(fn (string $t) => str_contains($t, 'Abebe K pressed We agreed'));
+    expect($nudges)->toHaveCount(1)
+        ->and(collect(textsTo(801))->filter(fn (string $t) => str_contains($t, 'Waiting for Sara T')))->toHaveCount(3)
+        ->and($match->fresh()->status)->toBe('introduced');
+});
+
+test('closing a parcel and posting it again does not tell the same traveller again that day', function (): void {
+    goodsMember(801, 'Abebe K');
+    goodsMember(802, 'Sara T');
+    postTrip(801);
+    $parcel = postParcel(802);
+
+    pressG(802, 'g:z:'.$parcel->id);
+    postParcel(802);
+    $notices = fn () => collect(textsTo(801))->filter(fn (string $t) => str_contains($t, 'A new post matches yours'));
+    expect($notices())->toHaveCount(1);
+
+    // A different parcel the same day (another date) is news.
+    postParcel(802, '22/11/2026', '2 kg', 'A box of coffee for my uncle');
+    expect($notices())->toHaveCount(2);
+
+    // A day later it is news again.
+    $this->travel(25)->hours();
+    foreach (GoodsPost::query()->where('member_id', Member::findByTelegramUser(802)->id)->where('status', 'open')->pluck('id') as $id) {
+        pressG(802, 'g:z:'.$id);
+    }
+    postParcel(802);
+    expect($notices())->toHaveCount(3);
+});
+
+test('the admin goods lists read each member\'s failed deals once per page, not once per row', function (): void {
+    Sanctum::actingAs(admin(), ['admin']);
+    $queries = function (string $url): int {
+        \Illuminate\Support\Facades\DB::flushQueryLog();
+        \Illuminate\Support\Facades\DB::enableQueryLog();
+        $this->getJson($url)->assertOk();
+        // Under test, every earlier webhook's after-response job is looked up again when a
+        // request ends; those lookups are the harness, not the page.
+        $count = collect(\Illuminate\Support\Facades\DB::getQueryLog())->reject(fn (array $q) => str_contains($q['query'], 'telegram_updates'))->count();
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+
+        return $count;
+    };
+
+    goodsMember(801, 'Abebe K');
+    goodsMember(802, 'Sara T');
+    $trip = postTrip(801);
+    postParcel(802);
+    pressG(802, 'g:i:'.$trip->id);
+    [$posts, $matches] = [$queries('/api/admin/goods/posts?status=all'), $queries('/api/admin/goods/matches')];
+
+    foreach ([803 => 'Meron T', 804 => 'Daniel A', 805 => 'Hana B'] as $id => $name) {
+        goodsMember($id, $name);
+        postParcel($id, '20/11/2026', '1 kg', 'A small box of coffee for my family');
+        pressG($id, 'g:i:'.$trip->id);
+    }
+
+    expect($queries('/api/admin/goods/posts?status=all'))->toBe($posts)
+        ->and($queries('/api/admin/goods/matches'))->toBe($matches)
+        ->and(GoodsMatch::query()->count())->toBe(4);
 });

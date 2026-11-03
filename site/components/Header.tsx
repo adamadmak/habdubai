@@ -7,8 +7,9 @@ import type { Meta } from "@/lib/api";
 import { Mark } from "./Logo";
 import { LangSwitch, LangSwitchPlain } from "./LangSwitch";
 import { NavLinks } from "./NavLinks";
+import { ThemeToggle } from "./ThemeToggle";
 
-/** A floating island of night: the page and the night bands scroll under it. */
+/** A floating island of frosted glass: the page and its bands scroll under it. */
 export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: Meta | null }) {
   const join = meta?.bot.link;
 
@@ -20,16 +21,17 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
           <span className="flex flex-col leading-none">
             <span className="text-[0.9375rem] font-bold tracking-tight">{d.brand}</span>
             {/* The name in the other script: Ge'ez on English and Oromo pages, Latin on Amharic and Tigrinya ones. */}
-            <span lang={isGeez(lang) ? "en" : "am"} className="mt-1 text-[0.6875rem] font-medium text-white/70">{d.brandNative}</span>
+            <span lang={isGeez(lang) ? "en" : "am"} className="mt-1 text-[0.6875rem] font-medium text-muted">{d.brandNative}</span>
           </span>
         </Link>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0 md:flex-1">
           <NavLinks lang={lang} labels={d.nav} label={d.navLabel} />
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1.5 md:gap-2">
             <Suspense fallback={<LangSwitchPlain lang={lang} label={d.language} />}>
               <LangSwitch lang={lang} label={d.language} />
             </Suspense>
+            <ThemeToggle labels={d.theme} />
             {join && (
               // On a tablet the links take the room, so the button keeps only its icon there (its words stay for screen readers).
               <a href={join} target="_blank" rel="noopener noreferrer" className="btn btn-gold hidden min-h-10 rounded-full px-4 text-sm sm:inline-flex md:max-lg:px-3">

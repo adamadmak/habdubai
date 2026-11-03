@@ -1,5 +1,6 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { Briefcase } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import PageTitle from "@/components/page-title";
 import { JobStatusBadge, ScamScore } from "@/components/job-badges";
 import { cn } from "@/lib/utils";
+import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
 import { useApiQuery, formatDateTime, type JobsPage, type JobStatus, CATEGORY_NAMES, JOB_EMIRATE_NAMES } from "@/lib/api";
 
 const TABS: { value: JobStatus | "all"; label: string }[] = [
@@ -28,11 +30,12 @@ const JobsPageInner = () => {
   const search = params.get("search") ?? "";
   const page = Number(params.get("page") ?? "1");
   const [searchInput, setSearchInput] = useState(search);
+  useEffect(() => setSearchInput(search), [search]);
 
   const query = new URLSearchParams({ status, page: String(page) });
   if (search) query.set("search", search);
 
-  const { data, isLoading, error } = useApiQuery<JobsPage>(["jobs", query.toString()], `/admin/jobs?${query.toString()}`, { refetchInterval: 30_000 });
+  const { data, isLoading, error, refetch } = useApiQuery<JobsPage>(["jobs", query.toString()], `/admin/jobs?${query.toString()}`, { refetchInterval: 30_000, placeholderData: (previous) => previous });
 
   const update = (changes: Record<string, string>) => {
     const next = new URLSearchParams(params.toString());
@@ -54,6 +57,7 @@ const JobsPageInner = () => {
             <button
               key={tab.value}
               type="button"
+              aria-pressed={status === tab.value}
               onClick={() => update({ status: tab.value })}
               className={cn(
                 "px-3 py-1.5 rounded-md text-sm font-medium border transition-colors",
@@ -67,19 +71,20 @@ const JobsPageInner = () => {
         })}
         <form
           className="flex gap-2 ml-auto"
+          role="search"
           onSubmit={(e) => {
             e.preventDefault();
             update({ search: searchInput.trim() });
           }}
         >
-          <Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Title or company" className="w-56" />
+          <Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Title or company" className="w-56" aria-label="Search jobs" />
           <Button type="submit" variant="outline">Search</Button>
         </form>
       </div>
 
       <Card>
         <CardContent className="p-0">
-          {error && <div className="p-4 text-destructive">{error.message}</div>}
+          {error && <ErrorState className="m-4" error={error} onRetry={() => refetch()} title="Jobs could not be loaded" />}
           <Table>
             <TableHeader>
               <TableRow>
@@ -94,13 +99,17 @@ const JobsPageInner = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={8} className="text-default-500">Loading…</TableCell></TableRow>}
+              {isLoading && <TableMessage colSpan={8}><LoadingRows className="p-4" /></TableMessage>}
               {data?.data.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-default-500">
-                    {status === "review" ? "Nothing waiting for review." : "No jobs here."}
-                  </TableCell>
-                </TableRow>
+                <TableMessage colSpan={8}>
+                  <EmptyState icon={Briefcase} title={search ? "No jobs match that search" : status === "review" ? "Nothing waiting for review" : "No jobs here"} compact>
+                    {search
+                      ? "Search looks at the title and the company name."
+                      : status === "review"
+                        ? "Risky or unclassified listings land here. New ones arrive as the sources run."
+                        : "Listings appear here as the job sources run. Add or fix a source on Job sources."}
+                  </EmptyState>
+                </TableMessage>
               )}
               {data?.data.map((job) => (
                 <TableRow key={job.id} className="cursor-pointer" onClick={() => router.push(`/jobs/${job.id}`)}>

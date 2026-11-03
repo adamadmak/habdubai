@@ -69,7 +69,7 @@ class JobCard
         $source = $job->source?->name;
         $lines[] = ($source ? e($this->messages->text('job_source', $label, ['source' => $source])).' · ' : '').$tags;
 
-        return mb_substr(implode("\n", $lines), 0, 4000);
+        return \App\Support\TelegramText::clip(implode("\n", $lines), 4000);
     }
 
     public function channelKeyboard(Job $job): array

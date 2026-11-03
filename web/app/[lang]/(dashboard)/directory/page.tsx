@@ -1,5 +1,6 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { BadgeCheck, Store } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,8 +15,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import PageTitle from "@/components/page-title";
 import { cn } from "@/lib/utils";
+import ConfirmButton from "@/components/confirm-button";
+import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
+import { toastResult } from "@/lib/toast";
 import {
-  useApiQuery, useApiMutation, formatDateTime, ApiError,
+  useApiQuery, useApiMutation, formatDateTime, ApiError, errorText,
   type Business, type BusinessClaimRow, type BusinessesPage, type BusinessStatus,
 } from "@/lib/api";
 
@@ -93,6 +97,25 @@ const toBody = (f: Form) => ({
   verified: f.verified,
 });
 
+/**
+ * What to send on save. A new listing sends everything; an edit sends only the
+ * fields the moderator changed, because the API drops an owner's queued change
+ * to any field it is sent (a moderator's correction wins), and sending the whole
+ * form would silently throw away every pending owner edit.
+ */
+function changedBody(form: Form, original: Business | null): Record<string, unknown> {
+  const next = toBody(form) as Record<string, unknown>;
+  if (!original) return next;
+  const before = toBody(toForm(original)) as Record<string, unknown>;
+  const changed = Object.fromEntries(Object.entries(next).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(before[k])));
+  // A pin is two numbers: the API's required_with only fires when both keys are present.
+  if ("latitude" in changed || "longitude" in changed) {
+    changed.latitude = next.latitude;
+    changed.longitude = next.longitude;
+  }
+  return changed;
+}
+
 /** A changed value, shown the way a person reads it. */
 function show(field: string, value: unknown, data?: BusinessesPage): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -110,16 +133,20 @@ const ClaimsList = () => {
     [["business-claims"], ["businesses"], ["dashboard"]]
   );
 
-  const run = (claim: BusinessClaimRow, action: "approve" | "reject") => {
-    if (action === "approve" && !window.confirm(`Hand ${claim.business?.name} to ${claim.owner?.name}? They will be able to edit it; their edits still come to you for review.`)) return;
-    decide.mutateAsync({ id: claim.id, action })
-      .then(() => toast.success(action === "approve" ? "Handed over. The owner was told in Telegram." : "Claim rejected. The owner was told."))
-      .catch((e: Error) => toast.error(e.message));
-  };
+  const run = (claim: BusinessClaimRow, action: "approve" | "reject") =>
+    toastResult(decide.mutateAsync({ id: claim.id, action }), action === "approve" ? "Handed over. The owner was told in Telegram." : "Claim rejected. The owner was told.");
 
-  if (error) return <div className="text-destructive">{error.message}</div>;
-  if (isLoading) return <div className="text-default-500">Loading…</div>;
-  if (!data?.data.length) return <Card><CardContent className="p-6 text-default-500">No ownership claims waiting.</CardContent></Card>;
+  if (error) return <ErrorState error={error} title="Claims could not be loaded" />;
+  if (isLoading) return <LoadingRows />;
+  if (!data?.data.length) {
+    return (
+      <Card>
+        <EmptyState icon={BadgeCheck} title="No ownership claims waiting">
+          When an owner on the website says a listing the community added is theirs, the claim waits here for you to check.
+        </EmptyState>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -142,8 +169,18 @@ const ClaimsList = () => {
             <p className="text-xs text-default-500">Check before handing over: call the listed phone, or ask the claimant to message from it.</p>
             <Input placeholder="Note to the claimant if you reject" value={notes[c.id] ?? ""} onChange={(e) => setNotes({ ...notes, [c.id]: e.target.value })} />
             <div className="flex gap-2">
-              <Button size="sm" color="success" disabled={decide.isPending} onClick={() => run(c, "approve")}>Hand over</Button>
-              <Button size="sm" variant="outline" color="destructive" disabled={decide.isPending} onClick={() => run(c, "reject")}>Reject</Button>
+              <ConfirmButton
+                size="sm"
+                color="success"
+                disabled={decide.isPending}
+                label="Hand over"
+                title={`Hand ${c.business?.name ?? "this listing"} to ${c.owner?.name ?? "this owner"}?`}
+                description="They will be able to edit it from the website; their edits still come to you for review. Other claims on it are rejected."
+                confirmLabel="Hand over"
+                tone="default"
+                onConfirm={() => run(c, "approve")}
+              />
+              <Button size="sm" variant="outline" color="destructive" disabled={decide.isPending} onClick={() => run(c, "reject").catch(() => undefined)}>Reject</Button>
             </div>
           </CardContent>
         </Card>
@@ -161,6 +198,7 @@ const DirectoryInner = () => {
   const search = params.get("search") ?? "";
   const page = Number(params.get("page") ?? "1");
   const [searchInput, setSearchInput] = useState(search);
+  useEffect(() => setSearchInput(search), [search]);
   const [form, setForm] = useState<Form | null>(null);
   const [current, setCurrent] = useState<Business | null>(null);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -171,10 +209,15 @@ const DirectoryInner = () => {
   if (category) query.set("category", category);
   if (search) query.set("search", search);
 
-  const { data, isLoading, error } = useApiQuery<BusinessesPage>(["businesses", query.toString()], `/admin/businesses?${query.toString()}`);
+  const { data, isLoading, error, refetch } = useApiQuery<BusinessesPage>(["businesses", query.toString()], `/admin/businesses?${query.toString()}`, {
+    placeholderData: (previous) => previous,
+  });
+  // The list row carries no reports; the open listing's own page does.
+  const detail = useApiQuery<{ business: Business }>(["businesses", "one", current?.id], `/admin/businesses/${current?.id}`, { enabled: Boolean(current?.id) });
+  const reports = detail.data?.business.reports ?? [];
 
   const invalidate = [["businesses"], ["dashboard"], ["directory-cities"]];
-  const save = useApiMutation<{ business: Business }, Form>((req, f) => (f.id ? req(`/admin/businesses/${f.id}`, "PUT", toBody(f)) : req("/admin/businesses", "POST", toBody(f))), invalidate);
+  const save = useApiMutation<{ business: Business }, Form>((req, f) => (f.id ? req(`/admin/businesses/${f.id}`, "PUT", changedBody(f, current)) : req("/admin/businesses", "POST", toBody(f))), invalidate);
   const act = useApiMutation<{ business?: Business }, { id: number; action: string; note?: string }>(
     (req, { id, action, note }) => (action === "delete" ? req(`/admin/businesses/${id}`, "DELETE") : req(`/admin/businesses/${id}/${action}`, "POST", { note })),
     invalidate
@@ -197,6 +240,10 @@ const DirectoryInner = () => {
   const submit = () => {
     if (!form) return;
     setErrors({});
+    if (form.id && Object.keys(changedBody(form, current)).length === 0) {
+      toast("Nothing changed.");
+      return;
+    }
     save
       .mutateAsync(form)
       .then(() => {
@@ -205,19 +252,13 @@ const DirectoryInner = () => {
       })
       .catch((e: ApiError) => {
         setErrors(e.errors ?? {});
-        toast.error(e.message);
+        toast.error(errorText(e));
       });
   };
 
-  const decide = (action: string, done: string) => {
-    if (!current) return;
-    act
-      .mutateAsync({ id: current.id, action, note: note || undefined })
-      .then(() => {
-        toast.success(done);
-        setForm(null);
-      })
-      .catch((e: Error) => toast.error(e.message));
+  const decide = (action: string, done: string): Promise<unknown> => {
+    if (!current) return Promise.resolve();
+    return toastResult(act.mutateAsync({ id: current.id, action, note: note || undefined }), done).then(() => setForm(null));
   };
 
   const err = (k: string) => errors[k] && <p className="text-xs text-destructive mt-1">{errors[k][0]}</p>;
@@ -275,7 +316,7 @@ const DirectoryInner = () => {
       ) : (
         <Card>
           <CardContent className="p-0">
-            {error && <div className="p-4 text-destructive">{error.message}</div>}
+            {error && <ErrorState className="m-4" error={error} onRetry={() => refetch()} title="Businesses could not be loaded" />}
             <Table>
               <TableHeader>
                 <TableRow>
@@ -289,19 +330,29 @@ const DirectoryInner = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading && <TableRow><TableCell colSpan={7} className="text-default-500">Loading…</TableCell></TableRow>}
+                {isLoading && <TableMessage colSpan={7}><LoadingRows className="p-4" /></TableMessage>}
                 {data?.data.length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="text-default-500">{status === "pending" ? "Nothing waiting for review." : status === "changes" ? "No owner edits waiting." : "Nothing here."}</TableCell></TableRow>
+                  <TableMessage colSpan={7}>
+                    <EmptyState icon={Store} compact title={search || cityId || category ? "No business matches" : status === "pending" ? "Nothing waiting for review" : status === "changes" ? "No owner edits waiting" : "Nothing here"}>
+                      {search || cityId || category
+                        ? "Try another city or kind, or search by name, area or phone."
+                        : status === "pending"
+                          ? "Suggestions from members and submissions from owners land here."
+                          : status === "changes"
+                            ? "When an owner edits a live listing, the change waits here while the live version stays up."
+                            : "Add a business with the button above, or approve one waiting for review."}
+                    </EmptyState>
+                  </TableMessage>
                 )}
                 {data?.data.map((b) => (
-                  <TableRow key={b.id} className="cursor-pointer" onClick={() => open(b)}>
+                  <TableRow key={b.id} className="cursor-pointer" tabIndex={0} onClick={() => open(b)} onKeyDown={(e) => e.key === "Enter" && open(b)} aria-label={`Open ${b.name}`}>
                     <TableCell>
                       {b.pending_photo || b.photo ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={(b.pending_photo ?? b.photo) as string} alt="" className="h-10 w-14 rounded object-cover" />
                       ) : <div className="h-10 w-14 rounded bg-default-100" />}
                     </TableCell>
-                    <TableCell className="max-w-xs">
+                    <TableCell className="min-w-[13rem] max-w-[18rem]">
                       <div className="font-medium text-default-900">{b.name} {b.verified && <span title="Verified">✅</span>}</div>
                       {b.description && <div className="text-xs text-default-500 truncate">{b.description}</div>}
                       {b.review_note && b.status !== "approved" && <div className="text-xs text-warning mt-1">{b.review_note}</div>}
@@ -314,9 +365,9 @@ const DirectoryInner = () => {
                       {b.reports_count > 0 && <Badge color="destructive" variant="outline" className="ml-1">{b.reports_count} report{b.reports_count === 1 ? "" : "s"}</Badge>}
                     </TableCell>
                     <TableCell className="text-sm whitespace-nowrap">{data.choices.categories[b.category] ?? b.category}</TableCell>
-                    <TableCell className="text-sm">{b.city}</TableCell>
+                    <TableCell className="text-sm whitespace-nowrap">{b.city}</TableCell>
                     <TableCell className="text-sm font-mono whitespace-nowrap">{b.phone ?? "—"}</TableCell>
-                    <TableCell className="text-sm">
+                    <TableCell className="text-sm whitespace-nowrap">
                       {b.owner ? <span>🏪 {b.owner.name}</span> : b.submitted_by?.name ?? <span className="text-default-500">admin</span>}
                       <div className="text-xs text-default-500">{formatDateTime(b.changes_submitted_at ?? b.submitted_at ?? b.created_at)}</div>
                     </TableCell>
@@ -393,8 +444,8 @@ const DirectoryInner = () => {
                   ) : <div className="text-sm text-default-600">Only the photo changed.</div>}
                   <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason, sent to the owner if you reject" />
                   <div className="flex gap-2">
-                    <Button size="sm" color="success" disabled={act.isPending} onClick={() => decide("changes/approve", "Changes are live; the channel post was updated and the owner told.")}>Approve changes</Button>
-                    <Button size="sm" variant="outline" color="destructive" disabled={act.isPending} onClick={() => decide("changes/reject", "Changes rejected; the owner was told.")}>Reject changes</Button>
+                    <Button size="sm" color="success" disabled={act.isPending} onClick={() => decide("changes/approve", "Changes are live; the channel post was updated and the owner told.").catch(() => undefined)}>Approve changes</Button>
+                    <Button size="sm" variant="outline" color="destructive" disabled={act.isPending} onClick={() => decide("changes/reject", "Changes rejected; the owner was told.").catch(() => undefined)}>Reject changes</Button>
                   </div>
                 </div>
               )}
@@ -497,10 +548,10 @@ const DirectoryInner = () => {
                 </label>
               </div>
 
-              {current && current.reports && current.reports.length > 0 && (
-                <div className="text-sm">
-                  <div className="text-default-500 mb-1">Reports of wrong information</div>
-                  <ul>{current.reports.map((r, i) => <li key={i}>{r.member ?? "A member"} · {formatDateTime(r.at)}</li>)}</ul>
+              {reports.length > 0 && (
+                <div className="rounded-lg border border-destructive/20 bg-destructive/[0.03] p-3 text-sm">
+                  <div className="font-medium text-default-900 mb-1">Reports of wrong information ({reports.length})</div>
+                  <ul className="space-y-1">{reports.map((r, i) => <li key={i}><span className="text-default-800">{r.reason || "No reason given"}</span> <span className="text-default-500">· {r.member ?? "A member"} · {formatDateTime(r.at)}</span></li>)}</ul>
                 </div>
               )}
 
@@ -513,18 +564,27 @@ const DirectoryInner = () => {
 
               <DialogFooter className="flex-wrap gap-2">
                 {current && current.status !== "approved" && (
-                  <Button color="success" disabled={act.isPending} onClick={() => decide("approve", current.status === "hidden" ? "Listed again; reports cleared." : "Approved: live on the website and posted to the channel.")}>
+                  <Button color="success" disabled={act.isPending} onClick={() => decide("approve", current.status === "hidden" ? "Listed again; reports cleared." : "Approved: live on the website and posted to the channel.").catch(() => undefined)}>
                     {current.status === "hidden" ? "List again" : "Approve"}
                   </Button>
                 )}
                 {current && current.status === "pending" && (
-                  <Button color="destructive" variant="outline" disabled={act.isPending} onClick={() => decide("reject", "Rejected.")}>Reject</Button>
+                  <ConfirmButton color="destructive" variant="outline" disabled={act.isPending} label="Reject"
+                    title={`Reject ${current.name}?`}
+                    description={note ? `The person who sent it is told why: “${note}”.` : "The person who sent it is told it was not listed. Write a reason in the box above if they should know why."}
+                    confirmLabel="Reject" onConfirm={() => decide("reject", "Rejected.")} />
                 )}
                 {current && current.status === "approved" && (
-                  <Button color="warning" variant="outline" disabled={act.isPending} onClick={() => decide("hide", "Hidden from the directory and removed from the channel.")}>Hide</Button>
+                  <ConfirmButton color="warning" variant="outline" disabled={act.isPending} label="Hide"
+                    title={`Hide ${current.name}?`}
+                    description="It leaves the website and the bot, and its channel post is removed. You can list it again from the Hidden tab."
+                    confirmLabel="Hide" tone="warning" onConfirm={() => decide("hide", "Hidden from the directory and removed from the channel.")} />
                 )}
                 {current && (
-                  <Button color="destructive" variant="ghost" disabled={act.isPending} onClick={() => window.confirm(`Delete ${current.name} for good?`) && decide("delete", "Deleted.")}>Delete</Button>
+                  <ConfirmButton color="destructive" variant="ghost" disabled={act.isPending} label="Delete"
+                    title={`Delete ${current.name} for good?`}
+                    description="The listing, its photos and its reports are removed and cannot be brought back. To take it down for now, hide it instead."
+                    confirmLabel="Delete for good" onConfirm={() => decide("delete", "Deleted.")} />
                 )}
                 <Button disabled={save.isPending} onClick={submit}>{form.id ? "Save changes" : "Add and list"}</Button>
               </DialogFooter>

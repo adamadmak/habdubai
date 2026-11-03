@@ -272,7 +272,7 @@ class JobsFlow
             $body[] = $this->card->entry($job, $l, ++$n);
         }
 
-        $this->telegram->sendText($member->chat_id, mb_substr(implode("\n", $body), 0, 4000));
+        $this->telegram->sendText($member->chat_id, \App\Support\TelegramText::clip(implode("\n", $body), 4000));
     }
 
     private function show(Member $member, string $text, array $keyboard, ?int $editMessageId): void

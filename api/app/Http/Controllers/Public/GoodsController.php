@@ -165,13 +165,17 @@ class GoodsController extends Controller
     /** @return array{trips: int, parcels: int, deals: int, kilos: int} */
     private static function stats(): array
     {
-        $open = self::board()->get(['id', 'kind', 'kilos', 'kilos_left', 'member_id']);
+        // Counted in the database: the board is read on every page of the site, and loading
+        // every open post (with its member) to count them grows with the board.
+        $byKind = self::board()->toBase()->reorder()
+            ->selectRaw('kind, count(*) as n, sum(coalesce(kilos_left, kilos)) as room')
+            ->groupBy('kind')->get()->keyBy('kind');
 
         return [
-            'trips' => $open->where('kind', 'traveller')->count(),
-            'parcels' => $open->where('kind', 'sender')->count(),
+            'trips' => (int) ($byKind['traveller']->n ?? 0),
+            'parcels' => (int) ($byKind['sender']->n ?? 0),
             'deals' => GoodsMatch::query()->where('status', 'completed')->count(),
-            'kilos' => (int) $open->where('kind', 'traveller')->sum(fn (GoodsPost $p) => $p->room()),
+            'kilos' => (int) ($byKind['traveller']->room ?? 0),
         ];
     }
 

@@ -49,6 +49,12 @@ class GoodsPost extends Model
         return $this->belongsTo(Member::class);
     }
 
+    /** Requests made about this post (it is the one asked about). */
+    public function matches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(GoodsMatch::class, 'post_id');
+    }
+
     public function isTraveller(): bool
     {
         return $this->kind === 'traveller';

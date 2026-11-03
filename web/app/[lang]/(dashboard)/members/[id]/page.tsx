@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +13,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import PageTitle from "@/components/page-title";
 import LeaderTopics from "@/components/leader-topics";
 import { StatusBadge, RoleBadge } from "@/components/member-badges";
+import AuditChange from "@/components/audit-change";
+import { ErrorState, PageLoading } from "@/components/states";
+import { runAction } from "@/lib/toast";
 import { useApiQuery, useApiMutation, formatDateTime, type Member, type AuditEntry, LANGUAGE_NAMES } from "@/lib/api";
 
 const EMIRATES: Record<string, string> = { dubai: "Dubai", sharjah: "Sharjah", abu_dhabi: "Abu Dhabi", ajman: "Ajman", other: "Other emirate" };
@@ -32,7 +34,7 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
 const MemberPage = () => {
   const { id } = useParams<{ id: string }>();
   const key = ["member", id];
-  const { data, isLoading, error } = useApiQuery<{ member: Member; audit: AuditEntry[] }>(key, `/admin/members/${id}`);
+  const { data, isLoading, error, refetch } = useApiQuery<{ member: Member; audit: AuditEntry[] }>(key, `/admin/members/${id}`);
   const [banReason, setBanReason] = useState("");
 
   const patch = useApiMutation<{ member: Member }, Partial<Pick<Member, "role" | "needs_review" | "display_name">>>(
@@ -42,16 +44,23 @@ const MemberPage = () => {
   const ban = useApiMutation<{ member: Member }, string>((request, reason) => request(`/admin/members/${id}/ban`, "POST", { reason }), [key, ["members"], ["dashboard"]]);
   const unban = useApiMutation<{ member: Member }>((request) => request(`/admin/members/${id}/unban`, "POST"), [key, ["members"], ["dashboard"]]);
 
-  if (error) return <div className="text-destructive">{error.message}</div>;
-  if (isLoading || !data) return <div className="text-default-600">Loading…</div>;
+  if (error) {
+    return (
+      <div>
+        <PageTitle title="Member"><Button asChild variant="outline" color="secondary" size="sm"><Link href="/members">All members</Link></Button></PageTitle>
+        <ErrorState error={error} onRetry={() => refetch()} title="This member could not be loaded" />
+      </div>
+    );
+  }
+  if (isLoading || !data) return <PageLoading />;
 
   const m = data.member;
-  const act = (promise: Promise<unknown>, done: string) => promise.then(() => toast.success(done)).catch((e: Error) => toast.error(e.message));
+  const act = (promise: Promise<unknown>, done: string) => runAction(promise, done);
 
   return (
     <div>
       <PageTitle title={m.display_name} description={m.telegram_username ? `@${m.telegram_username}` : `Telegram id ${m.telegram_user_id}`}>
-        <Link href="/members"><Button variant="outline" size="sm">All members</Button></Link>
+        <Button asChild variant="outline" color="secondary" size="sm"><Link href="/members">All members</Link></Button>
       </PageTitle>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -136,10 +145,12 @@ const MemberPage = () => {
           ) : (
             <ul className="space-y-2 text-sm">
               {data.audit.map((entry) => (
-                <li key={entry.id} className="flex gap-3">
+                <li key={entry.id} className="grid gap-1 sm:grid-cols-[11rem_1fr] border-b border-border/60 pb-2 last:border-0">
                   <span className="text-default-500 whitespace-nowrap">{formatDateTime(entry.created_at)}</span>
-                  <span className="text-default-900">{entry.action}</span>
-                  {entry.after && <code className="text-xs text-default-600">{JSON.stringify(entry.after)}</code>}
+                  <div className="min-w-0">
+                    <div className="font-medium text-default-900">{entry.action.replace(/[._]/g, " ")}</div>
+                    {(entry.before || entry.after) && <div className="text-xs mt-0.5"><AuditChange before={entry.before} after={entry.after} /></div>}
+                  </div>
                 </li>
               ))}
             </ul>

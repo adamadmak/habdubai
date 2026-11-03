@@ -12,8 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import PageTitle from "@/components/page-title";
+import ConfirmButton from "@/components/confirm-button";
+import { EmptyState, ErrorState, LoadingRows } from "@/components/states";
+import { runAction, toastResult } from "@/lib/toast";
+import { Megaphone, Tags } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useApiQuery, useApiMutation, formatDateTime, ApiError, type AnnouncementRow, type AnnouncementTopicRow } from "@/lib/api";
+import { useApiQuery, useApiMutation, formatDateTime, ApiError, errorText, type AnnouncementRow, type AnnouncementTopicRow } from "@/lib/api";
 
 type Payload = { data: AnnouncementRow[]; counts: Record<string, number>; topics: AnnouncementTopicRow[] };
 type TopicForm = Omit<AnnouncementTopicRow, "id" | "key"> & { id?: number };
@@ -22,7 +26,7 @@ const STATUS_COLOR = { pending: "warning", published: "success", rejected: "dest
 
 const AnnouncementsPage = () => {
   const [status, setStatus] = useState("pending");
-  const { data, isLoading, error } = useApiQuery<Payload>(["announcements", status], `/admin/announcements?status=${status}`, { refetchInterval: 30_000 });
+  const { data, isLoading, error, refetch } = useApiQuery<Payload>(["announcements", status], `/admin/announcements?status=${status}`, { refetchInterval: 30_000, placeholderData: (previous) => previous });
   const [compose, setCompose] = useState<{ topic_id: string; text: string; event_date: string; event_place: string } | null>(null);
   const [edit, setEdit] = useState<AnnouncementRow | null>(null);
   const [topic, setTopic] = useState<TopicForm | null>(null);
@@ -41,7 +45,7 @@ const AnnouncementsPage = () => {
   );
   const saveTopic = useApiMutation<unknown, TopicForm>((req, t) => (t.id ? req(`/admin/announcement-topics/${t.id}`, "PUT", t) : req("/admin/announcement-topics", "POST", t)), inv);
 
-  const fail = (e: ApiError) => { setErrors(e.errors ?? {}); toast.error(e.message); };
+  const fail = (e: ApiError) => { setErrors(e.errors ?? {}); toast.error(errorText(e)); };
   const err = (k: string) => errors[k] && <p className="text-xs text-destructive mt-1">{errors[k][0]}</p>;
 
   return (
@@ -57,18 +61,26 @@ const AnnouncementsPage = () => {
         </TabsList>
 
         <TabsContent value="list" className="mt-4">
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             {(["pending", "published", "rejected", "deleted", "all"] as const).map((s) => (
-              <button key={s} type="button" onClick={() => setStatus(s)}
-                className={cn("px-3 py-1.5 rounded-md text-sm font-medium border capitalize", status === s ? "bg-primary text-primary-foreground border-primary" : "bg-card text-default-700 border-default-200 hover:border-primary")}>
-                {s === "pending" ? "Waiting for approval" : s}{data && s !== "all" && <span className="ml-1.5 opacity-75">{data.counts[s] ?? 0}</span>}
+              <button key={s} type="button" aria-pressed={status === s} onClick={() => setStatus(s)}
+                className={cn("px-3 py-1.5 rounded-md text-sm font-medium border", status === s ? "bg-primary text-primary-foreground border-primary" : "bg-card text-default-700 border-default-200 hover:border-primary")}>
+                {({ pending: "Waiting for approval", published: "Published", rejected: "Rejected", deleted: "Deleted", all: "All" } as const)[s]}{data && s !== "all" && <span className="ml-1.5 opacity-75">{data.counts[s] ?? 0}</span>}
               </button>
             ))}
           </div>
 
-          {error && <div className="text-destructive">{error.message}</div>}
-          {isLoading && <div className="text-default-500">Loading…</div>}
-          {data?.data.length === 0 && <Card><CardContent className="p-6 text-default-500">Nothing here.</CardContent></Card>}
+          {error && <ErrorState className="mb-4" error={error} onRetry={() => refetch()} title="Announcements could not be loaded" />}
+          {isLoading && <LoadingRows />}
+          {data?.data.length === 0 && (
+            <Card>
+              <EmptyState icon={Megaphone} title={status === "pending" ? "Nothing waiting for approval" : "No announcements here"}>
+                {status === "pending"
+                  ? "Deaths and fundraisers from leaders wait here. Post one yourself with New announcement."
+                  : "Announcements posted from the bot by leaders, or from here, appear in these lists."}
+              </EmptyState>
+            </Card>
+          )}
 
           <div className="space-y-3">
             {data?.data.map((a) => (
@@ -98,15 +110,22 @@ const AnnouncementsPage = () => {
                   <div className="flex flex-wrap gap-2 items-center">
                     {a.status === "pending" && (
                       <>
-                        <Button size="sm" color="success" disabled={act.isPending} onClick={() => act.mutateAsync({ id: a.id, action: "approve" }).then((r) => toast.success(`Posted; ${r.subscribers ?? 0} members will get it.`)).catch((e: Error) => toast.error(e.message))}>Approve and post</Button>
-                        <Input className="w-64 h-9" placeholder="Why not (sent to the poster)" value={notes[a.id] ?? ""} onChange={(e) => setNotes({ ...notes, [a.id]: e.target.value })} />
-                        <Button size="sm" variant="outline" color="destructive" disabled={act.isPending} onClick={() => act.mutateAsync({ id: a.id, action: "reject", note: notes[a.id] }).then(() => toast.success("Rejected; the poster is told."))}>Reject</Button>
+                        <ConfirmButton size="sm" color="success" disabled={act.isPending} label="Approve and post"
+                          title="Post this announcement?"
+                          description="It goes to the channel now and to every member who follows this topic, in their language. Messages already sent cannot be taken back."
+                          confirmLabel="Post it" tone="default"
+                          onConfirm={() => toastResult(act.mutateAsync({ id: a.id, action: "approve" }), (r) => `Posted; ${r.subscribers ?? 0} members will get it.`)} />
+                        <Input className="w-64 max-w-full h-9" aria-label="Reason for rejecting" placeholder="Why not (sent to the poster)" value={notes[a.id] ?? ""} onChange={(e) => setNotes({ ...notes, [a.id]: e.target.value })} />
+                        <Button size="sm" variant="outline" color="destructive" disabled={act.isPending} onClick={() => runAction(act.mutateAsync({ id: a.id, action: "reject", note: notes[a.id] }), "Rejected; the poster is told.")}>Reject</Button>
                       </>
                     )}
                     {a.status === "published" && (
                       <>
-                        <Button size="sm" variant="outline" onClick={() => { setErrors({}); setEdit({ ...a }); }}>Edit wording</Button>
-                        <Button size="sm" variant="outline" color="destructive" disabled={act.isPending} onClick={() => window.confirm("Delete it from the channel?") && act.mutateAsync({ id: a.id, action: "delete" }).then(() => toast.success("Deleted."))}>Delete</Button>
+                        <Button size="sm" variant="outline" color="secondary" onClick={() => { setErrors({}); setEdit({ ...a }); }}>Edit wording</Button>
+                        <ConfirmButton size="sm" variant="outline" color="destructive" disabled={act.isPending} label="Delete"
+                          title="Delete this announcement?"
+                          description="It is removed from the channel and the website. Messages already sent to members stay in their chats."
+                          confirmLabel="Delete" onConfirm={() => toastResult(act.mutateAsync({ id: a.id, action: "delete" }), "Deleted.")} />
                       </>
                     )}
                   </div>
@@ -120,12 +139,15 @@ const AnnouncementsPage = () => {
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => { setErrors({}); setTopic({ name_en: "", name_am: "", name_ti: "", name_om: "", emoji: "📣", needs_approval: false, default_on: false, pin: false, sort: 100, active: true }); }}>Add topic</Button>
           </div>
+          {data && data.topics.length === 0 && (
+            <Card><EmptyState icon={Tags} title="No topics yet">Members follow topics with /topics and get each announcement in their language. Add the first one above.</EmptyState></Card>
+          )}
           {data?.topics.map((t) => (
-            <Card key={t.id} className="cursor-pointer hover:border-primary" onClick={() => { setErrors({}); setTopic({ ...t }); }}>
+            <Card key={t.id} role="button" tabIndex={0} aria-label={`Edit topic ${t.name_en}`} onKeyDown={(e) => { if (e.key === "Enter") { setErrors({}); setTopic({ ...t }); } }} className="cursor-pointer transition-colors hover:border-primary/50" onClick={() => { setErrors({}); setTopic({ ...t }); }}>
               <CardContent className="p-4 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="font-medium text-default-900">{t.emoji} {t.name_en} {!t.active && <Badge color="secondary" variant="soft">off</Badge>}</div>
-                  <div className="text-sm text-default-600">{t.name_am} · {t.name_ti}</div>
+                  <div className="text-sm text-default-600">{t.name_am} · {t.name_ti} · {t.name_om || <span className="text-default-400">{t.name_en} (Oromo not set)</span>}</div>
                 </div>
                 <div className="flex gap-1">
                   {t.needs_approval && <Badge color="warning" variant="soft">needs approval</Badge>}
@@ -144,7 +166,7 @@ const AnnouncementsPage = () => {
             <>
               <DialogHeader>
                 <DialogTitle>New announcement</DialogTitle>
-                <DialogDescription>Write it in any one language. With an Anthropic key it is translated into the other two; otherwise the same text goes out in all three, and you can edit the wording after.</DialogDescription>
+                <DialogDescription>Write it in any one language. With an Anthropic key it is translated into the other three; otherwise the same text goes out in all four, and you can edit the wording after. Posting sends it at once.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -156,7 +178,8 @@ const AnnouncementsPage = () => {
                 </div>
                 <div>
                   <Label className="mb-1.5 block">Text</Label>
-                  <Textarea rows={6} value={compose.text} onChange={(e) => setCompose({ ...compose, text: e.target.value })} className="text-base" />
+                  <Textarea rows={6} maxLength={2000} value={compose.text} onChange={(e) => setCompose({ ...compose, text: e.target.value })} className="text-base" />
+                  <p className="mt-1 text-xs text-default-500">{compose.text.trim().length} of 2000 characters{compose.text.trim().length < 10 ? "; at least 10" : ""}.</p>
                   {err("text")}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -172,7 +195,7 @@ const AnnouncementsPage = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button disabled={create.isPending} onClick={() => create.mutateAsync(compose).then((r) => { toast.success(`Posted${r.translated_by === "claude" ? " in three languages" : ""}; ${r.subscribers} members will get it.`); setCompose(null); }).catch(fail)}>
+                <Button disabled={create.isPending || !compose.topic_id || compose.text.trim().length < 10} onClick={() => create.mutateAsync(compose).then((r) => { toast.success(`Posted${r.translated_by === "claude" ? " in all four languages" : ""}; ${r.subscribers} members will get it.`); setCompose(null); }).catch(fail)}>
                   {create.isPending ? "Posting…" : "Post now"}
                 </Button>
               </DialogFooter>

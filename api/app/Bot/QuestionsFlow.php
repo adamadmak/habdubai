@@ -90,10 +90,7 @@ class QuestionsFlow
                     return;
                 }
                 $conversation->moveTo('ask_anonymous', ['category' => $category]);
-                $this->telegram->sendText($member->chat_id, $this->messages->text('ask_anonymous', $l), $this->telegram->replyKeyboard([
-                    [$this->messages->button('btn_ask_named', $l), $this->messages->button('btn_ask_anonymous', $l)],
-                    [$this->messages->button('btn_cancel', $l)],
-                ]));
+                $this->askAnonymous($member);
 
                 return;
 
@@ -103,6 +100,9 @@ class QuestionsFlow
                 } elseif ($this->messages->pressed('btn_ask_anonymous', $text)) {
                     $anonymous = true;
                 } else {
+                    // Anything else (typed words, a sticker): ask again, with the buttons.
+                    $this->askAnonymous($member);
+
                     return;
                 }
                 $data = $conversation->data ?? [];
@@ -390,6 +390,15 @@ class QuestionsFlow
         $length = mb_strlen(trim($text));
 
         return $length >= 15 && $length <= 2000 && ! str_starts_with(trim($text), '/');
+    }
+
+    private function askAnonymous(Member $member): void
+    {
+        $l = $member->language;
+        $this->telegram->sendText($member->chat_id, $this->messages->text('ask_anonymous', $l), $this->telegram->replyKeyboard([
+            [$this->messages->button('btn_ask_named', $l), $this->messages->button('btn_ask_anonymous', $l)],
+            [$this->messages->button('btn_cancel', $l)],
+        ]));
     }
 
     private function askCategory(Member $member): void

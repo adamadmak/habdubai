@@ -215,6 +215,13 @@ return [
         'en' => 'I did not understand that. Send /help.',
         'om' => 'Hin hubanne. /help ergaa.',
     ],
+    // Something the current step cannot use (a sticker, a photo where words were asked for).
+    'unknown_in_flow' => [
+        'am' => 'አልገባኝም። ከላይ ላለው ጥያቄ ይመልሱ፣ ወይም ለማቆም /cancel ይላኩ።',
+        'ti' => 'ኣይተረድኣንን። ነቲ ኣብ ላዕሊ ዘሎ ሕቶ መልሱ፣ ወይ ንምቁራጽ /cancel ስደዱ።',
+        'en' => 'I did not understand that. Answer the question above, or send /cancel to stop.',
+        'om' => 'Hin hubanne. Gaaffii armaan olii deebisaa, ykn dhaabuuf /cancel ergaa.',
+    ],
     'leave_confirm' => [
         'am' => 'ማህበረሰቡን መልቀቅ ይፈልጋሉ? መገለጫዎ ይደበቃል፣ ከቡድኖቹ ይወጣሉ። ለማረጋገጥ ይጫኑ።',
         'ti' => 'ማሕበረሰብ ክትገድፉ ትደልዩ? መግለጺኹም ይሕባእ፣ ካብ ጉጅለታት ትወጹ። ንምርግጋጽ ጠውቑ።',
@@ -1092,6 +1099,13 @@ return [
         'ti' => 'መወዓውዒ ክለጥፉ ዝኽእሉ መራሕቲ ማሕበረሰብ እዮም። ቤተ ክርስትያን፣ መስጊድ ወይ ማሕበር እንተመሪሕኩም ንኣመሓዳሪ ሕተቱ።',
         'en' => 'Only community leaders can post announcements. If you run a church, mosque or association, ask an admin.',
         'om' => "Beeksisa maxxansuu kan danda'an hoggantoota hawaasaa qofa. Mana kiristaanaa, masjiida ykn waldaa yoo geggeessitan, bulchaa gaafadhaa.",
+    ],
+    // A leader's cap per day: every announcement can reach every member's private chat.
+    'ann_limit' => [
+        'am' => 'ዛሬ {count} ማስታወቂያዎችን ለጥፈዋል፤ ለአንድ ቀን ይህ ከፍተኛው ነው። ነገ እንደገና ይሞክሩ፣ አስቸኳይ ከሆነ አወያይ ይጠይቁ።',
+        'ti' => 'ሎሚ {count} መወዓውዒታት ለጢፍኩም፤ ንሓደ መዓልቲ እዚ እቲ ዝለዓለ እዩ። ጽባሕ እንደገና ፈትኑ፣ ህጹጽ እንተኾይኑ ንኣወያዪ ሕተቱ።',
+        'en' => 'You have posted {count} announcements today, the most for one day. Try again tomorrow, or ask a moderator if it is urgent.',
+        'om' => "Har'a beeksisa {count} maxxansitaniittu; kun guyyaa tokkoof isa olaanaadha. Boru irra deebiin yaalaa, yoo ariifachiisaa ta'e to'ataa gaafadhaa.",
     ],
     'ann_pick_topic' => [
         'am' => '📣 ማስታወቂያው ለየትኛው ርዕስ ነው?',

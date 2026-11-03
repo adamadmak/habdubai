@@ -45,7 +45,8 @@ class SystemTickController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            return response()->json(['error' => $e->getMessage()], 500);
+            // The details are in the log; a database or file error can name hosts and paths.
+            return response()->json(['error' => 'The scheduler run failed; see the application log.'], 500);
         } finally {
             $seconds = round(microtime(true) - $started, 1);
             Cache::forever(self::LAST_TICK_KEY, ['at' => now()->toIso8601String(), 'seconds' => $seconds]);

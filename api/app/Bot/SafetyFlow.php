@@ -27,16 +27,31 @@ class SafetyFlow
     {
         $l = $member->language;
 
+        $this->telegram->sendText(
+            $member->chat_id,
+            $this->messages->text('safe_card', $l, ['extra' => $this->extraLines($l)]),
+            ['inline_keyboard' => [[['text' => $this->messages->button('btn_safe_report', $l), 'callback_data' => 's:report']]]]
+        );
+    }
+
+    /** The consulate and MoHRE numbers the operator set, for the card; anyone may read them. */
+    public function extraLines(string $l): string
+    {
         $extra = array_filter([
             Community::consulatePhone() !== '' ? $this->messages->text('safe_line_consulate', $l, ['phone' => e(Community::consulatePhone())]) : null,
             Community::mohrePhone() !== '' ? $this->messages->text('safe_line_mohre', $l, ['phone' => e(Community::mohrePhone())]) : null,
         ]);
 
-        $this->telegram->sendText(
-            $member->chat_id,
-            $this->messages->text('safe_card', $l, ['extra' => $extra === [] ? '' : implode("\n", $extra)."\n"]),
-            ['inline_keyboard' => [[['text' => $this->messages->button('btn_safe_report', $l), 'callback_data' => 's:report']]]]
-        );
+        return $extra === [] ? '' : implode("\n", $extra)."\n";
+    }
+
+    private function askContact(Member $member): void
+    {
+        $l = $member->language;
+        $this->telegram->sendText($member->chat_id, $this->messages->text('safe_ask_contact', $l), $this->telegram->replyKeyboard([
+            [$this->messages->button('btn_yes', $l), $this->messages->button('btn_no', $l)],
+            [$this->messages->button('btn_cancel', $l)],
+        ]));
     }
 
     public function beginReport(Member $member, Conversation $conversation): void
@@ -70,10 +85,7 @@ class SafetyFlow
                     return;
                 }
                 $conversation->moveTo('safe_contact', ['text' => mb_substr($text, 0, 5000)]);
-                $this->telegram->sendText($member->chat_id, $this->messages->text('safe_ask_contact', $l), $this->telegram->replyKeyboard([
-                    [$this->messages->button('btn_yes', $l), $this->messages->button('btn_no', $l)],
-                    [$this->messages->button('btn_cancel', $l)],
-                ]));
+                $this->askContact($member);
 
                 return;
 
@@ -83,6 +95,9 @@ class SafetyFlow
                 } elseif ($this->messages->pressed('btn_no', $text)) {
                     $contactable = false;
                 } else {
+                    // Not yes or no: ask again rather than fall silent on a member reporting abuse.
+                    $this->askContact($member);
+
                     return;
                 }
 

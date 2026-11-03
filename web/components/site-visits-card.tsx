@@ -3,9 +3,8 @@ import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import type { ApexOptions } from "apexcharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { themes } from "@/config/thems";
-import { useThemeStore } from "@/store";
 import { useApiQuery, formatDate, type SiteAnalytics } from "@/lib/api";
+import { isMissing } from "@/components/readiness/use-readiness";
 
 // ApexCharts touches `window` when it loads, so it is only ever loaded in the browser.
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -27,7 +26,7 @@ const SiteVisitsCard = () => {
       </CardHeader>
       <CardContent>
         {error ? (
-          <div className="text-sm text-default-500">Visits could not be loaded: {error.message}</div>
+          <div className="text-sm text-default-500">{isMissing(error) ? "Visit counting arrives with the website migration; nothing to show yet." : `Visits could not be loaded: ${error.message}`}</div>
         ) : isLoading || !data ? (
           <div className="text-sm text-default-600">Loading…</div>
         ) : (
@@ -95,23 +94,23 @@ const Visits = ({ data }: { data: SiteAnalytics }) => {
 };
 
 const DailyChart = ({ days }: { days: SiteAnalytics["days"] }) => {
-  const { theme: config } = useThemeStore();
   const { theme: mode } = useTheme();
-  const palette = themes.find((t) => t.name === config)?.cssVars[mode === "dark" ? "dark" : "light"];
+  // The brand's Nile blue, and quiet greys for the grid and labels.
+  const palette = mode === "dark" ? { bar: "#6C8EF5", grid: "#23304D", label: "#A9B2C6" } : { bar: "#1B4DDB", grid: "#E3E7EF", label: "#5A6378" };
   const max = Math.max(...days.map((d) => d.views));
 
   const series = [{ name: "Page views", data: days.map((d) => ({ x: new Date(`${d.day}T00:00:00`).getTime(), y: d.views })) }];
 
   const options: ApexOptions = {
     chart: { toolbar: { show: false }, zoom: { enabled: false }, animations: { enabled: false }, fontFamily: "inherit" },
-    colors: [palette ? `hsl(${palette.primary})` : "#2563eb"],
+    colors: [palette.bar],
     plotOptions: { bar: { columnWidth: "70%", borderRadius: 4, borderRadiusApplication: "end" } },
     dataLabels: { enabled: false },
     legend: { show: false },
-    grid: { borderColor: palette ? `hsl(${palette.chartGird})` : "#e5e7eb", strokeDashArray: 10, position: "back", xaxis: { lines: { show: false } } },
+    grid: { borderColor: palette.grid, strokeDashArray: 10, position: "back", xaxis: { lines: { show: false } } },
     xaxis: {
       type: "datetime",
-      labels: { datetimeUTC: false, style: { colors: palette ? `hsl(${palette.chartLabel})` : undefined } },
+      labels: { datetimeUTC: false, style: { colors: palette.label } },
       axisBorder: { show: false },
       axisTicks: { show: false },
     },
@@ -120,7 +119,7 @@ const DailyChart = ({ days }: { days: SiteAnalytics["days"] }) => {
       // Whole views only: a small count must not get ticks at 0.5.
       tickAmount: Math.min(4, Math.max(1, max)),
       forceNiceScale: true,
-      labels: { formatter: (v: number) => String(Math.round(v)), style: { colors: palette ? `hsl(${palette.chartLabel})` : undefined } },
+      labels: { formatter: (v: number) => String(Math.round(v)), style: { colors: palette.label } },
     },
     tooltip: { theme: mode === "dark" ? "dark" : "light", x: { format: "d MMM yyyy" }, y: { formatter: (v: number) => `${v} views` } },
     states: { active: { filter: { type: "none" } } },

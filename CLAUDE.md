@@ -169,12 +169,26 @@ carries fixed tables for them. The fixed lists (kinds of work, emirates, busines
 come from the API's `/public/meta`, i.e. from `Choices`, so the site and the
 bot never word them differently.
 
-- **Design: "two homes, one thread".** It follows the apple-design skill (in
-  the Addis game repo, `.claude/skills/apple-design/`). Every page opens on a
-  night band (`components/Night.tsx`: the Gulf sky at dusk, a horizon that
-  runs from the highlands into the skyline, the tibeb thread under it); the
-  header and the phone tab bar are floating islands of the same night
-  (`.chrome`). The page itself is warm ivory. Headings are Fraunces and Noto
+- **Design: "two homes, one thread", morning edition.** It follows the
+  apple-design skill (in the Addis game repo, `.claude/skills/apple-design/`).
+  Light first: the page is warm white over a faint aurora (`body::before`)
+  with paper grain; the header and the phone tab bar are floating islands of
+  frosted white (`.chrome`); frosted panels are `.glass`. The three heroes
+  (front page, goods board, owners' landing) are night bands
+  (`components/Dawn.tsx` → `Night`) holding white frosted panels
+  (`.glass-white`, which resets every token inside it to the light set);
+  every other page head is a `Dawn` band whose tint follows the hour in
+  Dubai (`data-sky`). The horizon under a band is one line of ink
+  (`--ink`), not a silhouette. The footer and a few islands stay `.night`.
+  Dark follows the device unless the reader chose a theme
+  (`components/ThemeToggle.tsx`, `data-theme` on `<html>`, applied before
+  paint by the script in `layout.tsx`); every colour is a token, and the dark
+  set is written twice in `globals.css` (media query and `data-theme`), so
+  keep both lists the same. Gold as text is `--color-gild` (honey on paper,
+  gold on night); `--color-accent` is for fills and the thread only.
+  `app/manifest.ts`, `apple-icon.tsx` and `opengraph-image.tsx` make the
+  site installable and give shared links a card; the locale middleware
+  excludes those two generated routes. Headings are Fraunces and Noto
   Serif Ethiopic (`.display`, `.headline`); body text is the system font with
   Noto Sans Ethiopic. Places without a photo get a cover in their kind's
   colours with their initials (`components/Cover.tsx`); kinds of work and of

@@ -392,7 +392,7 @@ export function GoodsForm({ lang, g, choices, member, limits, initial, today, la
               <div role="radiogroup" aria-label={f.currency} className="toggle-group w-36">
                 <span aria-hidden="true" className="toggle-thumb" style={{ width: "calc((100% - 0.5rem) / 2)", translate: `${currency === "ETB" ? 100 : 0}% 0` }} />
                 {(["AED", "ETB"] as const).map((c) => (
-                  <label key={c} className={`relative z-[1] grid cursor-pointer place-items-center rounded-full py-2 text-sm font-bold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary ${currency === c ? "text-white dark:text-[#10142b]" : "text-muted"}`}>
+                  <label key={c} className={`relative z-[1] grid cursor-pointer place-items-center rounded-full py-2 text-sm font-bold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary ${currency === c ? "text-[color:var(--chip-on-fg)]" : "text-muted"}`}>
                     <input type="radio" name="currency" value={c} checked={currency === c} onChange={() => setCurrency(c)} className="sr-only" />
                     {c}
                   </label>

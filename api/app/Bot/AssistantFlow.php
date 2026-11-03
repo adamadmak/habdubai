@@ -97,7 +97,7 @@ class AssistantFlow
         $lines[] = '';
         $lines[] = '<i>'.$this->messages->text('ai_footer', $l).'</i>';
 
-        return mb_substr(implode("\n", $lines), 0, 4000);
+        return \App\Support\TelegramText::clip(implode("\n", $lines), 4000);
     }
 
     private function askGroupKeyboard(string $l): array

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { Night } from "./Night";
+import { Dawn } from "./Dawn";
 
 /** Ge'ez numerals, for marking the sections of a page: ፩ ፪ ፫. */
 export const GEEZ = ["፩", "፪", "፫", "፬", "፭", "፮", "፯", "፰", "፱", "፲"];
@@ -38,16 +38,16 @@ export function Section({ title, lead, more, children, id, mark, className = "" 
   );
 }
 
-/** The head of a section page: a night band with the page's name, under the floating header. */
+/** The head of a section page: a dawn band with the page's name, under the floating header. */
 export function PageHead({ title, lead, children, word }: { title: string; lead?: string; children?: ReactNode; word?: string }) {
   return (
-    <Night low word={word}>
+    <Dawn low word={word}>
       <div className="mx-auto max-w-6xl px-4 pb-8 pt-10 md:pb-10 md:pt-16">
         <h1 className="display settle max-w-3xl text-[2.375rem] md:text-[3.5rem]">{title}</h1>
         {lead && <p className="settle settle-2 mt-4 max-w-2xl text-[1.0625rem] muted-on-night md:text-lg">{lead}</p>}
         {children && <div className="settle settle-3">{children}</div>}
       </div>
-    </Night>
+    </Dawn>
   );
 }
 

@@ -12,7 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import PageTitle from "@/components/page-title";
-import { useApiQuery, useApiMutation, ApiError, type FaqRow, type KnowledgeRow } from "@/lib/api";
+import ConfirmButton from "@/components/confirm-button";
+import { EmptyState, ErrorState, LoadingRows } from "@/components/states";
+import { toastResult } from "@/lib/toast";
+import { BookOpen, FileText } from "lucide-react";
+import { useApiQuery, useApiMutation, ApiError, errorText, type FaqRow, type KnowledgeRow } from "@/lib/api";
 
 type Payload = { faq: FaqRow[]; knowledge: KnowledgeRow[]; categories: Record<string, string> };
 type FaqForm = Omit<FaqRow, "id" | "question_id"> & { id?: number };
@@ -22,7 +26,7 @@ const EMPTY_FAQ: FaqForm = { category: "visa", q_am: "", q_ti: "", q_en: "", q_o
 const EMPTY_ARTICLE: ArticleForm = { title: "", body: "", source_name: "", source_url: "", active: true };
 
 const FaqPage = () => {
-  const { data, isLoading, error } = useApiQuery<Payload>(["faq"], "/admin/faq");
+  const { data, isLoading, error, refetch } = useApiQuery<Payload>(["faq"], "/admin/faq");
   const [faq, setFaq] = useState<FaqForm | null>(null);
   const [article, setArticle] = useState<ArticleForm | null>(null);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -39,16 +43,15 @@ const FaqPage = () => {
     setErrors({});
     m.mutateAsync(value)
       .then(() => { toast.success(done); close(); })
-      .catch((e: ApiError) => { setErrors(e.errors ?? {}); toast.error(e.message); });
+      .catch((e: ApiError) => { setErrors(e.errors ?? {}); toast.error(errorText(e)); });
   };
 
   const err = (k: string) => errors[k] && <p className="text-xs text-destructive mt-1">{errors[k][0]}</p>;
 
-  if (error) return <div className="text-destructive">{error.message}</div>;
-
   return (
     <div>
       <PageTitle title="FAQ and knowledge" description="What the bot's assistant answers from. It says it does not know rather than go beyond what is here, so check every word: a wrong fee or deadline can cost a member their visa." />
+      {error && <ErrorState className="mb-4" error={error} onRetry={() => refetch()} title="The FAQ could not be loaded" />}
 
       <Tabs defaultValue="faq">
         <TabsList>
@@ -58,10 +61,16 @@ const FaqPage = () => {
 
         <TabsContent value="faq" className="mt-4 space-y-3">
           <div className="flex justify-end"><Button onClick={() => { setErrors({}); setFaq({ ...EMPTY_FAQ }); }}>Add FAQ entry</Button></div>
-          {isLoading && <div className="text-default-500">Loading…</div>}
-          {data?.faq.length === 0 && <Card><CardContent className="p-6 text-default-500">No entries yet. Solved questions can be added from the Questions page.</CardContent></Card>}
+          {isLoading && <LoadingRows />}
+          {data?.faq.length === 0 && (
+            <Card>
+              <EmptyState icon={BookOpen} title="No FAQ entries yet">
+                Write one here, or open a solved question on the Questions page and press “Add to the FAQ”: it is written in all four languages for you.
+              </EmptyState>
+            </Card>
+          )}
           {data?.faq.map((f) => (
-            <Card key={f.id} className="cursor-pointer hover:border-primary" onClick={() => { setErrors({}); setFaq({ ...f, q_am: f.q_am ?? "", q_ti: f.q_ti ?? "", a_am: f.a_am ?? "", a_ti: f.a_ti ?? "", q_om: f.q_om ?? "", a_om: f.a_om ?? "", source_url: f.source_url ?? "" }); }}>
+            <Card key={f.id} role="button" tabIndex={0} aria-label={`Edit: ${f.q_en}`} onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLElement).click(); }} className="cursor-pointer transition-colors hover:border-primary/50" onClick={() => { setErrors({}); setFaq({ ...f, q_am: f.q_am ?? "", q_ti: f.q_ti ?? "", a_am: f.a_am ?? "", a_ti: f.a_ti ?? "", q_om: f.q_om ?? "", a_om: f.a_om ?? "", source_url: f.source_url ?? "" }); }}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -72,7 +81,10 @@ const FaqPage = () => {
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <Badge color={f.active ? "success" : "warning"} variant="soft">{f.active ? "live" : "draft"}</Badge>
                     <span className="text-xs text-default-500">{data.categories[f.category] ?? f.category}</span>
-                    {(!f.q_am || !f.q_ti || !f.q_om) && <span className="text-xs text-warning">missing translations</span>}
+                    {(() => {
+                      const missing = (["am", "ti", "om"] as const).filter((l) => !f[`q_${l}`] || !f[`a_${l}`]).map((l) => ({ am: "Amharic", ti: "Tigrinya", om: "Oromo" })[l]);
+                      return missing.length > 0 && <span className="text-xs text-warning">No {missing.join(", ")}</span>;
+                    })()}
                   </div>
                 </div>
               </CardContent>
@@ -90,9 +102,15 @@ const FaqPage = () => {
             </CardHeader>
           </Card>
           <div className="flex justify-end"><Button onClick={() => { setErrors({}); setArticle({ ...EMPTY_ARTICLE }); }}>Add article</Button></div>
-          {data?.knowledge.length === 0 && <Card><CardContent className="p-6 text-default-500">No articles yet. Until there are some, the assistant can only answer from the FAQ.</CardContent></Card>}
+          {data?.knowledge.length === 0 && (
+            <Card>
+              <EmptyState icon={FileText} title="No articles yet">
+                Until there are some, the assistant can only answer from the FAQ. Start with the questions members ask most: visas, unpaid salary, overstay fines.
+              </EmptyState>
+            </Card>
+          )}
           {data?.knowledge.map((a) => (
-            <Card key={a.id} className="cursor-pointer hover:border-primary" onClick={() => { setErrors({}); setArticle({ ...a, source_name: a.source_name ?? "", source_url: a.source_url ?? "" }); }}>
+            <Card key={a.id} role="button" tabIndex={0} aria-label={`Edit: ${a.title}`} onKeyDown={(e) => { if (e.key === "Enter") (e.currentTarget as HTMLElement).click(); }} className="cursor-pointer transition-colors hover:border-primary/50" onClick={() => { setErrors({}); setArticle({ ...a, source_name: a.source_name ?? "", source_url: a.source_url ?? "" }); }}>
               <CardContent className="p-4 flex items-start justify-between gap-3">
                 <div>
                   <div className="font-medium text-default-900">{a.title}</div>
@@ -144,7 +162,11 @@ const FaqPage = () => {
                 <label className="flex items-center gap-2 text-sm"><Switch checked={faq.active} onCheckedChange={(v) => setFaq({ ...faq, active: v })} /> Live in /faq and for the assistant</label>
               </div>
               <DialogFooter className="gap-2">
-                {faq.id && <Button variant="outline" color="destructive" onClick={() => window.confirm("Delete this entry?") && removeFaq.mutateAsync(faq.id!).then(() => { toast.success("Deleted."); setFaq(null); })}>Delete</Button>}
+                {faq.id && (
+                  <ConfirmButton variant="outline" color="destructive" label="Delete" title="Delete this FAQ entry?"
+                    description="The assistant stops using it at once. A question it came from goes back to being only solved."
+                    confirmLabel="Delete" onConfirm={() => toastResult(removeFaq.mutateAsync(faq.id!), "Deleted.").then(() => setFaq(null))} />
+                )}
                 <Button disabled={saveFaq.isPending} onClick={() => submit(saveFaq, clean(faq), "Saved.", () => setFaq(null))}>Save</Button>
               </DialogFooter>
             </>
@@ -185,7 +207,11 @@ const FaqPage = () => {
                 <label className="flex items-center gap-2 text-sm"><Switch checked={article.active} onCheckedChange={(v) => setArticle({ ...article, active: v })} /> The assistant uses this</label>
               </div>
               <DialogFooter className="gap-2">
-                {article.id && <Button variant="outline" color="destructive" onClick={() => window.confirm("Delete this article?") && removeArticle.mutateAsync(article.id!).then(() => { toast.success("Deleted."); setArticle(null); })}>Delete</Button>}
+                {article.id && (
+                  <ConfirmButton variant="outline" color="destructive" label="Delete" title="Delete this article?"
+                    description="The assistant stops answering from it at once. To keep it for later, turn it off instead."
+                    confirmLabel="Delete" onConfirm={() => toastResult(removeArticle.mutateAsync(article.id!), "Deleted.").then(() => setArticle(null))} />
+                )}
                 <Button disabled={saveArticle.isPending} onClick={() => submit(saveArticle, clean(article), "Saved.", () => setArticle(null))}>Save</Button>
               </DialogFooter>
             </>

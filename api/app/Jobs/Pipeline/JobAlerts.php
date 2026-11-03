@@ -6,6 +6,7 @@ use App\Bot\BotMessages;
 use App\Models\Job;
 use App\Models\JobAlert;
 use App\Models\JobFilter;
+use App\Services\TelegramApiException;
 use App\Services\TelegramBotService;
 use Illuminate\Support\Facades\Log;
 
@@ -89,9 +90,16 @@ class JobAlerts
             $body[] = $this->messages->text('jobs_alert_footer', $language);
 
             try {
-                $this->telegram->sendText($member->chat_id, mb_substr(implode("\n", $body), 0, 4000));
+                $this->telegram->sendText($member->chat_id, \App\Support\TelegramText::clip(implode("\n", $body), 4000));
             } catch (\Throwable $e) {
                 Log::warning('A job alert could not be sent.', ['member_id' => $memberId, 'error' => $e->getMessage()]);
+
+                // Blocked the bot or refused for good: these alerts can never arrive. Without this
+                // they would be tried again every five minutes and pile up for as long as the block lasts.
+                if ($e instanceof TelegramApiException && $e->isFinal()) {
+                    JobAlert::query()->whereIn('id', $pending->pluck('id'))->update(['sent_at' => now()]);
+                    $filter->forceFill(['last_alert_at' => now()])->save();
+                }
 
                 continue;
             }

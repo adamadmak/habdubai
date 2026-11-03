@@ -1,22 +1,28 @@
 @import "tailwindcss";
 
 /*
- * Habesha Dubai, the public website: "two homes, one thread".
+ * Habesha Dubai, the public website: "two homes, one thread", morning edition.
  *
- * Night   #0A1433  the hero, the bands under the chrome and the chrome itself:
- *                  the sky over the Gulf after sunset
- * Paper   #FBF8F2  the page, a warm ivory rather than screen white
+ * Paper   #FBF8F2  the page: warm white, with a faint aurora of blue and gold
+ *                  behind it so the frosted panels have something to blur
+ * Night   #0A1433  the footer and a few islands only; the sky over the Gulf
+ *                  after sunset. A reader can choose it for the whole site.
  * Nile    #1B4DDB  the brand blue, shared with the bot and the admin: actions
  * Adey    #F2B705  Adey Abeba, the Meskel daisy: the thread, marks and highlights
+ * Honey   #9C6A00  gold as ink, for words set in gold on white
  * Ember   #E8743B  the dusk over the skyline, only in glows
  *
- * The tibeb, the woven border of a habesha kemis, is the thread that runs
- * from the highlands to the skyline at the foot of every night band. It has
- * diamonds and no crosses: the community is of every faith.
+ * The tibeb, the woven border of a habesha kemis, is the thread at the foot
+ * of every band. It has diamonds and no crosses: the community is of every
+ * faith. The horizon under the hero is one line of ink, drawn once: the
+ * highlands of home running into the skyline of the Emirates.
  *
  * Headings are set in Fraunces (Latin) and Noto Serif Ethiopic (Ge'ez), so a
  * heading reads like print in both scripts; everything else is the system
  * font with Noto Sans Ethiopic.
+ *
+ * Theme: light by default. Dark follows the device unless the reader chose
+ * one (data-theme on <html>, set before paint by the script in layout.tsx).
  */
 
 @theme {
@@ -35,6 +41,7 @@
   --color-accent: #f2b705;
   --color-accent-ink: #855f00;
   --color-accent-soft: #fdf3d3;
+  --color-gild: #9c6a00;
   --color-night: #0a1433;
   --color-night-2: #15256a;
   --color-ember: #e8743b;
@@ -57,18 +64,50 @@
 
 @layer base {
   :root {
-    color-scheme: light dark;
+    color-scheme: light;
     --header-h: 3.5rem;
-    /* The header floats 0.75rem below the top; night bands reach up under it. */
+    /* The header floats 0.75rem below the top; the bands reach up under it. */
     --header-space: calc(var(--header-h) + 0.75rem);
     --tabbar-h: 4rem;
     /* The phone tab bar floats too: its height, the gap under it, the safe area. */
     --tabbar-space: calc(var(--tabbar-h) + max(0.75rem, env(safe-area-inset-bottom)));
     --tibeb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='14' viewBox='0 0 32 14'%3E%3Crect width='32' height='14' fill='%231b4ddb'/%3E%3Cpath d='M0 1h32v1H0zM0 12h32v1H0z' fill='%23f2b705'/%3E%3Cpath d='M8 3 12 7 8 11 4 7z' fill='%23f2b705'/%3E%3Cpath d='M8 5.2 9.8 7 8 8.8 6.2 7z' fill='%231b4ddb'/%3E%3Cpath d='M24 4.4 26.6 7 24 9.6 21.4 7z' fill='%23fff'/%3E%3Cpath d='M16 5.6 17.4 7 16 8.4 14.6 7zM0 5.6 1.4 7 0 8.4zM32 5.6 30.6 7 32 8.4z' fill='%23e8743b'/%3E%3C/svg%3E");
+
+    /* Frosted glass and the chrome (header, tab bar): white on the light page. */
+    --glass-bg: color-mix(in oklab, #ffffff 62%, transparent);
+    --glass-border: color-mix(in oklab, #ffffff 70%, var(--color-line));
+    --glass-highlight: rgb(255 255 255 / 0.9);
+    --glass-shadow: 0 12px 40px -24px rgb(10 20 51 / 0.35);
+    --chrome-bg: color-mix(in oklab, #ffffff 74%, transparent);
+    --chrome-border: color-mix(in oklab, #ffffff 60%, var(--color-line));
+    --chrome-shadow: 0 10px 30px -18px rgb(10 20 51 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.9);
+    /* The ink of the hero's line drawing, and the sky word behind it. */
+    --ink: color-mix(in oklab, var(--color-fg) 62%, transparent);
+    --ink-faint: color-mix(in oklab, var(--color-fg) 14%, transparent);
+    /* The aurora behind the page: blue from the top left, gold from the bottom right. */
+    --aurora-a: rgb(27 77 219 / 0.1);
+    --aurora-b: rgb(242 183 5 / 0.14);
+    --aurora-c: rgb(232 116 59 / 0.06);
+    /* The pressed filter chip and the lit thumb of a toggle. */
+    --chip-on-bg: #0a1433;
+    --chip-on-fg: #ffffff;
+    /* The goods board's three kinds, as ink and as a soft fill. */
+    --goods-traveller-ink: #1b4ddb;
+    --goods-traveller-soft: #e8eefd;
+    --goods-send-ink: #9a4318;
+    --goods-send-soft: #fbeadf;
+    --goods-request-ink: #0f7259;
+    --goods-request-soft: #ddf2ea;
   }
 
+  /*
+   * The dark set, twice: once for a device set to dark when the reader has not
+   * chosen light, once for a reader who chose dark. CSS cannot share a block
+   * between a media query and a selector, so both lists are kept the same.
+   */
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
       --color-bg: #070c1f;
       --color-surface: #0d1430;
       --color-elevated: #111a3b;
@@ -83,13 +122,78 @@
       --color-accent: #f5c542;
       --color-accent-ink: #f5c542;
       --color-accent-soft: #2e250b;
+      --color-gild: #f5c542;
       --color-success: #5dd38c;
       --color-success-soft: #10301f;
       --color-warning: #f2b45a;
       --color-warning-soft: #36270f;
       --color-danger: #ff8a80;
       --color-danger-soft: #3b1715;
+      --glass-bg: rgb(255 255 255 / 0.07);
+      --glass-border: rgb(255 255 255 / 0.13);
+      --glass-highlight: rgb(255 255 255 / 0.08);
+      --glass-shadow: 0 12px 40px -24px rgb(0 0 0 / 0.6);
+      --chrome-bg: color-mix(in oklab, #0a1433 76%, transparent);
+      --chrome-border: rgb(255 255 255 / 0.1);
+      --chrome-shadow: 0 14px 34px -14px rgb(6 12 36 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.09);
+      --ink: rgb(255 255 255 / 0.55);
+      --ink-faint: rgb(242 183 5 / 0.22);
+      --aurora-a: rgb(27 77 219 / 0.28);
+      --aurora-b: rgb(242 183 5 / 0.1);
+      --aurora-c: rgb(232 116 59 / 0.08);
+      --chip-on-bg: #f5c542;
+      --chip-on-fg: #10142b;
+      --goods-traveller-ink: #8aa4ff;
+      --goods-traveller-soft: #16224d;
+      --goods-send-ink: #f4a77a;
+      --goods-send-soft: #3a1f12;
+      --goods-request-ink: #6fd9b5;
+      --goods-request-soft: #0f2e27;
     }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-bg: #070c1f;
+    --color-surface: #0d1430;
+    --color-elevated: #111a3b;
+    --color-fg: #edf0fa;
+    --color-muted: #a6adc8;
+    --color-faint: #858dab;
+    --color-line: #1f2a52;
+    --color-primary: #8aa4ff;
+    --color-primary-strong: #b3c3ff;
+    --color-primary-fg: #070c1f;
+    --color-primary-soft: #16224d;
+    --color-accent: #f5c542;
+    --color-accent-ink: #f5c542;
+    --color-accent-soft: #2e250b;
+    --color-gild: #f5c542;
+    --color-success: #5dd38c;
+    --color-success-soft: #10301f;
+    --color-warning: #f2b45a;
+    --color-warning-soft: #36270f;
+    --color-danger: #ff8a80;
+    --color-danger-soft: #3b1715;
+    --glass-bg: rgb(255 255 255 / 0.07);
+    --glass-border: rgb(255 255 255 / 0.13);
+    --glass-highlight: rgb(255 255 255 / 0.08);
+    --glass-shadow: 0 12px 40px -24px rgb(0 0 0 / 0.6);
+    --chrome-bg: color-mix(in oklab, #0a1433 76%, transparent);
+    --chrome-border: rgb(255 255 255 / 0.1);
+    --chrome-shadow: 0 14px 34px -14px rgb(6 12 36 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.09);
+    --ink: rgb(255 255 255 / 0.55);
+    --ink-faint: rgb(242 183 5 / 0.22);
+    --aurora-a: rgb(27 77 219 / 0.28);
+    --aurora-b: rgb(242 183 5 / 0.1);
+    --aurora-c: rgb(232 116 59 / 0.08);
+    --chip-on-bg: #f5c542;
+    --chip-on-fg: #10142b;
+    --goods-traveller-ink: #8aa4ff;
+    --goods-traveller-soft: #16224d;
+    --goods-send-ink: #f4a77a;
+    --goods-send-soft: #3a1f12;
+    --goods-request-ink: #6fd9b5;
+    --goods-request-soft: #0f2e27;
   }
 
   html {
@@ -115,6 +219,39 @@
     font-family: var(--font-sans);
     line-height: 1.55;
     min-height: 100dvh;
+    /* Old-style figures in running text: dates and counts sit in the line like words. */
+    font-variant-numeric: oldstyle-nums;
+  }
+  /*
+   * The aurora: two soft lights fixed behind everything, and a whisper of
+   * paper grain over them. Glass panels blur the lights; the grain keeps the
+   * flat colour from looking like a screen.
+   */
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+  }
+  body::before {
+    background:
+      radial-gradient(ellipse 70% 55% at 8% -8%, var(--aurora-a), transparent 65%),
+      radial-gradient(ellipse 55% 45% at 100% 100%, var(--aurora-b), transparent 65%),
+      radial-gradient(ellipse 40% 30% at 85% 60%, var(--aurora-c), transparent 70%);
+  }
+  body::after {
+    z-index: -1;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+  /* Headings and figures that are compared keep lining figures. */
+  .display,
+  .headline,
+  .tabular {
+    font-variant-numeric: lining-nums tabular-nums;
   }
 
   /* Ge'ez script: normal tracking, room to breathe. */
@@ -129,8 +266,8 @@
     outline-offset: 2px;
     border-radius: 6px;
   }
-  .night :focus-visible,
-  .chrome :focus-visible {
+  /* On the night a blue ring would vanish; gold shows. The chrome is frosted white, so it keeps the blue. */
+  .night :focus-visible {
     outline-color: var(--color-accent);
   }
   /* The search bar is white even on night, so the ring inside it stays blue. */
@@ -166,11 +303,14 @@
     line-height: 1.3;
     font-weight: 700;
   }
-  /* The highlighted words of a heading: gold, and italic where the script has one. */
+  /* The highlighted words of a heading: gold as ink on paper, gold as light on night; italic where the script has one. */
   .gild {
-    color: var(--color-accent);
+    color: var(--color-gild);
     font-style: italic;
     font-variation-settings: "SOFT" 100, "WONK" 1;
+  }
+  .night .gild {
+    color: var(--color-accent);
   }
   /*
    * Afaan Oromo is Latin script, so it keeps the Latin type above (the Ge'ez
@@ -210,9 +350,64 @@
   }
 
   /*
-   * Night: the sky over the Gulf after sunset. Dusk glows behind the skyline,
-   * a few fixed stars, and the horizon (components/Night.tsx) at its foot.
-   * Always dark, in both colour schemes; the page's chrome is the same night.
+   * Dawn: the band at the head of every page, in the page's own light. The
+   * sky's tint follows the hour in Dubai (data-sky, set by Dawn.tsx): a rose
+   * and gold morning, a clear day, an apricot dusk, a deep blue evening that
+   * is still light to read. The horizon under it is drawn in ink.
+   */
+  .dawn {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    --sky-a: rgb(27 77 219 / 0.14);
+    --sky-b: rgb(242 183 5 / 0.2);
+    background:
+      radial-gradient(ellipse 60% 70% at 85% 105%, var(--sky-b), transparent 62%),
+      radial-gradient(ellipse 55% 50% at 0% -5%, var(--sky-a), transparent 65%),
+      linear-gradient(180deg, color-mix(in oklab, #ffffff 55%, var(--color-bg)) 0%, var(--color-bg) 100%);
+  }
+  .dawn[data-sky="morning"] {
+    --sky-a: rgb(232 116 59 / 0.16);
+    --sky-b: rgb(242 183 5 / 0.26);
+  }
+  .dawn[data-sky="day"] {
+    --sky-a: rgb(27 77 219 / 0.16);
+    --sky-b: rgb(242 183 5 / 0.14);
+  }
+  .dawn[data-sky="dusk"] {
+    --sky-a: rgb(27 77 219 / 0.12);
+    --sky-b: rgb(232 116 59 / 0.26);
+  }
+  .dawn[data-sky="evening"] {
+    --sky-a: rgb(10 20 51 / 0.2);
+    --sky-b: rgb(27 77 219 / 0.16);
+  }
+  /* A few stars in the evening, in ink. */
+  .dawn[data-sky="evening"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1.5px 1.5px at 12% 18%, var(--ink) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 41% 26%, var(--ink) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 68% 14%, var(--ink) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 88% 30%, var(--ink) 50%, transparent 51%),
+      radial-gradient(1px 1px at 27% 8%, var(--ink) 50%, transparent 51%),
+      radial-gradient(1px 1px at 56% 36%, var(--ink) 50%, transparent 51%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
+    mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
+  }
+  /* A band reaches up under the floating header. */
+  .under-header {
+    margin-top: calc(-1 * var(--header-space));
+    padding-top: var(--header-space);
+  }
+
+  /*
+   * Night: the footer and a few islands (the join tile, the claim card):
+   * the sky over the Gulf after sunset. Always dark, in both themes.
    */
   .night {
     position: relative;
@@ -239,21 +434,57 @@
       radial-gradient(1.2px 1.2px at 68% 30%, #fff 50%, transparent 51%),
       radial-gradient(1px 1px at 79% 6%, #fff 50%, transparent 51%),
       radial-gradient(1.5px 1.5px at 88% 22%, #ffe9a8 50%, transparent 51%),
-      radial-gradient(1px 1px at 95% 40%, #fff 50%, transparent 51%),
-      radial-gradient(1px 1px at 6% 44%, #fff 50%, transparent 51%),
-      radial-gradient(1.2px 1.2px at 33% 46%, #fff 50%, transparent 51%),
-      radial-gradient(1px 1px at 50% 38%, #fff 50%, transparent 51%),
-      radial-gradient(1px 1px at 19% 34%, #fff 50%, transparent 51%);
+      radial-gradient(1px 1px at 95% 40%, #fff 50%, transparent 51%);
     -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 72%);
     mask-image: linear-gradient(180deg, #000 0%, transparent 72%);
   }
-  /* A night band reaches up under the floating header. */
-  .under-header {
-    margin-top: calc(-1 * var(--header-space));
-    padding-top: var(--header-space);
+  /* Quiet text: on paper the muted ink, on night a softened white. */
+  .muted-on-night {
+    color: var(--color-muted);
   }
   .night .muted-on-night {
     color: rgb(255 255 255 / 0.72);
+  }
+  /* Inside a night band the frosted glass, its ink and the gilded words go back to light on dark. */
+  .night {
+    --glass-bg: rgb(255 255 255 / 0.07);
+    --glass-border: rgb(255 255 255 / 0.13);
+    --glass-highlight: rgb(255 255 255 / 0.08);
+    --glass-shadow: none;
+    --ink: rgb(255 255 255 / 0.7);
+    --ink-faint: rgb(242 183 5 / 0.32);
+    --color-gild: #f5c542;
+  }
+  /*
+   * A white panel on the night: frosted paper floating over the dark sky, the
+   * balance the whole site is built on. Everything inside reads as the light
+   * page does, whatever the band or the theme around it.
+   */
+  .glass-white {
+    color: #10142b;
+    --color-fg: #10142b;
+    --color-muted: #586078;
+    --color-faint: #666b83;
+    --color-line: #e6dece;
+    --color-elevated: #ffffff;
+    --color-surface: #f3eee3;
+    --color-primary: #1b4ddb;
+    --color-primary-strong: #143aa8;
+    --color-primary-fg: #ffffff;
+    --color-gild: #9c6a00;
+    --chip-on-bg: #0a1433;
+    --chip-on-fg: #ffffff;
+    background: rgb(255 255 255 / 0.84);
+    border: 1px solid rgb(255 255 255 / 0.95);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: inset 0 1px 0 #fff, 0 24px 60px -28px rgb(5 10 31 / 0.7);
+  }
+  .glass-white .muted-on-night {
+    color: #586078;
+  }
+  .glass-white :focus-visible {
+    outline-color: #1b4ddb;
   }
 
   /* A word in Ge'ez, drawn as an outline in the sky. Decoration only. */
@@ -262,35 +493,35 @@
     font-weight: 700;
     line-height: 1;
     color: transparent;
-    -webkit-text-stroke: 1.25px rgb(242 183 5 / 0.32);
+    -webkit-text-stroke: 1.25px var(--ink-faint);
     letter-spacing: 0 !important;
     user-select: none;
     pointer-events: none;
   }
 
-  /* Glass on night: the hero's live board. Never on top of another glass. */
+  /* Frosted glass: a white panel over the aurora, a thin bright edge, a soft shadow. Never on top of another glass. */
   .glass {
-    background: rgb(255 255 255 / 0.07);
-    border: 1px solid rgb(255 255 255 / 0.13);
-    -webkit-backdrop-filter: blur(14px) saturate(140%);
-    backdrop-filter: blur(14px) saturate(140%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
   }
 
-  /* The chrome (header and phone tab bar): a floating island of night. */
+  /* The chrome (header and phone tab bar): a floating island of frosted white. */
   .chrome {
-    color: #fff;
-    background: color-mix(in oklab, #0a1433 76%, transparent);
+    color: var(--color-fg);
+    background: var(--chrome-bg);
     -webkit-backdrop-filter: saturate(170%) blur(20px);
     backdrop-filter: saturate(170%) blur(20px);
-    border: 1px solid rgb(255 255 255 / 0.1);
-    box-shadow: 0 14px 34px -14px rgb(6 12 36 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.09);
+    border: 1px solid var(--chrome-border);
+    box-shadow: var(--chrome-shadow);
   }
 
   /*
    * The language menu on phones and tablets (LangSwitch): a <details> under
-   * the header. Solid night, not blurred: a blur nested in the header's own
-   * would show the page through it unsoftened.
+   * the header. Solid, not blurred: a blur nested in the header's own would
+   * show the page through it unsoftened.
    */
   .lang-menu > summary {
     list-style: none;
@@ -302,10 +533,10 @@
     rotate: 180deg;
   }
   .lang-menu-panel {
-    color: #fff;
-    background: #0a1433;
-    border: 1px solid rgb(255 255 255 / 0.12);
-    box-shadow: 0 18px 40px -12px rgb(6 12 36 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.09);
+    color: var(--color-fg);
+    background: var(--color-elevated);
+    border: 1px solid var(--color-line);
+    box-shadow: 0 18px 40px -12px rgb(6 12 36 / 0.3);
   }
 
   /* The old name for floating surfaces on the page itself (the job's apply bar). */
@@ -388,17 +619,9 @@
   }
   .chip[aria-current="true"],
   .chip[aria-pressed="true"] {
-    background: var(--color-night);
-    border-color: var(--color-night);
-    color: #fff;
-  }
-  @media (prefers-color-scheme: dark) {
-    .chip[aria-current="true"],
-    .chip[aria-pressed="true"] {
-      background: var(--color-accent);
-      border-color: var(--color-accent);
-      color: #10142b;
-    }
+    background: var(--chip-on-bg);
+    border-color: var(--chip-on-bg);
+    color: var(--chip-on-fg);
   }
   .chip .count {
     font-variant-numeric: tabular-nums;
@@ -449,12 +672,14 @@
     color: var(--color-fg);
   }
   .btn-glass {
-    color: #fff;
-    background: rgb(255 255 255 / 0.1);
-    border: 1px solid rgb(255 255 255 / 0.18);
+    color: inherit;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
   }
   .btn-glass:hover {
-    background: rgb(255 255 255 / 0.16);
+    border-color: color-mix(in oklab, var(--glass-border) 50%, currentColor);
   }
   .btn[aria-disabled="true"],
   .btn:disabled {
@@ -664,34 +889,20 @@
 .goods-traveller {
   --cover-a: #1b4ddb;
   --cover-b: #3a2fb8;
-  --kind-ink: #1b4ddb;
-  --kind-soft: #e8eefd;
+  --kind-ink: var(--goods-traveller-ink);
+  --kind-soft: var(--goods-traveller-soft);
 }
 .goods-send {
   --cover-a: #8a3a14;
   --cover-b: #c45a1c;
-  --kind-ink: #9a4318;
-  --kind-soft: #fbeadf;
+  --kind-ink: var(--goods-send-ink);
+  --kind-soft: var(--goods-send-soft);
 }
 .goods-request {
   --cover-a: #0c4f42;
   --cover-b: #138a6a;
-  --kind-ink: #0f7259;
-  --kind-soft: #ddf2ea;
-}
-@media (prefers-color-scheme: dark) {
-  .goods-traveller {
-    --kind-ink: #8aa4ff;
-    --kind-soft: #16224d;
-  }
-  .goods-send {
-    --kind-ink: #f4a77a;
-    --kind-soft: #3a1f12;
-  }
-  .goods-request {
-    --kind-ink: #6fd9b5;
-    --kind-soft: #0f2e27;
-  }
+  --kind-ink: var(--goods-request-ink);
+  --kind-soft: var(--goods-request-soft);
 }
 
 .pass {
@@ -831,24 +1042,74 @@
   color: var(--color-fg);
 }
 .toggle-group > button[aria-pressed="true"] {
-  color: #fff;
+  color: var(--chip-on-fg);
 }
 .toggle-thumb {
   position: absolute;
   inset-block: 0.25rem;
   left: 0.25rem;
   border-radius: 999px;
-  background: var(--color-night);
+  background: var(--chip-on-bg);
   box-shadow: 0 6px 16px -8px rgb(6 12 36 / 0.6);
   transition: translate 300ms var(--ease-fluid);
 }
-@media (prefers-color-scheme: dark) {
-  .toggle-group > button[aria-pressed="true"] {
-    color: #10142b;
-  }
-  .toggle-thumb {
-    background: var(--color-accent);
-  }
+
+/*
+ * The front page's search scope: the same lit thumb on frosted glass. The
+ * thumb is the page's ink; the pressed word shows through in the page's paper.
+ */
+.seg-thumb {
+  background: var(--chip-on-bg);
+}
+.seg[aria-pressed="true"] {
+  color: var(--chip-on-fg);
+}
+.seg:not([aria-pressed="true"]) {
+  color: var(--color-muted);
+}
+.seg:not([aria-pressed="true"]):hover {
+  color: var(--color-fg);
+}
+
+/* The theme switch in the header: the sun by day, the moon by night, drawn as one dial that turns. */
+.theme-dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  color: var(--color-fg);
+  background: color-mix(in oklab, var(--color-fg) 6%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-fg) 10%, transparent);
+  transition: background-color 160ms var(--ease-fluid);
+}
+.theme-dial:hover {
+  background: color-mix(in oklab, var(--color-fg) 10%, transparent);
+}
+.theme-dial > svg {
+  transition: rotate 500ms var(--ease-fluid), scale 500ms var(--ease-fluid), opacity 300ms var(--ease-fluid);
+}
+.theme-dial .sun {
+  rotate: 0deg;
+}
+.theme-dial .moon {
+  position: absolute;
+  opacity: 0;
+  rotate: -90deg;
+  scale: 0.6;
+}
+:root[data-theme="dark"] .theme-dial .sun,
+.theme-dial[data-mode="dark"] .sun {
+  opacity: 0;
+  rotate: 90deg;
+  scale: 0.6;
+}
+:root[data-theme="dark"] .theme-dial .moon,
+.theme-dial[data-mode="dark"] .moon {
+  opacity: 1;
+  rotate: 0deg;
+  scale: 1;
 }
 
 /* A choice in the goods form: a big card that lights up in its kind's colours when picked. */
@@ -1101,7 +1362,8 @@ html[data-reveal] .reveal:not([data-in]) {
   }
   .tile-arrow,
   .seg-thumb,
-  .toggle-thumb {
+  .toggle-thumb,
+  .theme-dial > svg {
     transition: none !important;
   }
   /* The flight: the plane rests mid-arc instead of flying, the trail is drawn to it. */
@@ -1136,20 +1398,33 @@ html[data-reveal] .reveal:not([data-in]) {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .material {
-    background: var(--color-bg);
+  .material,
+  .chrome,
+  .glass,
+  .btn-glass {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+  .material,
   .chrome {
-    background: #0a1433;
+    background: var(--color-elevated);
+  }
+  .glass,
+  .btn-glass {
+    background: var(--color-elevated);
+  }
+  .night .glass,
+  .night .btn-glass {
+    background: #16224f;
+  }
+  .glass-white {
+    background: #ffffff;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  .glass {
-    background: #16224f;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  body::before,
+  body::after {
+    display: none;
   }
 }
 
@@ -1157,9 +1432,11 @@ html[data-reveal] .reveal:not([data-in]) {
   :root {
     --color-muted: var(--color-fg);
     --color-line: color-mix(in oklab, var(--color-fg) 55%, transparent);
+    --ink: var(--color-fg);
   }
   .material,
-  .chrome {
+  .chrome,
+  .glass {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -1168,16 +1445,28 @@ html[data-reveal] .reveal:not([data-in]) {
     border-bottom: 1px solid var(--color-fg);
   }
   .chrome,
-  .lang-menu-panel {
-    background: #050a1f;
-    border-color: #fff;
-  }
+  .lang-menu-panel,
   .glass {
+    background: var(--color-elevated);
+    border-color: var(--color-fg);
+  }
+  .night .glass {
     background: #0a1433;
     border-color: rgb(255 255 255 / 0.7);
   }
   .night .muted-on-night {
     color: #fff;
+  }
+  /* A white panel on the night keeps its dark ink and takes a firm edge. */
+  .glass-white {
+    border-color: #10142b;
+  }
+  .glass-white .muted-on-night {
+    color: #10142b;
+  }
+  body::before,
+  body::after {
+    display: none;
   }
   .sky-word {
     display: none;

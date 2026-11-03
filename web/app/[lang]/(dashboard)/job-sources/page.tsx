@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Rss } from "lucide-react";
+import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
+import { runAction } from "@/lib/toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import PageTitle from "@/components/page-title";
-import { useApi, useApiQuery, useApiMutation, formatDateTime, ApiError, type JobSourceRow, type SourceKind, type SourceTestResult } from "@/lib/api";
+import { useApi, useApiQuery, useApiMutation, formatDateTime, ApiError, errorText, type JobSourceRow, type SourceKind, type SourceTestResult } from "@/lib/api";
 
 type Form = { id?: number; name: string; kind: SourceKind; interval_minutes: number; active: boolean; config: Record<string, string> };
 
@@ -41,7 +44,7 @@ const FIELDS: Record<SourceKind, { key: string; label: string; hint: string; pla
 const STATUS_COLOR = { ok: "success", failing: "warning", paused: "destructive", off: "secondary" } as const;
 
 const SourcesPage = () => {
-  const { data, isLoading, error } = useApiQuery<{ data: JobSourceRow[] }>(["job-sources"], "/admin/job-sources");
+  const { data, isLoading, error, refetch } = useApiQuery<{ data: JobSourceRow[] }>(["job-sources"], "/admin/job-sources");
   const { request } = useApi();
   const [form, setForm] = useState<Form | null>(null);
   const [test, setTest] = useState<SourceTestResult | null>(null);
@@ -92,7 +95,7 @@ const SourcesPage = () => {
       })
       .catch((e: ApiError) => {
         setErrors(e.errors ?? {});
-        toast.error(e.message);
+        toast.error(errorText(e));
       });
   };
 
@@ -104,7 +107,7 @@ const SourcesPage = () => {
 
       <Card>
         <CardContent className="p-0">
-          {error && <div className="p-4 text-destructive">{error.message}</div>}
+          {error && <ErrorState className="m-4" error={error} onRetry={() => refetch()} title="Sources could not be loaded" />}
           <Table>
             <TableHeader>
               <TableRow>
@@ -118,8 +121,14 @@ const SourcesPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={7} className="text-default-500">Loading…</TableCell></TableRow>}
-              {data?.data.length === 0 && <TableRow><TableCell colSpan={7} className="text-default-500">No sources yet. Add a job feed to start filling the channel.</TableCell></TableRow>}
+              {isLoading && <TableMessage colSpan={7}><LoadingRows className="p-4" /></TableMessage>}
+              {data?.data.length === 0 && (
+                <TableMessage colSpan={7}>
+                  <EmptyState icon={Rss} title="No sources yet" action={<Button size="sm" onClick={() => open()}>Add source</Button>} compact>
+                    Add an RSS feed, a job site's results page, or a Telegram channel the bot sits in. Test it before saving.
+                  </EmptyState>
+                </TableMessage>
+              )}
               {data?.data.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="max-w-xs">
@@ -136,11 +145,11 @@ const SourcesPage = () => {
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap space-x-2">
                     {s.kind !== "telegram" && (
-                      <Button size="sm" variant="outline" disabled={run.isPending} onClick={() => run.mutateAsync(s.id).then((r) => (r.result.error ? toast.error(r.result.error) : toast.success(`Found ${r.result.found}, ${r.result.new} new.`))).catch((e) => toast.error(e.message))}>
-                        Run now
+                      <Button size="sm" variant="outline" color="secondary" disabled={run.isPending} onClick={() => run.mutateAsync(s.id).then((r) => (r.result.error ? toast.error(`The source answered with an error: ${r.result.error}`) : toast.success(`Found ${r.result.found}, ${r.result.new} new.`))).catch((e) => toast.error(errorText(e)))}>
+                        {run.isPending && run.variables === s.id ? "Running…" : "Run now"}
                       </Button>
                     )}
-                    {!s.built_in && <Button size="sm" variant="outline" onClick={() => open(s)}>{s.status === "paused" ? "Fix and resume" : "Edit"}</Button>}
+                    {!s.built_in && <Button size="sm" variant="outline" color="secondary" onClick={() => open(s)}>{s.status === "paused" ? "Fix and resume" : "Edit"}</Button>}
                     {!s.built_in && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild><Button size="sm" variant="outline" color="destructive">Delete</Button></AlertDialogTrigger>
@@ -151,7 +160,7 @@ const SourcesPage = () => {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => remove.mutateAsync(s.id).then(() => toast.success("Deleted.")).catch((e) => toast.error(e.message))}>Delete</AlertDialogAction>
+                            <AlertDialogAction color="destructive" onClick={() => runAction(remove.mutateAsync(s.id), "Deleted.")}>Delete</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

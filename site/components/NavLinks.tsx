@@ -22,7 +22,7 @@ function isActive(pathname: string, href: string, lang: Locale): boolean {
   return href === `/${lang}` ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** The header's links on wide screens; the current one sits on a lit pill with a gold thread under it. */
+/** The header's links on wide screens; the current one sits on a tinted pill with a gold thread under it. */
 export function NavLinks({ lang, labels, label }: { lang: Locale; labels: Record<Key, string>; label: string }) {
   const pathname = usePathname();
 
@@ -36,7 +36,7 @@ export function NavLinks({ lang, labels, label }: { lang: Locale; labels: Record
             href={item.href}
             aria-current={active ? "page" : undefined}
             // Six links do not fit beside the brand on a tablet: the owners' page joins them from desktop widths (it stays in the home bento and the footer).
-            className={`press relative whitespace-nowrap rounded-full px-2.5 py-2 text-[0.875rem] font-medium transition-colors lg:px-3.5 lg:text-[0.9375rem] ${active ? "bg-white/12 text-white" : "text-white/70 hover:text-white"} ${item.key === "business" ? "hidden xl:block" : ""}`}
+            className={`press relative whitespace-nowrap rounded-full px-2.5 py-2 text-[0.875rem] font-medium transition-colors lg:px-3.5 lg:text-[0.9375rem] ${active ? "bg-fg/8 text-fg" : "text-muted hover:text-fg"} ${item.key === "business" ? "hidden xl:block" : ""}`}
           >
             {item.label}
             {active && <span aria-hidden="true" className="absolute inset-x-4 -bottom-px h-0.5 rounded-full bg-accent" />}
@@ -47,7 +47,7 @@ export function NavLinks({ lang, labels, label }: { lang: Locale; labels: Record
   );
 }
 
-/** The phone's tab bar: a floating island of night within the thumb's reach. The goods board takes the owners' place here. */
+/** The phone's tab bar: a floating island of glass within the thumb's reach. The goods board takes the owners' place here. */
 export function TabBar({ lang, labels, label }: { lang: Locale; labels: Record<Key, string>; label: string }) {
   const pathname = usePathname();
 
@@ -64,9 +64,9 @@ export function TabBar({ lang, labels, label }: { lang: Locale; labels: Record<K
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`press flex flex-col items-center justify-center gap-1 rounded-[1.25rem] text-[0.6875rem] font-semibold transition-colors ${active ? "bg-white/12 text-white" : "text-white/65"}`}
+                  className={`press flex flex-col items-center justify-center gap-1 rounded-[1.25rem] text-[0.6875rem] font-semibold transition-colors ${active ? "bg-fg/8 text-fg" : "text-muted"}`}
                 >
-                  <Icon className={`size-[1.375rem] ${active ? "text-accent" : ""}`} strokeWidth={active ? 2.3 : 1.8} aria-hidden="true" />
+                  <Icon className={`size-[1.375rem] ${active ? "text-primary" : ""}`} strokeWidth={active ? 2.3 : 1.8} aria-hidden="true" />
                   <span className="leading-none">{item.label}</span>
                 </Link>
               </li>

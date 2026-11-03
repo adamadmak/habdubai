@@ -211,7 +211,7 @@ class BusinessPublisher
         $text = $this->channelText($business);
         // The post is a photo with a caption or a plain message; one of the two edits applies.
         if (! $this->telegram->editText($channel, (int) $business->channel_message_id, $text, $this->keyboard($business))) {
-            $this->telegram->editCaption($channel, (int) $business->channel_message_id, mb_substr($text, 0, 1024), $this->keyboard($business));
+            $this->telegram->editCaption($channel, (int) $business->channel_message_id, \App\Support\TelegramText::clip($text, 1024), $this->keyboard($business));
         }
     }
 

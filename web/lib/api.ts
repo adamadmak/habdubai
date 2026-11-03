@@ -21,31 +21,81 @@ type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 /** Several queries can meet the same 401 at once; sign out only once. */
 let signingOut = false;
 
+/**
+ * What a person reads when a request fails: the API's own sentence when it
+ * wrote one for people (validation, "only a pending announcement…"), and a
+ * plain explanation otherwise. Never a stack trace, HTML or raw JSON.
+ */
+function readableError(status: number, data: unknown): string {
+  const body = (data && typeof data === "object" ? data : {}) as { message?: unknown; errors?: Record<string, string[]> };
+  const message = typeof body.message === "string" ? body.message.trim() : "";
+  const looksMachine = message === "" || /^[[{<]/.test(message) || message.length > 300 || /^(Server Error|Unauthenticated.?|Forbidden|Not Found|Too Many Attempts.?)$/i.test(message)
+    // Laravel's own wording for a missing model or route names classes and paths.
+    || /No query results for model|could not be found|SQLSTATE|Exception/i.test(message);
+
+  if (status >= 500) return "The server hit an error. Try again; if it keeps happening, check the API logs.";
+  if (status === 401) return "Your session has ended. Sign in again.";
+  if (status === 429) return "Too many requests at once. Wait a minute and try again.";
+  if (status === 419) return "The page was open too long. Reload it and try again.";
+  if (!looksMachine) return message;
+  if (status === 422) return Object.values(body.errors ?? {}).flat()[0] ?? "Some of the values are not accepted.";
+  if (status === 403) return "This account may not do that.";
+  if (status === 404) return "Not found. It may have been deleted, or the API does not offer this yet.";
+  if (status === 409) return "Someone else changed this at the same time. Reload and try again.";
+  return `The request failed (${status}).`;
+}
+
 export async function apiRequest<T>(path: string, token: string | undefined, method: Method = "GET", body?: unknown): Promise<T> {
-  const response = await fetch(`${API_URL}/api${path}`, {
-    method,
-    headers: {
-      Accept: "application/json",
-      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/api${path}`, {
+      method,
+      headers: {
+        Accept: "application/json",
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiError(0, "Could not reach the API. Check the connection and try again.");
+  }
 
   const text = await response.text();
-  const data = text ? (JSON.parse(text) as any) : null;
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // A proxy's HTML error page, or a truncated answer: no JSON to read.
+    data = null;
+  }
 
   if (!response.ok) {
     if (response.status === 401 && !signingOut) {
       signingOut = true;
       // Through next-auth, whose signOut event also revokes the token on the API.
-      await signOut({ callbackUrl: "/auth/login" });
+      // Back to this page after signing in again; the path without the locale prefix, as the login form expects.
+      const path = window.location.pathname.replace(/^\/(en|am|ti|om)(?=\/|$)/, "") + window.location.search;
+      const next = path && path !== "/" && !/^\/auth\//.test(path) ? `&next=${encodeURIComponent(path)}` : "";
+      await signOut({ callbackUrl: `/auth/login?expired=1${next}` });
     }
-    throw new ApiError(response.status, data?.message ?? `Request failed (${response.status})`, data?.errors ?? {});
+    if (response.status >= 500) console.error(`API ${method} ${path} failed (${response.status})`, data ?? text.slice(0, 500));
+    throw new ApiError(response.status, readableError(response.status, data), data?.errors ?? {});
+  }
+
+  if (data === null && text) {
+    throw new ApiError(response.status, "The API answered with something that is not JSON. Check the API address on this app.");
   }
 
   return data as T;
+}
+
+/** The sentence to put in a toast for any thrown value. */
+export function errorText(error: unknown): string {
+  if (error instanceof ApiError) return error.message;
+  if (error instanceof Error && error.message) return error.message;
+  return "Something went wrong. Try again.";
 }
 
 /** A request function bound to the signed-in admin's token. */
@@ -205,6 +255,10 @@ export interface GoodsPostRow {
   in_group: boolean;
   member: GoodsMember | null;
   created_at: string;
+  /** A carry fee members pay each other directly (since 3 Nov 2026); null means "to agree". Absent on older APIs. */
+  price?: number | null;
+  currency?: "AED" | "ETB" | null;
+  mode?: "send" | "request" | null;
 }
 
 export type GoodsMatchStatus =
@@ -515,4 +569,46 @@ export const LANGUAGE_NAMES: Record<string, string> = { am: "Amharic", ti: "Tigr
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
   return new Date(value).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+}
+
+// ---- launch readiness --------------------------------------------------------
+
+export type ReadinessSeverity = "blocker" | "important" | "nice";
+
+export interface ReadinessItem {
+  key: string;
+  label: string;
+  ok: boolean;
+  severity: ReadinessSeverity;
+  detail: string;
+  fix: string;
+  /** An admin page (e.g. "/settings") or a full URL; null when the fix is outside the admin. */
+  href: string | null;
+}
+
+/** `GET /admin/readiness`: what still stands between today and launch. */
+export interface ReadinessPayload {
+  score: number;
+  ready: boolean;
+  items: ReadinessItem[];
+}
+
+/** `GET /health`: is the running API well. */
+export interface HealthPayload {
+  ok: boolean;
+  db: boolean | string;
+  tick_age_seconds: number | null;
+  queue_pending: number;
+  failed_updates_24h: number;
+}
+
+/** "just now", "4 min ago", "3 h ago", "2 days ago". */
+export function timeAgo(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return "never";
+  const s = Math.max(0, Math.round(seconds));
+  if (s < 45) return "just now";
+  if (s < 3600) return `${Math.round(s / 60)} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+  const days = Math.round(s / 86400);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
 }

@@ -5,7 +5,7 @@ import { ArrowRight, Eye, Hourglass, Pencil, Plus, Send } from "lucide-react";
 import { GEEZ, PageHead } from "@/components/Bits";
 import { ListingMock } from "@/components/Cards";
 import { Cover } from "@/components/Cover";
-import { Night } from "@/components/Night";
+import { Night } from "@/components/Dawn";
 import { ConfirmSubmit } from "@/components/owner/ConfirmSubmit";
 import { StatusPill } from "@/components/owner/StatusPill";
 import { removeListing } from "@/lib/actions";
@@ -39,7 +39,7 @@ function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
       <Night>
         <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-12 pt-10 md:grid-cols-[1.15fr_0.85fr] md:items-center md:pb-16 md:pt-16">
           <div className="settle">
-            <p className="glass inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
+            <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
               <span className="tibeb-thin inline-block w-7 rounded-full" aria-hidden="true" /> {d.nav.business}
             </p>
             <h1 className="display mt-5 text-[2.5rem] md:text-[3.5rem]">{d.business.landingTitle}</h1>
@@ -53,11 +53,11 @@ function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
           </div>
           {/* What the owner gets: a page of their own, and a post in the channel. */}
           <div className="settle settle-2 relative mx-auto h-[22rem] w-full max-w-sm" aria-hidden="true">
-            <div className="glass absolute left-0 top-6 w-60 -rotate-6 rounded-[1.375rem] p-3">
+            <div className="glass-white absolute left-0 top-6 w-60 -rotate-6 rounded-[1.375rem] p-3">
               <Cover category="restaurant" name="Selam" seed={0} className="aspect-[16/10] rounded-2xl" />
-              <div className="mt-2.5 h-2.5 w-3/4 rounded-full bg-white/30" />
-              <div className="mt-1.5 h-2 w-1/2 rounded-full bg-white/18" />
-              <div className="mt-3 flex gap-1.5"><span className="h-6 flex-1 rounded-lg bg-accent/70" /><span className="h-6 w-10 rounded-lg bg-white/15" /></div>
+              <div className="mt-2.5 h-2.5 w-3/4 rounded-full bg-fg/20" />
+              <div className="mt-1.5 h-2 w-1/2 rounded-full bg-fg/12" />
+              <div className="mt-3 flex gap-1.5"><span className="h-6 flex-1 rounded-lg bg-accent/80" /><span className="h-6 w-10 rounded-lg bg-fg/10" /></div>
             </div>
             <ListingMock lang={lang} className="absolute bottom-0 right-0 rotate-3" />
           </div>

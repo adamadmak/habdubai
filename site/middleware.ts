@@ -27,6 +27,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Not the route handlers, Next's files, or anything with a file extension (sitemap.xml, icon.svg).
-  matcher: ["/((?!api|_next|.*\\..*).*)"],
+  // Not the route handlers, Next's files, the generated images (apple-icon, opengraph-image: no
+  // extension, so they would be sent to /en/…), or anything with a file extension (sitemap.xml, icon.svg).
+  matcher: ["/((?!api/|_next/|apple-icon$|opengraph-image$|.*\\..*).*)"],
 };

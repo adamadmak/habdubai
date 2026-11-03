@@ -1,140 +1,98 @@
 "use client";
-import React, { useState } from "react";
-import { cn, isLocationMatch } from "@/lib/utils";
-import { useSidebar, useThemeStore } from "@/store";
-import SidebarLogo from "../common/logo";
-import { menusConfig } from "@/config/menus";
-import MenuLabel from "../common/menu-label";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React, { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import SingleMenuItem from "./single-menu-item";
-import SubMenuHandler from "./sub-menu-handler";
-import NestedSubMenu from "../common/nested-menus";
-const MobileSidebar = ({ className, trans }: { className?: string, trans: any }) => {
-  const { sidebarBg, mobileMenu, setMobileMenu } = useSidebar();
-  const [activeSubmenu, setActiveSubmenu] = useState<number | null>(null);
-  const [activeMultiMenu, setMultiMenu] = useState<number | null>(null);
-  const menus = menusConfig?.sidebarNav?.classic || [];
-  const { collapsed } = useSidebar();
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useSidebar } from "@/store";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { SidebarBrand, SidebarNav } from "../classic";
 
-  const toggleSubmenu = (i: number) => {
-    if (activeSubmenu === i) {
-      setActiveSubmenu(null);
-    } else {
-      setActiveSubmenu(i);
+/**
+ * The same navigation as a drawer, below 1280 px. Opening it focuses the close
+ * button, keeps the keyboard inside and stops the page behind from scrolling;
+ * closing it (navigation, backdrop, Escape, the button) gives focus back to
+ * whatever opened it.
+ */
+const MobileSidebar = ({ className }: { className?: string; trans?: unknown }) => {
+  const { mobileMenu, setMobileMenu } = useSidebar();
+  const location = usePathname();
+  const drawer = useRef<HTMLElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setMobileMenu(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
+
+  useEffect(() => {
+    if (!mobileMenu) {
+      // Back to the menu button (or whatever had focus), if it is still on the page.
+      const target = opener.current;
+      opener.current = null;
+      if (target && document.contains(target)) target.focus();
+      return;
     }
-  };
 
-  const toggleMultiMenu = (subIndex: number) => {
-    if (activeMultiMenu === subIndex) {
-      setMultiMenu(null);
-    } else {
-      setMultiMenu(subIndex);
-    }
-  };
-  const locationName = usePathname();
+    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButton.current?.focus();
 
-  React.useEffect(() => {
-    let subMenuIndex = null;
-    let multiMenuIndex = null;
-    menus?.map((item: any, i: number) => {
-      if (item?.child) {
-        item.child.map((childItem: any, j: number) => {
-          if (isLocationMatch(childItem.href, locationName)) {
-            subMenuIndex = i;
-          }
-          if (childItem?.multi_menu) {
-            childItem.multi_menu.map((multiItem: any, k: number) => {
-              if (isLocationMatch(multiItem.href, locationName)) {
-                subMenuIndex = i;
-                multiMenuIndex = j;
-              }
-            });
-          }
-        });
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileMenu(false);
+        return;
       }
-    });
-    setActiveSubmenu(subMenuIndex);
-    setMultiMenu(multiMenuIndex);
-    if (mobileMenu) {
-      setMobileMenu(false);
-    }
-  }, [locationName]);
+      if (event.key !== "Tab" || !drawer.current) return;
+      // Tab moves through the drawer's own controls and wraps, so focus never reaches the page behind.
+      const focusable = Array.from(drawer.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+      if (focusable.length === 0) return;
+      event.preventDefault();
+      const index = focusable.indexOf(document.activeElement as HTMLElement);
+      const step = event.shiftKey ? -1 : 1;
+      focusable[(index + step + focusable.length) % focusable.length].focus();
+    };
+    // Anything that still lands outside (a click on the backdrop, a programmatic focus) comes back in.
+    const onFocus = (event: FocusEvent) => {
+      if (drawer.current && event.target instanceof Node && !drawer.current.contains(event.target)) closeButton.current?.focus();
+    };
+    document.addEventListener("focusin", onFocus);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("focusin", onFocus);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenu, setMobileMenu]);
+
   return (
     <>
-      <div
+      <aside
+        ref={drawer}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Admin pages"
+        aria-hidden={!mobileMenu}
         className={cn(
-          "fixed top-0  bg-card h-full w-[248px] z-[9999] ",
-          className,
-          {
-            " -left-[300px] invisible opacity-0  ": !mobileMenu,
-            " left-0 visible opacity-100  ": mobileMenu,
-          }
+          "fixed top-0 z-[9999] flex h-full w-[272px] flex-col text-white transition-[transform,opacity,visibility] duration-200 xl:hidden",
+          "bg-[linear-gradient(180deg,hsl(225_67%_13%)_0%,hsl(226_70%_9%)_100%)]",
+          mobileMenu ? "left-0 translate-x-0 visible opacity-100" : "left-0 -translate-x-full invisible opacity-0",
+          className
         )}
       >
-        {sidebarBg !== "none" && (
-          <div
-            className=" absolute left-0 top-0   z-[-1] w-full h-full bg-cover bg-center opacity-[0.07]"
-            style={{ backgroundImage: `url(${sidebarBg})` }}
-          ></div>
-        )}
-        <SidebarLogo hovered={collapsed} />
-        <ScrollArea
-          className={cn("sidebar-menu  h-[calc(100%-80px)] ", {
-            "px-4": !collapsed,
-          })}
-        >
-          <ul
-            className={cn("", {
-              " space-y-2 text-center": collapsed,
-            })}
-          >
-            {menus.map((item, i) => (
-              <li key={`menu_key_${i}`}>
-                {/* single menu  */}
-
-                {!item.child && !item.isHeader && (
-                  <SingleMenuItem item={item} collapsed={collapsed} />
-                )}
-
-                {/* menu label */}
-                {item.isHeader && !item.child && !collapsed && (
-                  <MenuLabel item={item} trans={trans} />
-                )}
-
-                {/* sub menu */}
-                {item.child && (
-                  <>
-                    <SubMenuHandler
-                      item={item}
-                      toggleSubmenu={toggleSubmenu}
-                      index={i}
-                      activeSubmenu={activeSubmenu}
-                      collapsed={collapsed}
-                    />
-
-                    {!collapsed && (
-                      <NestedSubMenu
-                        toggleMultiMenu={toggleMultiMenu}
-                        activeMultiMenu={activeMultiMenu}
-                        activeSubmenu={activeSubmenu}
-                        item={item}
-                        index={i} title={""} trans={undefined} />
-                    )}
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+        <div className="flex items-center gap-2 px-5 pt-5 pb-4">
+          <div className="min-w-0 flex-1"><SidebarBrand /></div>
+          <button ref={closeButton} type="button" onClick={() => setMobileMenu(false)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-white/70 hover:bg-white/10 focus-visible:outline-gold" aria-label="Close the menu">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="tibeb-rule mx-5 mb-2 opacity-70" aria-hidden="true" />
+        <ScrollArea className="flex-1">
+          <SidebarNav onNavigate={() => setMobileMenu(false)} />
         </ScrollArea>
-      </div>
-      {mobileMenu && (
-        <div
-          onClick={() => setMobileMenu(false)}
-          className="overlay bg-black/60 backdrop-filter backdrop-blur-sm opacity-100 fixed inset-0 z-[999]"
-        ></div>
-      )}
+      </aside>
+      {mobileMenu && <div onClick={() => setMobileMenu(false)} className="fixed inset-0 z-[999] bg-navy/50 backdrop-blur-sm xl:hidden" aria-hidden="true" />}
     </>
   );
 };

@@ -85,7 +85,7 @@ class FaqController extends Controller
             'a_ti' => ['nullable', 'string', 'max:3000'],
             'q_om' => ['nullable', 'string', 'max:500'],
             'a_om' => ['nullable', 'string', 'max:3000'],
-            'source_url' => ['nullable', 'url', 'max:500'],
+            'source_url' => ['nullable', 'url:http,https', 'max:500'],
             'active' => ['boolean'],
         ], [], ['q_en' => 'English question', 'a_en' => 'English answer']);
     }
@@ -96,7 +96,7 @@ class FaqController extends Controller
             'title' => ['required', 'string', 'max:160'],
             'body' => ['required', 'string', 'max:20000'],
             'source_name' => ['nullable', 'string', 'max:120'],
-            'source_url' => ['nullable', 'url', 'max:500'],
+            'source_url' => ['nullable', 'url:http,https', 'max:500'],
             'active' => ['boolean'],
         ]);
     }

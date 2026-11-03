@@ -16,8 +16,16 @@ pest()->extend(TestCase::class)
         Http::preventStrayRequests();
         TelegramFake::$results = [];
         TelegramFake::$files = [];
+        TelegramFake::$errors = [];
         Http::fake(['api.telegram.org/*' => function ($request) {
             $method = basename((string) parse_url($request->url(), PHP_URL_PATH));
+
+            // A refusal the way Telegram words it, for the methods a test chose.
+            if (isset(TelegramFake::$errors[$method])) {
+                [$code, $description] = TelegramFake::$errors[$method];
+
+                return Http::response(['ok' => false, 'error_code' => $code, 'description' => $description], $code);
+            }
 
             // File downloads (api.telegram.org/file/bot<token>/<path>) answer with raw bytes.
             if (str_contains($request->url(), '/file/bot')) {
@@ -43,6 +51,9 @@ final class TelegramFake
 
     /** @var array<string, string> file name => bytes served at api.telegram.org/file/bot…/<name> */
     public static array $files = [];
+
+    /** @var array<string, array{0: int, 1: string}> method => [error_code, description] answered instead of ok */
+    public static array $errors = [];
 }
 
 /** A real JPEG of the given size, for upload tests. */

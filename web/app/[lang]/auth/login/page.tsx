@@ -1,30 +1,47 @@
 import { Suspense } from "react";
 import LogInForm from "@/components/auth/login-form";
+import BrandMark from "@/components/brand-mark";
 
 export const metadata = { title: "Sign in" };
 
 const LoginPage = () => {
   return (
-    <div className="min-h-screen bg-background flex items-center overflow-hidden w-full">
-      <div className="min-h-screen basis-full flex flex-wrap w-full justify-center overflow-y-auto">
-        <div className="basis-1/2 w-full relative hidden xl:flex justify-center items-center bg-gradient-to-br from-primary-600 via-primary-400 to-primary-600">
-          <div className="relative z-10 backdrop-blur bg-primary-foreground/40 py-14 px-16 rounded max-w-[560px]">
-            <div className="text-4xl leading-[50px] 2xl:text-5xl 2xl:leading-[64px] font-semibold text-default-900 dark:text-default-50">
-              ሐበሻ ዱባይ
-            </div>
-            <div className="mt-4 text-xl text-default-800 dark:text-default-200 font-medium">
-              Verified members, jobs in Amharic and Tigrinya, questions, announcements, and a trusted goods board.
-            </div>
+    <div className="min-h-screen w-full lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      {/* The brand side: the Gulf night, the tibeb thread, the two homes. */}
+      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,hsl(225_67%_14%)_0%,hsl(226_70%_9%)_55%,hsl(224_78%_22%)_100%)] p-12 text-white">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-primary/40 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 left-10 h-80 w-80 rounded-full bg-gold/20 blur-3xl" />
+
+        <div className="relative flex items-center gap-3">
+          <BrandMark className="h-11 w-11" />
+          <div>
+            <div className="font-display text-xl font-semibold">Habesha Dubai</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">Admin</div>
           </div>
         </div>
-        <div className="min-h-screen basis-full md:basis-1/2 w-full px-4 py-5 flex justify-center items-center">
-          <div className="lg:w-[480px]">
-            <Suspense>
-              <LogInForm />
-            </Suspense>
-          </div>
+
+        <div className="relative max-w-md">
+          <div className="font-display text-[44px] leading-[1.1] font-semibold" lang="am">ሐበሻ ዱባይ</div>
+          <p className="mt-4 text-lg leading-relaxed text-white/80">
+            Verified members, jobs in four languages, questions and answers, announcements, a business directory and a trusted goods board.
+          </p>
+          <div className="tibeb-rule mt-8 w-40 opacity-80" aria-hidden="true" />
         </div>
-      </div>
+
+        <p className="relative text-sm text-white/60">Two homes, one thread.</p>
+      </aside>
+
+      <main className="flex min-h-screen items-center justify-center px-5 py-10">
+        <div className="w-full max-w-[420px]">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <BrandMark className="h-10 w-10" />
+            <div className="font-display text-xl font-semibold text-default-900">Habesha Dubai</div>
+          </div>
+          <Suspense>
+            <LogInForm />
+          </Suspense>
+        </div>
+      </main>
     </div>
   );
 };

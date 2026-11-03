@@ -2,6 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { Link2, Package, Scale } from "lucide-react";
+import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +15,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import PageTitle from "@/components/page-title";
 import { cn } from "@/lib/utils";
-import { useApiQuery, useApiMutation, formatDate, formatDateTime, type GoodsMatchRow, type GoodsMember, type GoodsPostRow } from "@/lib/api";
+import { useApiQuery, useApiMutation, formatDate, formatDateTime, errorText, type GoodsMatchRow, type GoodsMember, type GoodsPostRow } from "@/lib/api";
+
+/** "AED 15 per kg", "Free", "To agree": what a post says about the carry fee, paid member to member. */
+function fee(p: GoodsPostRow): string | null {
+  if (p.price === undefined) return null;
+  if (p.price === null) return "Fee to agree";
+  if (p.price === 0) return "Free";
+  return `${p.currency ?? ""} ${p.price}${p.kind === "traveller" ? " per kg" : ""}`.trim();
+}
 
 type Paged<T> = { data: T[]; meta: { total: number; page: number; last_page: number }; counts: Record<string, number> };
 
@@ -62,6 +72,7 @@ function Chips({ tabs, value, counts, onChange }: { tabs: readonly (readonly [st
         <button
           key={v}
           type="button"
+          aria-pressed={value === v}
           onClick={() => onChange(v)}
           className={cn("px-3 py-1.5 rounded-md text-sm font-medium border", value === v ? "bg-primary text-primary-foreground border-primary" : "bg-card text-default-700 border-default-200 hover:border-primary")}
         >
@@ -117,11 +128,11 @@ const GoodsPage = () => {
   const disputes = useApiQuery<Paged<GoodsMatchRow>>(["goods-matches", "disputed"], "/admin/goods/matches?status=disputed", { refetchInterval: 30_000 });
 
   const mqs = new URLSearchParams({ status: matchStatus, page: String(matchPage) });
-  const matches = useApiQuery<Paged<GoodsMatchRow>>(["goods-matches", mqs.toString()], `/admin/goods/matches?${mqs.toString()}`);
+  const matches = useApiQuery<Paged<GoodsMatchRow>>(["goods-matches", mqs.toString()], `/admin/goods/matches?${mqs.toString()}`, { placeholderData: (previous) => previous });
 
   const pqs = new URLSearchParams({ status: postStatus, page: String(postPage) });
   if (query) pqs.set("search", query);
-  const posts = useApiQuery<Paged<GoodsPostRow>>(["goods-posts", pqs.toString()], `/admin/goods/posts?${pqs.toString()}`);
+  const posts = useApiQuery<Paged<GoodsPostRow>>(["goods-posts", pqs.toString()], `/admin/goods/posts?${pqs.toString()}`, { placeholderData: (previous) => previous });
 
   const resolve = useApiMutation<unknown, Decision & { note: string }>(
     (req, d) => req(`/admin/goods/matches/${d.match.id}/resolve`, "POST", { outcome: d.outcome, failed_member_id: d.failed_member_id, note: d.note || null }),
@@ -142,7 +153,7 @@ const GoodsPage = () => {
     resolve
       .mutateAsync({ ...decision, note })
       .then(() => { toast.success("Decided. Both members have been told."); setDecision(null); })
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: Error) => toast.error(errorText(e)));
   };
 
   const submitHide = () => {
@@ -150,7 +161,7 @@ const GoodsPage = () => {
     hide
       .mutateAsync({ post: hiding, reason })
       .then(() => { toast.success("Hidden. The group card is gone and the member was told."); setHiding(null); setReason(""); })
-      .catch((e: Error) => toast.error(e.message));
+      .catch((e: Error) => toast.error(errorText(e)));
   };
 
   const decisionText = (d: Decision) => {
@@ -178,9 +189,15 @@ const GoodsPage = () => {
         </TabsList>
 
         <TabsContent value="disputes" className="mt-4 space-y-3">
-          {disputes.error && <div className="text-destructive">{disputes.error.message}</div>}
-          {disputes.isLoading && <div className="text-default-500">Loading…</div>}
-          {disputes.data?.data.length === 0 && <Card><CardContent className="p-6 text-default-500">No disputes. Every check-in so far has been fine.</CardContent></Card>}
+          {disputes.error && <ErrorState error={disputes.error} onRetry={() => disputes.refetch()} title="Disputes could not be loaded" />}
+          {disputes.isLoading && <LoadingRows />}
+          {disputes.data?.data.length === 0 && (
+            <Card>
+              <EmptyState icon={Scale} title="No disputes">
+                Every check-in so far has been fine. A “no” after a flight opens a dispute here for you to decide.
+              </EmptyState>
+            </Card>
+          )}
           {disputes.data?.data.map((m) => (
             <Card key={m.id}>
               <CardContent className="p-4 space-y-3">
@@ -217,7 +234,7 @@ const GoodsPage = () => {
           <Chips tabs={MATCH_TABS} value={matchStatus} counts={matches.data?.counts} onChange={(v) => { setMatchStatus(v); setMatchPage(1); }} />
           <Card>
             <CardContent className="p-0">
-              {matches.error && <div className="p-4 text-destructive">{matches.error.message}</div>}
+              {matches.error && <ErrorState className="m-4" error={matches.error} onRetry={() => matches.refetch()} title="Matches could not be loaded" />}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -231,7 +248,12 @@ const GoodsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {matches.data?.data.length === 0 && <TableRow><TableCell colSpan={7} className="text-default-500">Nothing here.</TableCell></TableRow>}
+                  {matches.isLoading && <TableMessage colSpan={7}><LoadingRows className="p-4" /></TableMessage>}
+                  {matches.data?.data.length === 0 && (
+                    <TableMessage colSpan={7}>
+                      <EmptyState icon={Link2} compact title="No matches here">A match starts when a member presses “Interested” on a trip or a parcel.</EmptyState>
+                    </TableMessage>
+                  )}
                   {matches.data?.data.map((m) => (
                     <TableRow key={m.id}>
                       <TableCell className="text-sm">{m.id}</TableCell>
@@ -254,7 +276,7 @@ const GoodsPage = () => {
                       </TableCell>
                       <TableCell>
                         {["agreed", "unconfirmed", "disputed"].includes(m.status) && (
-                          <Button size="sm" variant="outline" onClick={() => decide(m, "completed")}>Decide</Button>
+                          <Button size="sm" variant="outline" color="secondary" onClick={() => decide(m, "completed")}>Decide</Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -269,14 +291,14 @@ const GoodsPage = () => {
         <TabsContent value="posts" className="mt-4 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <Chips tabs={POST_TABS} value={postStatus} counts={posts.data?.counts} onChange={(v) => { setPostStatus(v); setPostPage(1); }} />
-            <form className="flex gap-2 ml-auto" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPostPage(1); }}>
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Member or words in the post" className="w-60" />
+            <form className="flex gap-2 ml-auto" role="search" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPostPage(1); }}>
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Member or words in the post" className="w-60" aria-label="Search posts" />
               <Button type="submit" variant="outline">Search</Button>
             </form>
           </div>
           <Card>
             <CardContent className="p-0">
-              {posts.error && <div className="p-4 text-destructive">{posts.error.message}</div>}
+              {posts.error && <ErrorState className="m-4" error={posts.error} onRetry={() => posts.refetch()} title="Posts could not be loaded" />}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -288,7 +310,14 @@ const GoodsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {posts.data?.data.length === 0 && <TableRow><TableCell colSpan={5} className="text-default-500">Nothing here.</TableCell></TableRow>}
+                  {posts.isLoading && <TableMessage colSpan={5}><LoadingRows className="p-4" /></TableMessage>}
+                  {posts.data?.data.length === 0 && (
+                    <TableMessage colSpan={5}>
+                      <EmptyState icon={Package} compact title={query ? "No post matches" : "No posts here"}>
+                        {query ? "Search looks at the member's name and the words of the post." : "Members post trips with /travel and parcels with /send, in the bot or on the website."}
+                      </EmptyState>
+                    </TableMessage>
+                  )}
                   {posts.data?.data.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="text-sm">
@@ -299,7 +328,7 @@ const GoodsPage = () => {
                       </TableCell>
                       <TableCell><Person member={p.member} /></TableCell>
                       <TableCell className="text-sm max-w-md">
-                        <div className="text-xs text-default-500">{p.categories.join(", ")}</div>
+                        <div className="text-xs text-default-500">{p.categories.join(", ")}{fee(p) && <> · <span className="text-default-700">{fee(p)}</span></>}{p.mode === "request" && " · handed over at the other end"}</div>
                         {p.description && <div className="whitespace-pre-wrap">{p.description}</div>}
                         {p.hidden_reason && <div className="text-xs text-destructive mt-1">Hidden: {p.hidden_reason}</div>}
                       </TableCell>
@@ -363,7 +392,7 @@ const GoodsPage = () => {
           </DialogHeader>
           <div className="space-y-1.5">
             <Label htmlFor="goods-reason">Reason (sent to the member)</Label>
-            <Input id="goods-reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="For example: asked for money to carry" />
+            <Input id="goods-reason" minLength={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="For example: asked for money to carry" />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setHiding(null)}>Cancel</Button>

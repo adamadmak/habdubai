@@ -221,3 +221,61 @@ test('dates are read in the common formats and must not be in the past', functio
         ->and(AnnouncementsFlow::parseDate('2020-01-01'))->toBeNull()
         ->and(AnnouncementsFlow::parseDate('next friday'))->toBeNull();
 });
+
+test('a leader can send a few announcements a day, not a flood; moderators are not counted', function (): void {
+    // 23:30 in Dubai: a day in Dubai, not in UTC, is what counts.
+    $this->travelTo(\Carbon\CarbonImmutable::parse('2026-11-10 19:30:00', 'UTC'));
+    $leader = leader(709, '+971500000709', ['church']);
+    $post = fn (string $text, string $status) => Announcement::query()->create(['topic_id' => topic('church')->id, 'member_id' => $leader->id, 'original_language' => 'en',
+        'text_en' => $text, 'text_am' => 'x', 'text_ti' => 'x', 'status' => $status, 'published_at' => $status === 'published' ? now() : null]);
+
+    // A rejected draft does not use up a turn.
+    foreach (range(1, AnnouncementsFlow::LEADER_PER_DAY - 1) as $i) {
+        $post('Sunday service '.$i, 'published');
+    }
+    $post('Not this one', 'rejected');
+    say(709, '/announce');
+    expect(lastTo(709)['text'])->not->toContain('announcements today');
+    say(709, '/cancel');
+
+    $post('Sunday service '.AnnouncementsFlow::LEADER_PER_DAY, 'pending');
+    say(709, '/announce');
+    expect(lastTo(709)['text'])->toContain('posted 5 announcements today');
+
+    // Half an hour later it is a new day in Dubai (still the 10th in UTC).
+    $this->travel(31)->minutes();
+    say(709, '/announce');
+    expect(lastTo(709)['text'])->not->toContain('announcements today');
+    say(709, '/cancel');
+    $this->travelTo(\Carbon\CarbonImmutable::parse('2026-11-10 19:30:00', 'UTC'));
+
+    $this->travel(1)->day();
+    say(709, '/announce');
+    expect(lastTo(709)['text'])->not->toContain('announcements today');
+
+    $leader->forceFill(['role' => 'moderator'])->save();
+    foreach (range(1, AnnouncementsFlow::LEADER_PER_DAY) as $i) {
+        Announcement::query()->create(['topic_id' => topic('church')->id, 'member_id' => $leader->id, 'original_language' => 'en',
+            'text_en' => 'Notice '.$i, 'text_am' => 'x', 'text_ti' => 'x', 'status' => 'published', 'published_at' => now()]);
+    }
+    say(709, '/cancel');
+    say(709, '/announce');
+    expect(lastTo(709)['text'])->not->toContain('announcements today');
+});
+
+test('a topic taken away while a leader is writing is checked again when they press Publish', function (): void {
+    $leader = leader(710, '+971500000710', ['church']);
+
+    say(710, '/announce');
+    say(710, '⛪ Church');
+    say(710, 'Choir practice moves to Saturday evening at the hall.');
+    say(710, '⏭ Skip');
+    say(710, '⏭ Skip');
+    expect(lastTo(710)['text'])->toContain('Preview');
+
+    DB::table('leader_topics')->where('member_id', $leader->id)->delete();
+    say(710, '📣 Publish');
+
+    expect(Announcement::query()->count())->toBe(0)
+        ->and(lastTo(710)['text'])->toContain('Only community leaders');
+});

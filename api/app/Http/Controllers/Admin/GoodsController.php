@@ -25,6 +25,9 @@ class GoodsController extends Controller
 {
     private const MEMBER_FIELDS = 'id,display_name,telegram_username,verified_at,trips_completed,rating_avg,rating_count';
 
+    /** @var array<int, int>|null failed deals in the last year per member id, read once per page */
+    private ?array $failures = null;
+
     public function posts(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -43,6 +46,7 @@ class GoodsController extends Controller
                 ->orWhereHas('member', fn ($m) => Search::anyColumn($m, ['display_name'], $search))));
 
         $page = $query->paginate(25);
+        $this->loadFailures($page->getCollection()->pluck('member_id'));
 
         return response()->json([
             'data' => $page->getCollection()->map(fn (GoodsPost $p) => $this->post($p))->all(),
@@ -79,6 +83,7 @@ class GoodsController extends Controller
             ->when($status === 'disputed', fn ($q) => $q->oldest('updated_at'), fn ($q) => $q->latest('id'));
 
         $page = $query->paginate(25);
+        $this->loadFailures($page->getCollection()->flatMap(fn (GoodsMatch $m) => [$m->owner_id, $m->requester_id]));
 
         return response()->json([
             'data' => $page->getCollection()->map(fn (GoodsMatch $m) => $this->match($m))->all(),
@@ -120,6 +125,10 @@ class GoodsController extends Controller
             'kilos_left' => $post->kilos_left,
             'categories' => array_map(fn (string $c) => Choices::label(Choices::GOODS_CATEGORIES, $c, 'en'), (array) $post->categories),
             'description' => $post->description,
+            // The carry fee members pay each other, and whether the parcel is handed over at the other end.
+            'price' => $post->price !== null ? (int) $post->price : null,
+            'currency' => $post->price !== null && (int) $post->price > 0 ? $post->currency : null,
+            'mode' => $post->isTraveller() ? null : ($post->mode ?? 'send'),
             'status' => $post->status,
             'open' => $post->isOpen(),
             'hidden_reason' => $post->hidden_reason,
@@ -178,7 +187,18 @@ class GoodsController extends Controller
             'deals' => (int) $member->trips_completed,
             'rating_avg' => $member->rating_avg !== null ? (float) $member->rating_avg : null,
             'rating_count' => (int) $member->rating_count,
-            'failures_year' => GoodsMatch::failuresFor($member),
+            'failures_year' => $this->failures !== null ? ($this->failures[$member->id] ?? 0) : GoodsMatch::failuresFor($member),
         ];
+    }
+
+    /** One query for the whole page instead of one per member shown (the same rule as failuresFor). */
+    private function loadFailures(iterable $memberIds): void
+    {
+        $ids = collect($memberIds)->filter()->unique()->values()->all();
+
+        $this->failures = $ids === [] ? [] : GoodsMatch::query()
+            ->whereIn('failed_member_id', $ids)->where('status', 'failed')->where('closed_at', '>=', now()->subYear())
+            ->selectRaw('failed_member_id, count(*) as n')->groupBy('failed_member_id')
+            ->pluck('n', 'failed_member_id')->map(fn ($n) => (int) $n)->all();
     }
 }

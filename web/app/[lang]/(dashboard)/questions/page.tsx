@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { HelpCircle } from "lucide-react";
+import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
+import { runAction, toastResult } from "@/lib/toast";
+import ConfirmButton from "@/components/confirm-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +34,7 @@ const QuestionsPage = () => {
 
   const qs = new URLSearchParams({ status, page: String(page) });
   if (query) qs.set("search", query);
-  const { data, isLoading, error } = useApiQuery<Page>(["questions", qs.toString()], `/admin/questions?${qs.toString()}`, { refetchInterval: 30_000 });
+  const { data, isLoading, error, refetch } = useApiQuery<Page>(["questions", qs.toString()], `/admin/questions?${qs.toString()}`, { refetchInterval: 30_000, placeholderData: (previous) => previous });
   const detail = useApiQuery<{ question: QuestionDetail }>(["question", openId], `/admin/questions/${openId}`, { enabled: openId !== null });
 
   const invalidate = [["questions"], ["question", openId], ["faq"], ["dashboard"]];
@@ -50,6 +53,7 @@ const QuestionsPage = () => {
           <button
             key={value}
             type="button"
+            aria-pressed={status === value}
             onClick={() => { setStatus(value); setPage(1); }}
             className={cn("px-3 py-1.5 rounded-md text-sm font-medium border", status === value ? "bg-primary text-primary-foreground border-primary" : "bg-card text-default-700 border-default-200 hover:border-primary")}
           >
@@ -57,15 +61,15 @@ const QuestionsPage = () => {
             {data && <span className="ml-1.5 opacity-75">{value === "all" ? total : data.counts[value] ?? 0}</span>}
           </button>
         ))}
-        <form className="flex gap-2 ml-auto" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPage(1); }}>
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Words in the question" className="w-56" />
+        <form className="flex gap-2 ml-auto" role="search" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPage(1); }}>
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Words in the question" className="w-56" aria-label="Search questions" />
           <Button type="submit" variant="outline">Search</Button>
         </form>
       </div>
 
       <Card>
         <CardContent className="p-0">
-          {error && <div className="p-4 text-destructive">{error.message}</div>}
+          {error && <ErrorState className="m-4" error={error} onRetry={() => refetch()} title="Questions could not be loaded" />}
           <Table>
             <TableHeader>
               <TableRow>
@@ -78,10 +82,16 @@ const QuestionsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={6} className="text-default-500">Loading…</TableCell></TableRow>}
-              {data?.data.length === 0 && <TableRow><TableCell colSpan={6} className="text-default-500">No questions yet.</TableCell></TableRow>}
+              {isLoading && <TableMessage colSpan={6}><LoadingRows className="p-4" /></TableMessage>}
+              {data?.data.length === 0 && (
+                <TableMessage colSpan={6}>
+                  <EmptyState icon={HelpCircle} compact title={query ? "No question matches" : status === "all" ? "No questions yet" : `No ${status} questions`}>
+                    {query ? "Search looks at the words of the question." : "Members ask with /ask in the bot; each question gets its own topic in the questions group."}
+                  </EmptyState>
+                </TableMessage>
+              )}
               {data?.data.map((row) => (
-                <TableRow key={row.id} className="cursor-pointer" onClick={() => setOpenId(row.id)}>
+                <TableRow key={row.id} className="cursor-pointer" tabIndex={0} onClick={() => setOpenId(row.id)} onKeyDown={(e) => e.key === "Enter" && setOpenId(row.id)}>
                   <TableCell className="max-w-md font-medium text-default-900">{row.title}{row.faq_id && <Badge color="info" variant="soft" className="ml-2">in FAQ</Badge>}</TableCell>
                   <TableCell><Badge color={STATUS_COLOR[row.status]} variant="soft" className="capitalize">{row.status}</Badge></TableCell>
                   <TableCell className="text-sm">{data.categories[row.category] ?? row.category}</TableCell>
@@ -106,8 +116,10 @@ const QuestionsPage = () => {
 
       <Dialog open={openId !== null} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent size="3xl" className="max-h-[90vh] overflow-y-auto">
-          {!q ? (
-            <div className="p-6 text-default-500">Loading…</div>
+          {detail.error ? (
+            <ErrorState error={detail.error} onRetry={() => detail.refetch()} title="This question could not be loaded" />
+          ) : !q ? (
+            <LoadingRows rows={3} />
           ) : (
             <>
               <DialogHeader>
@@ -132,7 +144,7 @@ const QuestionsPage = () => {
                       <div className="mt-2 flex items-center gap-2">
                         {r.is_solution && <Badge color="success" variant="soft">solution</Badge>}
                         {q.status !== "solved" && r.member?.id !== q.asker?.id && (
-                          <Button size="sm" variant="outline" disabled={solve.isPending} onClick={() => solve.mutateAsync(r.id).then(() => toast.success("Marked as the solution; the group is told.")).catch((e: Error) => toast.error(e.message))}>
+                          <Button size="sm" variant="outline" disabled={solve.isPending} onClick={() => runAction(solve.mutateAsync(r.id), "Marked as the solution; the group is told.")}>
                             Mark as the solution
                           </Button>
                         )}
@@ -144,17 +156,19 @@ const QuestionsPage = () => {
 
               <DialogFooter>
                 {q.status === "solved" && !q.faq_id && (
-                  <Button
+                  <ConfirmButton
                     disabled={promote.isPending}
-                    onClick={() =>
-                      promote
-                        .mutateAsync()
-                        .then((r) => toast.success(r.written_by === "claude" ? "Added to the FAQ in three languages." : "Added to the FAQ as an English draft; check it on the FAQ page before turning it on."))
-                        .catch((e: Error) => toast.error(e.message))
+                    label={promote.isPending ? "Writing…" : "Add to the FAQ"}
+                    title="Add this question to the FAQ?"
+                    description="The question and its solution are rewritten in all four languages (one Claude call), the answerer gets 10 points, and the entry goes live at once when Claude wrote it. You can edit or turn it off on the FAQ page."
+                    confirmLabel="Add to the FAQ"
+                    tone="default"
+                    onConfirm={() =>
+                      toastResult(promote.mutateAsync(), (r) =>
+                        r.written_by === "claude" ? "Added to the FAQ in all four languages." : "Added to the FAQ as an English draft; check it on the FAQ page before turning it on."
+                      )
                     }
-                  >
-                    {promote.isPending ? "Writing…" : "Add to the FAQ"}
-                  </Button>
+                  />
                 )}
                 {q.faq_id && <Badge color="info" variant="soft">In the FAQ</Badge>}
               </DialogFooter>

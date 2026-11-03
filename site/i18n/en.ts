@@ -7,6 +7,7 @@ export const en = {
   tabs: { home: "Home", jobs: "Jobs", directory: "Places", news: "News", goods: "Goods", business: "Business" },
   join: "Join on Telegram",
   language: "Language",
+  theme: { light: "Light mode", dark: "Dark mode" },
   // The name of the main navigation, for screen readers.
   navLabel: "Main",
 

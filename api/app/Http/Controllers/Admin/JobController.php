@@ -29,10 +29,14 @@ class JobController extends Controller
             Search::anyColumn($query, ['title', 'company'], $search);
         }
 
-        foreach (['category', 'emirate', 'source_id'] as $field) {
-            if ($value = $request->query($field)) {
+        foreach (['category', 'emirate'] as $field) {
+            if (is_string($value = $request->query($field)) && $value !== '') {
                 $query->where($field, $value);
             }
+        }
+        // A number, or no filter: Postgres answers "abc" for an integer column with an error (a 500).
+        if (($sourceId = $request->integer('source_id')) > 0) {
+            $query->where('source_id', $sourceId);
         }
 
         $page = $query->paginate(min(100, max(10, (int) $request->query('per_page', 25))));

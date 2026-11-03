@@ -27,9 +27,9 @@ const ProfileInfo = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild className="cursor-pointer">
-        <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold" aria-label="Account menu">
+        <button type="button" className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold ring-2 ring-card shadow-sm" aria-label={`Account: ${name}`}>
           {initials(name)}
-        </div>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 p-0" align="end">
         <DropdownMenuLabel className="p-3">
@@ -46,7 +46,7 @@ const ProfileInfo = () => {
         <DropdownMenuSeparator className="mb-0" />
         <DropdownMenuItem onSelect={() => signOut({ callbackUrl: "/auth/login" })} className="flex items-center gap-2 text-sm font-medium text-default-600 my-1 px-3 cursor-pointer">
           <Icon icon="heroicons:power" className="w-4 h-4" />
-          Log out
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

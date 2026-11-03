@@ -38,9 +38,10 @@ class GoodsController extends Controller
 
         $posts = GoodsPost::query()->with('member')->where('member_id', $member->id)
             ->where(fn ($q) => $q->where('status', 'open')->orWhere('updated_at', '>=', now()->subDays(60)))
+            ->withCount(['matches as live_requests' => fn ($q) => $q->whereIn('status', ['requested', 'introduced', 'agreed'])])
             ->orderByDesc('date')->limit(20)->get();
 
-        $deals = GoodsMatch::query()->with(['post', 'requesterPost', 'owner', 'requester'])
+        $deals = GoodsMatch::query()->with(['post.member', 'requesterPost.member', 'owner', 'requester'])
             ->where(fn ($q) => $q->where('owner_id', $member->id)->orWhere('requester_id', $member->id))
             ->latest('id')->limit(20)->get();
 
@@ -216,7 +217,10 @@ class GoodsController extends Controller
         return PublicGoods::card($post) + [
             'status' => $post->status,
             'open' => $post->isOpen(),
-            'requests' => GoodsMatch::query()->where('post_id', $post->id)->whereIn('status', ['requested', 'introduced', 'agreed'])->count(),
+            // Counted with the list when it was read (withCount), else here.
+            'requests' => $post->live_requests !== null
+                ? (int) $post->live_requests
+                : GoodsMatch::query()->where('post_id', $post->id)->whereIn('status', ['requested', 'introduced', 'agreed'])->count(),
         ];
     }
 
@@ -229,13 +233,14 @@ class GoodsController extends Controller
         }
 
         $other = $match->owner_id === $member->id ? $match->requester : $match->owner;
+        $card = PublicGoods::card($trip);
 
         return [
             'id' => $match->id,
             'status' => $match->status,
             'role' => $match->owner_id === $member->id ? 'owner' : 'requester',
             'other_name' => (string) $other?->display_name,
-            'route' => ['from' => PublicGoods::card($trip)['from']['name'], 'to' => PublicGoods::card($trip)['to']['name']],
+            'route' => ['from' => $card['from']['name'], 'to' => $card['to']['name']],
             'date' => $trip->date->toDateString(),
             'kilos' => $match->kilos !== null ? (int) $match->kilos : null,
         ];

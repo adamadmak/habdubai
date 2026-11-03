@@ -1,34 +1,20 @@
 "use client";
-import Image from "next/image";
-import lightImage from "@/public/images/error/light-404.png";
-import darkImage from "@/public/images/error/dark-404.png";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
+import BrandMark from "@/components/brand-mark";
+
+/** The admin's 404: no such page, and the way back. */
 const ErrorBlock = () => {
-  const { theme } = useTheme();
   return (
-    <div className="min-h-screen  overflow-y-auto flex justify-center items-center p-10">
-      <div className="w-full flex flex-col items-center">
-        <div className="max-w-[740px]">
-          <Image
-            src={theme === "dark" ? darkImage : lightImage}
-            alt="error image"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="mt-16 text-center">
-          <div className="text-2xl md:text-4xl lg:text-5xl font-semibold text-default-900">
-            Ops! Page Not Found
-          </div>
-          <div className="mt-3 text-default-600 text-sm md:text-base">
-            The page you are looking for might have been removed had <br /> its
-            name changed or is temporarily unavailable.
-          </div>
-          <Button asChild className="mt-9  md:min-w-[300px]" size="lg">
-            <Link href="/dashboard">Go to Homepage</Link>
-          </Button>
-        </div>
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="max-w-md text-center">
+        <BrandMark className="mx-auto h-14 w-14" />
+        <div className="mt-6 font-display text-[64px] leading-none font-semibold text-default-900">404</div>
+        <h1 className="mt-3 text-xl font-semibold text-default-900">There is no such page</h1>
+        <p className="mt-2 text-sm text-default-600">The link may be old, or the page was renamed. Every admin page is in the sidebar, or press Ctrl K to find one.</p>
+        <Button asChild className="mt-8" size="lg">
+          <Link href="/dashboard">Go to the dashboard</Link>
+        </Button>
       </div>
     </div>
   );

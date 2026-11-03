@@ -7,7 +7,7 @@ import { BusinessCard, EventCard, firstLine, JobCard, ListingMock, NewsCard } fr
 import { Clocks } from "@/components/Clocks";
 import { KindBadge } from "@/components/Cover";
 import { HomeSearch } from "@/components/HomeSearch";
-import { Night } from "@/components/Night";
+import { Night } from "@/components/Dawn";
 import { GoodsTeaser } from "@/components/goods/GoodsBits";
 import { api, type GoodsBoard, type Home } from "@/lib/api";
 import { dayAndMonth, ethiopianDate, number, relative, weekday } from "@/lib/format";
@@ -40,15 +40,15 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
   return (
     <>
-      {/* ---- The hero: the night over the Gulf, the thread underneath. ---- */}
+      {/* ---- The hero: the night over the Gulf, white frosted panels on it, the thread underneath. ---- */}
       <Night word="ሰላም">
         {/* grid-cols-1 on phones: one column that never grows past the screen, so a long word or label truncates instead of widening the hero. */}
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 pb-10 pt-10 md:grid-cols-[1.12fr_0.88fr] md:items-center md:pb-14 md:pt-16 lg:gap-16">
           <div className="settle">
-            <p className="glass inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
+            <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
               <span className="tibeb-thin inline-block w-7 rounded-full" aria-hidden="true" />
-              <span lang="am" className="text-accent">ሰላም</span>
-              <span className="text-white/40" aria-hidden="true">·</span>
+              <span lang="am" className="text-gild">ሰላም</span>
+              <span className="text-faint" aria-hidden="true">·</span>
               {d.home.hello}
             </p>
             <h1 className="display mt-5 text-[2.625rem] md:text-[3.75rem] lg:text-[4.25rem]">
@@ -72,30 +72,30 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
           <div className="settle settle-2 flex flex-col gap-3" role="group" aria-label={d.home.live}>
             <Clocks lang={lang} labels={d.clock} />
             {job && (
-              <Link href={`/${lang}/jobs/${job.id}`} className="glass press hidden items-center gap-3.5 rounded-[1.375rem] p-3.5 transition-colors hover:bg-white/12 md:flex">
+              <Link href={`/${lang}/jobs/${job.id}`} className="glass-white lift press hidden items-center gap-3.5 rounded-[1.375rem] border-line p-3.5 md:flex">
                 <KindBadge kind="trade" category={job.category} className="size-12 rounded-2xl" />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-accent">{d.home.jobsTitle}</span>
+                  <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-gild">{d.home.jobsTitle}</span>
                   <span className="block truncate font-semibold">{job.title}</span>
                   <span className="block truncate text-xs muted-on-night">
                     {[job.salary, label(meta.labels.emirates[job.emirate], lang), relative(job.published_at, lang)].filter(Boolean).join(" · ")}
                   </span>
                 </span>
-                <ArrowUpRight className="size-4 shrink-0 text-white/60" aria-hidden="true" />
+                <ArrowUpRight className="size-4 shrink-0 text-faint" aria-hidden="true" />
               </Link>
             )}
             {event?.event_date && (
-              <Link href={`/${lang}/news/${event.id}`} className="glass press hidden items-center gap-3.5 rounded-[1.375rem] p-3.5 transition-colors hover:bg-white/12 md:flex">
-                <span className="grid w-12 shrink-0 overflow-hidden rounded-xl bg-white text-center text-night">
-                  <span className="bg-accent py-0.5 text-[0.625rem] font-bold">{dayAndMonth(event.event_date, lang).month}</span>
+              <Link href={`/${lang}/news/${event.id}`} className="glass-white lift press hidden items-center gap-3.5 rounded-[1.375rem] border-line p-3.5 md:flex">
+                <span className="grid w-12 shrink-0 overflow-hidden rounded-xl bg-elevated text-center text-fg ring-1 ring-line">
+                  <span className="bg-accent py-0.5 text-[0.625rem] font-bold text-night">{dayAndMonth(event.event_date, lang).month}</span>
                   <span className="headline py-0.5 text-lg tabular">{dayAndMonth(event.event_date, lang).day}</span>
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-accent">{d.home.eventsTitle}</span>
+                  <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-gild">{d.home.eventsTitle}</span>
                   <span className="block truncate font-semibold" lang={pickLang(event.text, lang)}>{firstLine(pick(event.text, lang), 80)}</span>
                   <span className="block truncate text-xs muted-on-night">{weekday(event.event_date, lang)} · {ethiopianDate(event.event_date, lang)}</span>
                 </span>
-                <ArrowUpRight className="size-4 shrink-0 text-white/60" aria-hidden="true" />
+                <ArrowUpRight className="size-4 shrink-0 text-faint" aria-hidden="true" />
               </Link>
             )}
           </div>

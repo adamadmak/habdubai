@@ -144,9 +144,10 @@ export function getWords(inputString: string): string {
 
 // for path name
 export function getDynamicPath(pathname: any): any {
-  const prefixes = ["en", "bn", "ar"];
+  const prefixes = ["en", "am", "ti", "om"];
 
   for (const prefix of prefixes) {
+    if (pathname === `/${prefix}`) return "/";
     if (pathname.startsWith(`/${prefix}/`)) {
       return `/${pathname.slice(prefix.length + 2)}`;
     }

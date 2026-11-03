@@ -88,7 +88,10 @@ class Router
         }
 
         if ($member?->isBanned()) {
-            $this->reply($conversation, 'banned', ['support' => $this->supportHandle()]);
+            // Once an hour at most: an account flooding the bot must not make it flood back.
+            if (\Illuminate\Support\Facades\Cache::add('banned-reply:'.$member->id, true, now()->addHour())) {
+                $this->reply($conversation, 'banned', ['support' => $this->supportHandle()]);
+            }
 
             return;
         }
@@ -162,7 +165,8 @@ class Router
                 if ($member?->isActive()) {
                     $this->safety->card($member);
                 } else {
-                    $this->reply($conversation, 'safe_card', ['extra' => '']);
+                    // The same numbers, without the members-only report button.
+                    $this->reply($conversation, 'safe_card', ['extra' => $this->safety->extraLines($conversation->language)]);
                 }
 
                 return;
@@ -305,7 +309,16 @@ class Router
             return;
         }
 
-        $this->reply($conversation, $member ? 'unknown' : 'not_member');
+        // Inside a step that could not use this (a sticker, a photo where words were asked
+        // for): say how to answer or get out, rather than a bare "send /help".
+        if ($member?->isActive() && $conversation->state !== 'idle') {
+            $this->reply($conversation, 'unknown_in_flow');
+
+            return;
+        }
+
+        // Someone who left, or stopped half-way through joining, is told how to (re)join.
+        $this->reply($conversation, $member?->isActive() ? 'unknown' : 'not_member');
     }
 
     private function start(Conversation $conversation, ?Member $member, Incoming $in): void

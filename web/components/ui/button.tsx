@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-0   disabled:opacity-50  whitespace-nowrap disabled:pointer-events-none",
+  "inline-flex items-center justify-center rounded-lg text-sm font-semibold ring-offset-background transition-[color,background-color,border-color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97] disabled:opacity-50 whitespace-nowrap disabled:pointer-events-none",
   {
     variants: {
       color: {
@@ -70,7 +70,7 @@ const buttonVariants = cva(
         variant: "outline",
         color: "secondary",
         className:
-          "text-muted-foreground dark:bg-transparent hover:bg-default-500  dark:hover:bg-default-500/50 border-default-500",
+          "text-default-700 bg-card/60 border-default-300 hover:bg-default-100 hover:text-default-900 hover:border-default-400 dark:bg-transparent",
       },
       {
         variant: "outline",
@@ -123,7 +123,7 @@ const buttonVariants = cva(
         variant: "ghost",
         color: "secondary",
         className:
-          " text-muted-foreground dark:bg-transparent hover:bg-default-500/50  dark:hover:bg-default-500/50",
+          "text-default-600 hover:bg-default-100 hover:text-default-900 dark:bg-transparent",
       },
       {
         variant: "ghost",

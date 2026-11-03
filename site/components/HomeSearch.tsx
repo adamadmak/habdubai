@@ -35,10 +35,10 @@ export function HomeSearch({ lang, placeholder, scopes, scopeLabel, searchLabel 
         router.push(`/${lang}/${scope}${term ? `?q=${encodeURIComponent(term)}` : ""}`);
       }}
     >
-      <div className="glass relative mb-3 grid w-full max-w-sm grid-cols-3 rounded-full p-1" role="group" aria-label={scopeLabel}>
+      <div className="glass-white relative mb-3 grid w-full max-w-sm grid-cols-3 rounded-full p-1" role="group" aria-label={scopeLabel}>
         <span
           aria-hidden="true"
-          className="seg-thumb absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/3)] rounded-full bg-white shadow-[0_4px_14px_-6px_rgb(0_0_0/0.5)] transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+          className="seg-thumb absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/3)] rounded-full shadow-[0_4px_14px_-6px_rgb(0_0_0/0.5)] transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
           style={{ transform: `translateX(${index * 100}%)` }}
         />
         {SCOPES.map((key) => (
@@ -47,7 +47,7 @@ export function HomeSearch({ lang, placeholder, scopes, scopeLabel, searchLabel 
             type="button"
             aria-pressed={scope === key}
             onClick={() => setScope(key)}
-            className={`seg relative z-10 rounded-full px-3 py-2 text-sm font-semibold transition-colors ${scope === key ? "text-night" : "text-white/75 hover:text-white"}`}
+            className="seg relative z-10 rounded-full px-3 py-2 text-sm font-semibold transition-colors"
           >
             {scopes[key]}
           </button>

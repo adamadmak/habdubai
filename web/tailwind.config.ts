@@ -28,6 +28,13 @@ const config  = {
     },
     extend: {
       colors: {
+        // Brand: gold accents and navy chrome, on a warm white canvas.
+        gold: {
+          DEFAULT: "hsl(var(--gold) / <alpha-value>)",
+          foreground: "hsl(var(--gold-foreground) / <alpha-value>)",
+        },
+        navy: "hsl(var(--navy) / <alpha-value>)",
+        canvas: "hsl(var(--canvas) / <alpha-value>)",
         border: "hsl(var(--border) / <alpha-value>)",
         default: {
           50: "hsl(var(--default-50) / <alpha-value>)",
@@ -104,7 +111,8 @@ const config  = {
         },
       },
       boxShadow: {
-        sm: "0px 1px 2px 0px rgba(15, 22, 36, 0.06), 0px 1px 3px 0px rgba(15, 22, 36, 0.10)",
+        sm: "var(--shadow-card)",
+        lift: "var(--shadow-lift)",
       },
       borderRadius: {
         lg: "var(--radius)",

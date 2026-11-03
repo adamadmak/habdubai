@@ -9,6 +9,7 @@ export const ti: Dictionary = {
   tabs: { home: "መበገሲ", jobs: "ስራሕ", directory: "ቦታታት", news: "ዜና", goods: "ኣቕሑ", business: "ንግዲ" },
   join: "ብቴሌግራም ተጸንበሩ",
   language: "ቋንቋ",
+  theme: { light: "ብሩህ ገጽታ", dark: "ጸልማት ገጽታ" },
   navLabel: "ቀንዲ ዝርዝር",
 
   common: {

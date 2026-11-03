@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { ShieldAlert } from "lucide-react";
+import { EmptyState, ErrorState, LoadingRows } from "@/components/states";
+import { runAction } from "@/lib/toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +13,12 @@ import { useApiQuery, useApiMutation, formatDateTime, type EmployerReportRow } f
 
 const SafetyPage = () => {
   const [status, setStatus] = useState<"open" | "closed" | "all">("open");
-  const { data, isLoading, error } = useApiQuery<{ data: EmployerReportRow[]; counts: Record<string, number> }>(["employer-reports", status], `/admin/employer-reports?status=${status}`);
+  const { data, isLoading, error, refetch } = useApiQuery<{ data: EmployerReportRow[]; counts: Record<string, number> }>(["employer-reports", status], `/admin/employer-reports?status=${status}`);
   const [notes, setNotes] = useState<Record<number, string>>({});
 
   const update = useApiMutation<unknown, { id: number; status: "open" | "closed"; note: string | null }>(
     (req, { id, ...body }) => req(`/admin/employer-reports/${id}`, "PUT", body),
-    [["employer-reports"]]
+    [["employer-reports"], ["dashboard"]]
   );
 
   return (
@@ -25,16 +27,22 @@ const SafetyPage = () => {
 
       <div className="flex gap-2 mb-4">
         {(["open", "closed", "all"] as const).map((s) => (
-          <button key={s} type="button" onClick={() => setStatus(s)}
+          <button key={s} type="button" aria-pressed={status === s} onClick={() => setStatus(s)}
             className={cn("px-3 py-1.5 rounded-md text-sm font-medium border capitalize", status === s ? "bg-primary text-primary-foreground border-primary" : "bg-card text-default-700 border-default-200 hover:border-primary")}>
             {s}{data && s !== "all" && <span className="ml-1.5 opacity-75">{data.counts[s] ?? 0}</span>}
           </button>
         ))}
       </div>
 
-      {error && <div className="text-destructive">{error.message}</div>}
-      {isLoading && <div className="text-default-500">Loading…</div>}
-      {data?.data.length === 0 && <Card><CardContent className="p-6 text-default-500">No {status === "all" ? "" : status} reports.</CardContent></Card>}
+      {error && <ErrorState className="mb-4" error={error} onRetry={() => refetch()} title="Safety reports could not be loaded" />}
+      {isLoading && <LoadingRows />}
+      {data?.data.length === 0 && (
+        <Card>
+          <EmptyState icon={ShieldAlert} title={status === "open" ? "No open reports" : `No ${status === "all" ? "" : status + " "}reports`}>
+            Members report an employer privately with /safe in the bot. Nothing here is ever posted.
+          </EmptyState>
+        </Card>
+      )}
 
       <div className="space-y-3">
         {data?.data.map((r) => (
@@ -55,10 +63,10 @@ const SafetyPage = () => {
                   <span className="text-default-500">Did not agree to be contacted.</span>
                 )}
               </div>
-              <Textarea rows={2} placeholder="Note for other moderators: what was done" value={notes[r.id] ?? r.note ?? ""} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} />
+              <Textarea rows={2} aria-label="Note for other moderators" placeholder="Note for other moderators: what was done" value={notes[r.id] ?? r.note ?? ""} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} />
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" disabled={update.isPending} onClick={() => update.mutateAsync({ id: r.id, status: r.status, note: (notes[r.id] ?? r.note) || null }).then(() => toast.success("Note saved."))}>Save note</Button>
-                <Button size="sm" disabled={update.isPending} onClick={() => update.mutateAsync({ id: r.id, status: r.status === "open" ? "closed" : "open", note: (notes[r.id] ?? r.note) || null }).then(() => toast.success(r.status === "open" ? "Closed." : "Reopened."))}>
+                <Button size="sm" variant="outline" color="secondary" disabled={update.isPending} onClick={() => runAction(update.mutateAsync({ id: r.id, status: r.status, note: (notes[r.id] ?? r.note) || null }), "Note saved.")}>Save note</Button>
+                <Button size="sm" disabled={update.isPending} onClick={() => runAction(update.mutateAsync({ id: r.id, status: r.status === "open" ? "closed" : "open", note: (notes[r.id] ?? r.note) || null }), r.status === "open" ? "Closed." : "Reopened.")}>
                   {r.status === "open" ? "Close" : "Reopen"}
                 </Button>
               </div>

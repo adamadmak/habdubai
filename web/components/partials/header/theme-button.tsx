@@ -21,6 +21,7 @@ const ThemeButton = () => {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="Light or dark"
           className="relative md:h-9 md:w-9 h-8 w-8 hover:bg-default-100 dark:hover:bg-default-200 
           data-[state=open]:bg-default-100  dark:data-[state=open]:bg-default-200 
            hover:text-primary text-default-500 dark:text-default-800  rounded-full 

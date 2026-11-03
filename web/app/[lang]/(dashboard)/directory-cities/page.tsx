@@ -11,14 +11,18 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import PageTitle from "@/components/page-title";
-import { useApiQuery, useApiMutation, ApiError, type DirectoryCity } from "@/lib/api";
+import ConfirmButton from "@/components/confirm-button";
+import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
+import { toastResult } from "@/lib/toast";
+import { MapPin } from "lucide-react";
+import { useApiQuery, useApiMutation, ApiError, errorText, type DirectoryCity } from "@/lib/api";
 
 type Form = { id?: number; name_en: string; name_am: string; name_ti: string; name_om: string; country: string; sort: number; active: boolean };
 
 const EMPTY: Form = { name_en: "", name_am: "", name_ti: "", name_om: "", country: "AE", sort: 100, active: true };
 
 const CitiesPage = () => {
-  const { data, isLoading, error } = useApiQuery<{ data: DirectoryCity[] }>(["directory-cities"], "/admin/directory-cities");
+  const { data, isLoading, error, refetch } = useApiQuery<{ data: DirectoryCity[] }>(["directory-cities"], "/admin/directory-cities");
   const [form, setForm] = useState<Form | null>(null);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
@@ -37,7 +41,7 @@ const CitiesPage = () => {
       })
       .catch((e: ApiError) => {
         setErrors(e.errors ?? {});
-        toast.error(e.message);
+        toast.error(errorText(e));
       });
   };
 
@@ -45,19 +49,20 @@ const CitiesPage = () => {
 
   return (
     <div>
-      <PageTitle title="Directory cities" description="The cities members pick from, in the order shown. Names in all three languages appear on the bot's buttons.">
+      <PageTitle title="Directory cities" description="The cities members pick from, in the order shown. Each name appears on the bot's buttons in the member's language; Afaan Oromoo falls back to English when empty.">
         <Button onClick={() => { setErrors({}); setForm({ ...EMPTY }); }}>Add city</Button>
       </PageTitle>
 
       <Card>
         <CardContent className="p-0">
-          {error && <div className="p-4 text-destructive">{error.message}</div>}
+          {error && <ErrorState className="m-4" error={error} onRetry={() => refetch()} title="Cities could not be loaded" />}
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>City</TableHead>
                 <TableHead>Amharic</TableHead>
                 <TableHead>Tigrinya</TableHead>
+                <TableHead>Afaan Oromoo</TableHead>
                 <TableHead>Country</TableHead>
                 <TableHead>Order</TableHead>
                 <TableHead>Listed</TableHead>
@@ -66,7 +71,14 @@ const CitiesPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={8} className="text-default-500">Loading…</TableCell></TableRow>}
+              {isLoading && <TableMessage colSpan={9}><LoadingRows className="p-4" /></TableMessage>}
+              {data?.data.length === 0 && (
+                <TableMessage colSpan={9}>
+                  <EmptyState icon={MapPin} title="No cities yet" compact action={<Button size="sm" onClick={() => { setErrors({}); setForm({ ...EMPTY }); }}>Add city</Button>}>
+                    Members browse the directory by city first. The eight UAE cities are normally seeded; add them here if this database is new.
+                  </EmptyState>
+                </TableMessage>
+              )}
               {data?.data.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">
@@ -74,14 +86,18 @@ const CitiesPage = () => {
                   </TableCell>
                   <TableCell>{c.name_am}</TableCell>
                   <TableCell>{c.name_ti}</TableCell>
+                  <TableCell>{c.name_om || <span className="text-default-400">English</span>}</TableCell>
                   <TableCell>{c.country}</TableCell>
                   <TableCell>{c.sort}</TableCell>
                   <TableCell><Link className="text-primary" href={`/directory?status=approved&city_id=${c.id}`}>{c.listed_count ?? 0}</Link></TableCell>
                   <TableCell><Link className="text-primary" href={`/directory?status=pending&city_id=${c.id}`}>{c.pending_count ?? 0}</Link></TableCell>
                   <TableCell className="text-right whitespace-nowrap space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => { setErrors({}); setForm({ id: c.id, name_en: c.name_en, name_am: c.name_am, name_ti: c.name_ti, name_om: c.name_om ?? "", country: c.country, sort: c.sort, active: c.active }); }}>Edit</Button>
+                    <Button size="sm" variant="outline" color="secondary" onClick={() => { setErrors({}); setForm({ id: c.id, name_en: c.name_en, name_am: c.name_am, name_ti: c.name_ti, name_om: c.name_om ?? "", country: c.country, sort: c.sort, active: c.active }); }}>Edit</Button>
                     {(c.listed_count ?? 0) + (c.pending_count ?? 0) === 0 && (
-                      <Button size="sm" variant="outline" color="destructive" onClick={() => window.confirm(`Delete ${c.name_en}?`) && remove.mutateAsync(c.id).then(() => toast.success("Deleted.")).catch((e: Error) => toast.error(e.message))}>Delete</Button>
+                      <ConfirmButton size="sm" variant="outline" color="destructive" label="Delete"
+                        title={`Delete ${c.name_en}?`}
+                        description="It has no listed or waiting businesses. To keep it but hide it from the bot, turn it off instead."
+                        confirmLabel="Delete" onConfirm={() => toastResult(remove.mutateAsync(c.id), "Deleted.")} />
                     )}
                   </TableCell>
                 </TableRow>

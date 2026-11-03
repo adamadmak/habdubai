@@ -8,7 +8,7 @@ import { FlightPath } from "@/components/goods/FlightPath";
 import { ChoiceTile, goodsStats, newPostHref } from "@/components/goods/GoodsBits";
 import { GoodsBadge, GoodsCard } from "@/components/goods/GoodsCard";
 import { ToggleRow } from "@/components/goods/ToggleRow";
-import { Night } from "@/components/Night";
+import { Night } from "@/components/Dawn";
 import { api, GOODS_DIRECTIONS, query, type GoodsBoard, type GoodsDirection } from "@/lib/api";
 import { currentClient } from "@/lib/client";
 import { number } from "@/lib/format";
@@ -62,7 +62,7 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
       <Night word="ሰሌዳ">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 pb-4 pt-10 md:grid-cols-[1.05fr_0.95fr] md:items-center md:gap-12 md:pb-8 md:pt-16">
           <div className="settle">
-            <p className="glass inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
+            <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
               <span className="grid size-6 place-items-center rounded-full bg-accent text-night">
                 <ShieldCheck className="size-3.5" aria-hidden="true" />
               </span>

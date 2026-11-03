@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\PlatformSetting;
 use App\Support\RuntimeEnv;
+use App\Support\TelegramText;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
@@ -84,9 +86,30 @@ class TelegramBotService
         return $this->post('getMe')->json('result', []);
     }
 
-    public function getWebhookInfo(): array
+    /** With $quick, one try and five seconds: for a check a page polls, where a slow Telegram must not hold a worker. */
+    public function getWebhookInfo(bool $quick = false): array
     {
-        return $this->post('getWebhookInfo')->json('result', []);
+        return $this->post('getWebhookInfo', [], retry: ! $quick, timeout: $quick ? 5 : null)->json('result', []);
+    }
+
+    /** A group or channel as Telegram sees it (type, title, is_forum). For checks: one try, five seconds. */
+    public function getChat(int|string $chatId): array
+    {
+        return $this->post('getChat', ['chat_id' => $chatId], retry: false, timeout: 5)->json('result', []);
+    }
+
+    /** One user's place in a chat (status: creator, administrator, member, left…). One try, five seconds. */
+    public function getChatMember(int|string $chatId, int $userId): array
+    {
+        return $this->post('getChatMember', ['chat_id' => $chatId, 'user_id' => $userId], retry: false, timeout: 5)->json('result', []);
+    }
+
+    /** Changes when the token changes and reveals nothing of it: a key for caching what Telegram said about this bot. */
+    public function tokenFingerprint(): string
+    {
+        $token = $this->botToken();
+
+        return $token === '' ? 'none' : substr(hash_hmac('sha256', $token, 'habesha-dubai-token-fingerprint'), 0, 16);
     }
 
     /** Long polling, for local development only (bot:poll). Fails while a webhook is set. */
@@ -139,15 +162,27 @@ class TelegramBotService
         }
     }
 
+    /**
+     * A message to one chat. Text over Telegram's 4096 characters goes as several
+     * messages, cut at line breaks with every tag closed; the buttons go on the last.
+     */
     public function sendText(int|string $chatId, string $text, ?array $replyMarkup = null): array
     {
-        return $this->post('sendMessage', array_filter([
-            'chat_id' => $chatId,
-            'text' => $text,
-            'parse_mode' => 'HTML',
-            'link_preview_options' => ['is_disabled' => true],
-            'reply_markup' => $replyMarkup,
-        ], fn ($value) => $value !== null))->json('result', []);
+        $parts = TelegramText::chunks($text);
+        $last = array_key_last($parts);
+        $result = [];
+
+        foreach ($parts as $i => $part) {
+            $result = $this->post('sendMessage', array_filter([
+                'chat_id' => $chatId,
+                'text' => $part,
+                'parse_mode' => 'HTML',
+                'link_preview_options' => ['is_disabled' => true],
+                'reply_markup' => $i === $last ? $replyMarkup : null,
+            ], fn ($value) => $value !== null))->json('result', []);
+        }
+
+        return $result;
     }
 
     /** A photo already on Telegram (by file_id), with an HTML caption of at most 1024 characters. */
@@ -156,7 +191,7 @@ class TelegramBotService
         return $this->post('sendPhoto', array_filter([
             'chat_id' => $chatId,
             'photo' => $fileId,
-            'caption' => $caption !== '' ? mb_substr($caption, 0, 1024) : null,
+            'caption' => $caption !== '' ? TelegramText::clip($caption, TelegramText::MAX_CAPTION) : null,
             'parse_mode' => $caption !== '' ? 'HTML' : null,
             'reply_markup' => $replyMarkup,
         ], fn ($value) => $value !== null))->json('result', []);
@@ -203,7 +238,7 @@ class TelegramBotService
             $this->post('editMessageCaption', array_filter([
                 'chat_id' => $chatId,
                 'message_id' => $messageId,
-                'caption' => mb_substr($caption, 0, 1024),
+                'caption' => TelegramText::clip($caption, TelegramText::MAX_CAPTION),
                 'parse_mode' => 'HTML',
                 'reply_markup' => $replyMarkup,
             ], fn ($value) => $value !== null), retry: false);
@@ -274,7 +309,7 @@ class TelegramBotService
         return $this->post('sendMessage', array_filter([
             'chat_id' => $chatId,
             'message_thread_id' => $threadId,
-            'text' => $text,
+            'text' => TelegramText::clip($text),
             'parse_mode' => 'HTML',
             'link_preview_options' => ['is_disabled' => true],
             'reply_markup' => $replyMarkup,
@@ -334,7 +369,7 @@ class TelegramBotService
     {
         $this->post('sendMessage', [
             'chat_id' => $chatId,
-            'text' => $text,
+            'text' => TelegramText::clip($text),
             'parse_mode' => 'HTML',
         ], retry: false, timeout: 5);
     }
@@ -346,7 +381,7 @@ class TelegramBotService
             $this->post('editMessageText', array_filter([
                 'chat_id' => $chatId,
                 'message_id' => $messageId,
-                'text' => $text,
+                'text' => TelegramText::clip($text),
                 'parse_mode' => 'HTML',
                 'link_preview_options' => ['is_disabled' => true],
                 'reply_markup' => $replyMarkup,
@@ -444,8 +479,11 @@ class TelegramBotService
         try {
             $request = $this->http()->asJson()->timeout($timeout ?? (int) config('services.telegram.timeout', 20));
 
+            // Again only when another try can help: no connection, too many requests, or
+            // Telegram's own trouble. A 400 or a 403 is refused the same way every time.
             if ($retry) {
-                $request = $request->retry(2, 300, throw: false);
+                $request = $request->retry(2, 300, fn (\Throwable $e) => ! $e instanceof RequestException
+                    || $e->response->status() === 429 || $e->response->serverError(), throw: false);
             }
 
             $response = $request->post($this->endpoint($method), $payload);
@@ -460,8 +498,13 @@ class TelegramBotService
     {
         if (! $response->successful() || ! $response->json('ok', false)) {
             $description = (string) $response->json('description', 'Telegram request failed.');
+            $retryAfter = $response->json('parameters.retry_after');
 
-            throw new RuntimeException(str($description)->limit(300)->toString());
+            throw new TelegramApiException(
+                str($description)->limit(300)->toString(),
+                (int) ($response->json('error_code') ?: $response->status()),
+                is_numeric($retryAfter) ? (int) $retryAfter : null,
+            );
         }
 
         return $response;

@@ -43,21 +43,21 @@ export function Clocks({ lang, labels }: { lang: Locale; labels: Dictionary["clo
   const blank = "––:––";
 
   return (
-    <div className="glass rounded-[1.5rem] p-4 md:p-5">
+    <div className="glass-white rounded-[1.5rem] p-4 md:p-5">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="flex items-center gap-1.5 text-xs font-semibold muted-on-night">
-            <span className="live-dot size-1.5 rounded-full bg-green-400" aria-hidden="true" />
+            <span className="live-dot size-1.5 rounded-full bg-green-500" aria-hidden="true" />
             {labels.dubai}
           </p>
           <p className="headline mt-1 text-[2rem] tabular md:text-[2.25rem]" suppressHydrationWarning>{now ? hm(now, "Asia/Dubai", lang) : blank}</p>
         </div>
         <div>
           <p className="truncate text-xs font-semibold muted-on-night">{labels.home}</p>
-          <p className="headline mt-1 text-[2rem] tabular text-accent md:text-[2.25rem]" suppressHydrationWarning>{now ? hm(now, "Africa/Addis_Ababa", lang) : blank}</p>
+          <p className="headline mt-1 text-[2rem] tabular text-gild md:text-[2.25rem]" suppressHydrationWarning>{now ? hm(now, "Africa/Addis_Ababa", lang) : blank}</p>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-white/12 pt-3 text-[0.8125rem]">
+      <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-fg/10 pt-3 text-[0.8125rem]">
         <p suppressHydrationWarning>
           <span className="muted-on-night">{labels.habesha} · </span>
           <span lang={lang} className="font-semibold">{now ? habeshaTime(now, labels.periods, labels.format) : "…"}</span>

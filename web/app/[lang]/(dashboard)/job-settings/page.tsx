@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import PageTitle from "@/components/page-title";
-import { useApiQuery, useApiMutation, type JobSettingsPayload, ApiError } from "@/lib/api";
+import { ErrorState, PageLoading } from "@/components/states";
+import { useApiQuery, useApiMutation, type JobSettingsPayload, ApiError, errorText } from "@/lib/api";
 
 type Form = JobSettingsPayload["settings"] & { anthropic_api_key: string };
 
@@ -21,18 +22,26 @@ const LANGS = [
 ] as const;
 
 const JobSettingsPage = () => {
-  const { data, isLoading, error } = useApiQuery<JobSettingsPayload>(["job-settings"], "/admin/job-settings");
+  // No refetch on focus, and the form is filled once: switching tabs must not wipe a half-typed key.
+  const { data, isLoading, error, refetch } = useApiQuery<JobSettingsPayload>(["job-settings"], "/admin/job-settings", { refetchOnWindowFocus: false });
   const [form, setForm] = useState<Form | null>(null);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
-    if (data) setForm({ ...data.settings, anthropic_api_key: "" });
-  }, [data]);
+    if (data && form === null) setForm({ ...data.settings, anthropic_api_key: "" });
+  }, [data, form]);
 
   const save = useApiMutation<JobSettingsPayload, Form>((request, body) => request("/admin/job-settings", "PUT", body), [["job-settings"], ["dashboard"]]);
 
-  if (error) return <div className="text-destructive">{error.message}</div>;
-  if (isLoading || !data || !form) return <div className="text-default-600">Loading…</div>;
+  if (error) {
+    return (
+      <div>
+        <PageTitle title="Job settings" />
+        <ErrorState error={error} onRetry={() => refetch()} title="Job settings could not be loaded" />
+      </div>
+    );
+  }
+  if (isLoading || !data || !form) return <PageLoading />;
 
   const languages = form.job_card_languages.split(",").filter(Boolean);
   const toggleLanguage = (code: string) => {
@@ -44,13 +53,14 @@ const JobSettingsPage = () => {
     setErrors({});
     save
       .mutateAsync(form)
-      .then(() => {
-        setForm({ ...form, anthropic_api_key: "" });
+      .then((saved) => {
+        // What the server now holds; the key box comes back empty.
+        setForm({ ...saved.settings, anthropic_api_key: "" });
         toast.success("Job settings saved.");
       })
       .catch((e: ApiError) => {
         setErrors(e.errors ?? {});
-        toast.error(e.message);
+        toast.error(errorText(e));
       });
   };
 
@@ -81,7 +91,7 @@ const JobSettingsPage = () => {
             </div>
             <div>
               <Label className="mb-2 block">Summaries on the channel card</Label>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-x-5 gap-y-2">
                 {LANGS.map(([code, name]) => (
                   <label key={code} className="flex items-center gap-2 text-sm">
                     <Switch checked={languages.includes(code)} onCheckedChange={() => toggleLanguage(code)} />

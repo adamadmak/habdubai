@@ -20,6 +20,9 @@ const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", dis
 // Not preloaded: two heavy weights that only Ge'ez headings use; English pages would fetch them for nothing.
 const ethiopicSerif = Noto_Serif_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic-serif", display: "swap", weight: ["600", "700"], preload: false });
 
+/** Reads the theme the reader chose (ThemeToggle) and sets it on <html>; nothing stored means "follow the device". */
+const THEME_SCRIPT = "try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}";
+
 /*
  * No generateStaticParams: nothing under /[lang] is pre-rendered at build time,
  * so a build never depends on the API being up. Pages render on the first
@@ -30,8 +33,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  // The night of the header and the hero, in both schemes.
-  themeColor: "#0a1433",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf8f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#070c1f" },
+  ],
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -59,8 +64,10 @@ export default async function LangLayout({ children, params }: { children: React
   const meta = await api<Meta>("/public/meta", { revalidate: 300 }).catch(() => null);
 
   return (
-    <html lang={lang} className={`${ethiopic.variable} ${fraunces.variable} ${ethiopicSerif.variable}`}>
+    <html lang={lang} className={`${ethiopic.variable} ${fraunces.variable} ${ethiopicSerif.variable}`} suppressHydrationWarning>
       <body className="antialiased">
+        {/* The reader's theme, applied before the first paint so a dark choice never flashes light. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <a href="#main" className="sr-only z-50 rounded-lg bg-primary px-4 py-2 text-primary-fg focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           {d.skip}
         </a>

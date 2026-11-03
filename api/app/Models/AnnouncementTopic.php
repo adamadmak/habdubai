@@ -55,11 +55,13 @@ class AnnouncementTopic extends Model
     /** Active members who should get this topic's announcements by DM. */
     public function subscribers()
     {
-        $optedOut = \Illuminate\Support\Facades\DB::table('member_topic_prefs')->where('topic_id', $this->id)->where('subscribed', false)->pluck('member_id');
-        $optedIn = \Illuminate\Support\Facades\DB::table('member_topic_prefs')->where('topic_id', $this->id)->where('subscribed', true)->pluck('member_id');
+        // Subqueries, not lists of ids: with thousands of members a list becomes thousands of
+        // bound parameters, and Postgres refuses a statement with more than 65,535.
+        $prefs = fn (bool $subscribed) => \Illuminate\Support\Facades\DB::table('member_topic_prefs')
+            ->select('member_id')->where('topic_id', $this->id)->where('subscribed', $subscribed);
 
         $query = Member::query()->whereNotNull('agreed_rules_at')->whereNull('banned_at')->whereNull('left_at')->whereNotNull('chat_id');
 
-        return $this->default_on ? $query->whereNotIn('id', $optedOut) : $query->whereIn('id', $optedIn);
+        return $this->default_on ? $query->whereNotIn('id', $prefs(false)) : $query->whereIn('id', $prefs(true));
     }
 }

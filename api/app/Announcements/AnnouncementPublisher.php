@@ -147,6 +147,6 @@ class AnnouncementPublisher
             $card .= $this->messages->text('ann_fundraiser_note', $language);
         }
 
-        return mb_substr($card, 0, 4000);
+        return \App\Support\TelegramText::clip($card, 4000);
     }
 }

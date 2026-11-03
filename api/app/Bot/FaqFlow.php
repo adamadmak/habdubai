@@ -89,6 +89,6 @@ class FaqFlow
             }
         }
 
-        return mb_substr(implode("\n", $lines), 0, 4000);
+        return \App\Support\TelegramText::clip(implode("\n", $lines), 4000);
     }
 }

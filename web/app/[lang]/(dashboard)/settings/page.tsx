@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import PageTitle from "@/components/page-title";
-import { useApiQuery, useApiMutation, formatDateTime, type SettingsPayload } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ErrorState, PageLoading } from "@/components/states";
+import { useApiQuery, useApiMutation, formatDateTime, errorText, LANGUAGE_NAMES, type SettingsPayload } from "@/lib/api";
 
 const FIELDS: { key: string; label: string; hint: string; placeholder?: string; secret?: boolean }[] = [
   { key: "public_url", label: "Public URL of the API", hint: "Where Telegram reaches the webhook, and the address of listing photos. Must be https and not localhost.", placeholder: "https://api.habesha-dubai.com" },
@@ -19,7 +21,7 @@ const FIELDS: { key: string; label: string; hint: string; placeholder?: string; 
   { key: "telegram_goods_group_link", label: "Goods board group invite link", hint: "Sent at the end of joining.", placeholder: "https://t.me/+…" },
   { key: "telegram_questions_group_id", label: "Questions group chat id", hint: "Numeric id (starts with -100). Needed to remove a member who leaves or is banned.", placeholder: "-1001234567890" },
   { key: "telegram_goods_group_id", label: "Goods board group chat id", hint: "Same, for the goods group.", placeholder: "-1001234567890" },
-  { key: "community_language", label: "Language of the bot's labels in groups", hint: "am, ti, en or om. Members' own words stay as they wrote them.", placeholder: "am" },
+  { key: "community_language", label: "Language of the bot's labels in groups", hint: "Members' own words stay as they wrote them.", placeholder: "am" },
   { key: "questions_per_day", label: "Questions a member may ask per day", hint: "Default 5.", placeholder: "5" },
   { key: "assistant_per_day", label: "Assistant answers per member per day", hint: "Each answer is one Claude call. Default 20; 0 turns the assistant off.", placeholder: "20" },
   { key: "safety_consulate_phone", label: "Ethiopian consulate phone, for /safe", hint: "Shown on the safety card when set. Check the number before saving.", placeholder: "+971 …" },
@@ -30,7 +32,7 @@ const FIELDS: { key: string; label: string; hint: string; placeholder?: string; 
 
 const SettingsPage = () => {
   // No refetch on focus: coming back to the tab must not disturb a half-typed form.
-  const { data, isLoading, error } = useApiQuery<SettingsPayload>(["settings"], "/admin/settings", { refetchOnWindowFocus: false });
+  const { data, isLoading, error, refetch } = useApiQuery<SettingsPayload>(["settings"], "/admin/settings", { refetchOnWindowFocus: false });
   // null until the admin types: until then the form shows what the server has, and after
   // that a refetch never overwrites the draft.
   const [form, setForm] = useState<Record<string, string> | null>(null);
@@ -40,8 +42,15 @@ const SettingsPage = () => {
   const saveToken = useApiMutation<{ bot: { username?: string }; webhook_error: string | null }, string>((request, t) => request("/admin/settings/telegram", "POST", { token: t }), [["settings"], ["dashboard"]]);
   const setWebhook = useApiMutation<unknown>((request) => request("/admin/settings/webhook", "POST"), [["settings"]]);
 
-  if (error) return <div className="text-destructive">{error.message}</div>;
-  if (isLoading || !data) return <div className="text-default-600">Loading…</div>;
+  if (error) {
+    return (
+      <div>
+        <PageTitle title="Settings" />
+        <ErrorState error={error} onRetry={() => refetch()} title="Settings could not be loaded" />
+      </div>
+    );
+  }
+  if (isLoading || !data) return <PageLoading />;
 
   const telegram = data.telegram;
   const values = form ?? data.settings;
@@ -68,13 +77,21 @@ const SettingsPage = () => {
                     setForm(saved.settings);
                     toast.success("Settings saved.");
                   })
-                  .catch((err) => toast.error(err.message));
+                  .catch((err) => toast.error(errorText(err)));
               }}
             >
               {FIELDS.map((f) => (
                 <div key={f.key}>
                   <Label htmlFor={f.key} className="mb-2 block">{f.label}</Label>
                   {/* "off" is ignored for passwords; "new-password" and the manager hints keep the admin's own login out of write-only boxes. */}
+                  {f.key === "community_language" ? (
+                    <Select value={values[f.key] || "am"} onValueChange={(v) => edit(f.key, v)}>
+                      <SelectTrigger id={f.key} className="max-w-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {(["am", "ti", "om", "en"] as const).map((code) => <SelectItem key={code} value={code}>{LANGUAGE_NAMES[code]}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : (
                   <Input
                     id={f.key}
                     type={f.secret ? "password" : "text"}
@@ -85,6 +102,7 @@ const SettingsPage = () => {
                     placeholder={f.secret ? (data.secrets?.[f.key] ? "Saved. Type a new value to replace it." : "Not set") : f.placeholder}
                     onChange={(e) => edit(f.key, e.target.value)}
                   />
+                  )}
                   <p className="mt-1 text-xs text-default-500">{f.hint}</p>
                   {save.error?.errors?.[f.key] && <p className="mt-1 text-xs text-destructive">{save.error.errors[f.key][0]}</p>}
                 </div>
@@ -118,10 +136,10 @@ const SettingsPage = () => {
                         toast.success(`Token saved for @${r.bot.username ?? "bot"} and the webhook registered.`);
                       }
                     })
-                    .catch((err) => toast.error(err.message));
+                    .catch((err) => toast.error(errorText(err)));
                 }}
               >
-                <Input type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="123456789:ABC…" autoComplete="new-password" data-1p-ignore data-lpignore="true" />
+                <Input type="password" aria-label="Bot token" value={token} onChange={(e) => setToken(e.target.value)} placeholder="123456789:ABC…" autoComplete="new-password" data-1p-ignore data-lpignore="true" />
                 <Button type="submit" className="w-full" disabled={saveToken.isPending || token.trim() === ""}>Save token and register webhook</Button>
               </form>
 
@@ -132,7 +150,7 @@ const SettingsPage = () => {
                 {telegram.webhook?.error && <div className="text-destructive">{telegram.webhook.error}</div>}
               </div>
 
-              <Button variant="outline" className="w-full" disabled={!telegram.configured || setWebhook.isPending} onClick={() => setWebhook.mutateAsync().then(() => toast.success("Webhook registered.")).catch((err) => toast.error(err.message))}>
+              <Button variant="outline" className="w-full" disabled={!telegram.configured || setWebhook.isPending} onClick={() => setWebhook.mutateAsync().then(() => toast.success("Webhook registered.")).catch((err) => toast.error(errorText(err)))}>
                 Register the webhook again
               </Button>
             </CardContent>
@@ -146,7 +164,7 @@ const SettingsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {(data.chats ?? []).length === 0 && <div className="text-sm text-default-500">None yet.</div>}
+              {(data.chats ?? []).length === 0 && <div className="text-sm text-default-500">None yet. Add the bot to your channel and groups as an admin; they appear here within a minute.</div>}
               {(data.chats ?? []).map((c) => (
                 <div key={c.chat_id} className="rounded-md border border-default-200 p-3 text-sm space-y-2">
                   <div className="flex items-center justify-between gap-2">

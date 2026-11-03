@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import PageTitle from "@/components/page-title";
 import { JobStatusBadge, ScamScore } from "@/components/job-badges";
+import ConfirmButton from "@/components/confirm-button";
+import { ErrorState, PageLoading } from "@/components/states";
+import { runAction, toastResult } from "@/lib/toast";
 import { useApiQuery, useApiMutation, formatDateTime, type JobDetail, type AuditEntry, CATEGORY_NAMES, JOB_EMIRATE_NAMES } from "@/lib/api";
 
 type Payload = { job: JobDetail; audit: AuditEntry[]; choices: { categories: string[]; emirates: string[] } };
@@ -28,33 +30,56 @@ const draftOf = (job: JobDetail): Draft => ({
 const JobPage = () => {
   const { id } = useParams<{ id: string }>();
   const key = ["job", id];
-  const { data, isLoading, error } = useApiQuery<Payload>(key, `/admin/jobs/${id}`);
+  // No refetch on focus: a moderator correcting a listing must not lose the edit by switching tabs.
+  const { data, isLoading, error, refetch } = useApiQuery<Payload>(key, `/admin/jobs/${id}`, { refetchOnWindowFocus: false });
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [blockCompany, setBlockCompany] = useState(false);
 
+  // The form follows the server until the moderator types; after that only a save resets it.
   useEffect(() => {
-    if (data) setDraft(draftOf(data.job));
-  }, [data]);
+    if (data && !dirty) setDraft(draftOf(data.job));
+  }, [data, dirty]);
 
   const invalidate = [key, ["jobs"], ["dashboard"]];
   const approve = useApiMutation<unknown, Draft>((request, body) => request(`/admin/jobs/${id}/approve`, "POST", body), invalidate);
-  const save = useApiMutation<unknown, Draft>((request, body) => request(`/admin/jobs/${id}`, "PATCH", body), invalidate);
+  const save = useApiMutation<{ job: Partial<JobDetail> }, Draft>((request, body) => request(`/admin/jobs/${id}`, "PATCH", body), invalidate);
   const reject = useApiMutation<unknown, { reason: string; block_company: boolean }>((request, body) => request(`/admin/jobs/${id}/reject`, "POST", body), invalidate);
   const close = useApiMutation<unknown>((request) => request(`/admin/jobs/${id}/close`, "POST"), invalidate);
 
-  if (error) return <div className="text-destructive">{error.message}</div>;
-  if (isLoading || !data || !draft) return <div className="text-default-600">Loading…</div>;
+  if (error) {
+    return (
+      <div>
+        <PageTitle title="Job"><Button asChild variant="outline" color="secondary" size="sm"><Link href="/jobs">All jobs</Link></Button></PageTitle>
+        <ErrorState error={error} onRetry={() => refetch()} title="This job could not be loaded" />
+      </div>
+    );
+  }
+  if (isLoading || !data || !draft) return <PageLoading />;
 
   const job = data.job;
-  const act = (promise: Promise<unknown>, done: string) => promise.then(() => toast.success(done)).catch((e: Error) => toast.error(e.message));
-  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft({ ...draft, [k]: v });
+  // A successful save hands the form back to the server's copy.
+  const act = (promise: Promise<unknown>, done: string) => runAction(promise.then(() => setDirty(false)), done);
+  // The PATCH answers with the summary only (no summaries or salary numbers); the draft itself is what was
+  // saved, so keep it and let the next refetch confirm it rather than snapping to the cached pre-save job.
+  // The PATCH answers with the summary only, and the cache still holds the pre-save job until the refetch
+  // lands: keep the draft (it is what was saved) and hand it back to the server copy only once that is fresh.
+  const saveDraft = (body: Draft) =>
+    runAction(
+      save.mutateAsync(body).then(() => refetch()).then(() => setDirty(false)),
+      job.status === "published" ? "Saved; the channel card is updated." : "Saved."
+    );
+  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => {
+    setDirty(true);
+    setDraft({ ...draft, [k]: v });
+  };
   const canApprove = ["review", "rejected", "pending"].includes(job.status);
 
   return (
     <div>
       <PageTitle title={job.title} description={`${job.company ?? "Company not stated"} · from ${job.source ?? "unknown source"} · ${formatDateTime(job.created_at)}`}>
-        <Link href="/jobs"><Button variant="outline" size="sm">All jobs</Button></Link>
+        <Button asChild variant="outline" color="secondary" size="sm"><Link href="/jobs">All jobs</Link></Button>
       </PageTitle>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -123,9 +148,9 @@ const JobPage = () => {
                 {canApprove ? (
                   <Button disabled={approve.isPending} onClick={() => act(approve.mutateAsync(draft), "Approved and published.")}>Approve and publish</Button>
                 ) : (
-                  <Button variant="outline" disabled={save.isPending} onClick={() => act(save.mutateAsync(draft), job.status === "published" ? "Saved; the channel card is updated." : "Saved.")}>Save changes</Button>
+                  <Button variant="outline" disabled={save.isPending} onClick={() => saveDraft(draft)}>Save changes</Button>
                 )}
-                {job.url && <a href={job.url} target="_blank" rel="noreferrer"><Button variant="outline">Open the original</Button></a>}
+                {job.url && <Button asChild variant="outline" color="secondary"><a href={job.url} target="_blank" rel="noreferrer">Open the original</a></Button>}
               </div>
             </CardContent>
           </Card>
@@ -187,14 +212,24 @@ const JobPage = () => {
                     </div>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => act(reject.mutateAsync({ reason: rejectReason, block_company: blockCompany }), "Rejected.")}>Reject</AlertDialogAction>
+                      <AlertDialogAction color="destructive" onClick={() => act(reject.mutateAsync({ reason: rejectReason, block_company: blockCompany }), "Rejected.")}>Reject</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
               )}
 
               {job.status === "published" && (
-                <Button variant="outline" className="w-full" disabled={close.isPending} onClick={() => act(close.mutateAsync(), "Closed; the card is marked closed.")}>Mark closed</Button>
+                <ConfirmButton
+                  variant="outline"
+                  color="secondary"
+                  className="w-full"
+                  label="Mark closed"
+                  title="Mark this job closed?"
+                  description="The channel card is marked closed and members stop getting alerts for it. It cannot be reopened from here."
+                  confirmLabel="Mark closed"
+                  tone="warning"
+                  onConfirm={() => toastResult(close.mutateAsync(), "Closed; the card is marked closed.")}
+                />
               )}
             </CardContent>
           </Card>
@@ -208,7 +243,7 @@ const JobPage = () => {
                 <ul className="space-y-2 text-sm">
                   {data.audit.map((entry) => (
                     <li key={entry.id}>
-                      <div className="text-default-900">{entry.action}</div>
+                      <div className="text-default-900">{entry.action.replace(/[._]/g, " ")}</div>
                       <div className="text-xs text-default-500">{formatDateTime(entry.created_at)}</div>
                     </li>
                   ))}

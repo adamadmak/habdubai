@@ -14,6 +14,7 @@ export const om: Dictionary = {
   tabs: { home: "Jalqaba", jobs: "Hojii", directory: "Bakkeewwan", news: "Oduu", goods: "Meeshaa", business: "Daldala" },
   join: "Telegiraamiin makamaa",
   language: "Afaan",
+  theme: { light: "Haala ifaa", dark: "Haala dukkanaa" },
   navLabel: "Baafata ijoo",
 
   common: {

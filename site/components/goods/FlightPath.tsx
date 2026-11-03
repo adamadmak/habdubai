@@ -1,13 +1,14 @@
 import type { GoodsDirection } from "@/lib/api";
 
 /*
- * The flight path in the goods board's night band: home on the left (the
- * highlands, as on the horizon below) and Dubai on the right, two glowing
- * points joined by a dashed arc. When the page opens, a plane flies the arc
- * once, the way the board's direction points, and a gold trail draws in
- * behind it on the same curve and the same easing. Nothing loops. Under
- * reduced motion (and when `still`) the plane rests mid-arc with the trail
- * drawn to it. Decoration only: the words are on the page.
+ * The flight path in the goods board's band: home on the left (the
+ * highlands, as on the horizon below) and Dubai on the right, two points
+ * joined by a dashed arc. When the page opens, a plane flies the arc once,
+ * the way the board's direction points, and a gold trail draws in behind it
+ * on the same curve and the same easing. Nothing loops. Under reduced motion
+ * (and when `still`) the plane rests mid-arc with the trail drawn to it.
+ * Drawn in the ink of wherever it sits: dark on the dawn band, white on a
+ * night tile. Decoration only: the words are on the page.
  */
 
 const HOME = { x: 70, y: 176 };
@@ -36,35 +37,35 @@ export function FlightPath({ direction, home, gulf, still = false, className = "
       <svg viewBox="0 0 480 240" className="absolute inset-0 size-full overflow-visible">
         <defs>
           <radialGradient id="flight-glow">
-            <stop offset="0" stopColor="#f2b705" stopOpacity="0.55" />
+            <stop offset="0" stopColor="#f2b705" stopOpacity="0.45" />
             <stop offset="1" stopColor="#f2b705" stopOpacity="0" />
           </radialGradient>
         </defs>
-        <path d={path} fill="none" stroke="rgb(255 255 255 / 0.3)" strokeWidth="1.6" strokeDasharray="2 7" strokeLinecap="round" />
-        <path d={path} pathLength={1} fill="none" stroke="#f2b705" strokeWidth="2.2" strokeLinecap="round" className={still ? "flight-trail-rest" : "flight-trail"} />
+        <path d={path} fill="none" stroke="var(--ink)" strokeOpacity="0.5" strokeWidth="1.6" strokeDasharray="2 7" strokeLinecap="round" />
+        <path d={path} pathLength={1} fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round" className={still ? "flight-trail-rest" : "flight-trail"} />
         {[HOME, GULF].map((p) => (
           <g key={p.x} transform={`translate(${p.x} ${p.y})`}>
             <circle r="26" fill="url(#flight-glow)" />
-            <circle r="8.5" fill="none" stroke="#f2b705" strokeOpacity="0.6" strokeWidth="1.4" />
-            <circle r="4.5" fill="#ffe9a8" />
+            <circle r="8.5" fill="none" stroke="var(--color-accent)" strokeOpacity="0.7" strokeWidth="1.4" />
+            <circle r="4.5" fill="var(--color-accent)" />
           </g>
         ))}
         {!still && (
           <g className="flight-moving">
-            <path d={PLANE} fill="#fff" transform="scale(1.3)" />
+            <path d={PLANE} fill="currentColor" transform="scale(1.3)" />
             <animateMotion dur="2.6s" fill="freeze" rotate="auto" calcMode="spline" keyPoints="0;0.93" keyTimes="0;1" keySplines="0.2 0.8 0.2 1" path={path} />
           </g>
         )}
         <g className={still ? undefined : "flight-still"} transform={`translate(${mid.x} ${mid.y}) rotate(${angle})`}>
-          <path d={PLANE} fill="#fff" transform="scale(1.3)" />
+          <path d={PLANE} fill="currentColor" transform="scale(1.3)" />
         </g>
       </svg>
       <span className="absolute left-[3%] top-[calc(73%+1.25rem)] text-left leading-tight">
-        <span className="block text-[0.6875rem] font-bold tracking-wider text-accent">{home.code}</span>
+        <span className="block text-[0.6875rem] font-bold tracking-wider text-gild">{home.code}</span>
         <span className="block text-[0.8125rem] font-semibold">{home.name}</span>
       </span>
       <span className="absolute right-[3%] top-[calc(62%+1.25rem)] text-right leading-tight">
-        <span className="block text-[0.6875rem] font-bold tracking-wider text-accent">{gulf.code}</span>
+        <span className="block text-[0.6875rem] font-bold tracking-wider text-gild">{gulf.code}</span>
         <span className="block text-[0.8125rem] font-semibold">{gulf.name}</span>
       </span>
     </div>

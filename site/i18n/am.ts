@@ -9,6 +9,7 @@ export const am: Dictionary = {
   tabs: { home: "መነሻ", jobs: "ሥራ", directory: "ቦታዎች", news: "ዜና", goods: "ዕቃ", business: "ንግድ" },
   join: "በቴሌግራም ይቀላቀሉ",
   language: "ቋንቋ",
+  theme: { light: "ብርሃናማ ገጽታ", dark: "ጨለማ ገጽታ" },
   navLabel: "ዋና ማውጫ",
 
   common: {

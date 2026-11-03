@@ -13,6 +13,7 @@ use App\Support\Community;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -346,6 +347,13 @@ class GoodsFlow
             if (! $owner?->chat_id) {
                 continue;
             }
+            // Once a day per matching post and the same route and date from this poster: closing a
+            // post and posting it again must not message the same member over and over, while a
+            // different trip the same day is still news.
+            $same = $post->direction.':'.$post->city_from.':'.$post->city_to.':'.$post->date->toDateString();
+            if (! Cache::add('goods-notice:'.$match->id.':'.$member->id.':'.$same, true, now()->addDay())) {
+                continue;
+            }
             try {
                 $this->telegram->sendText($owner->chat_id, $this->messages->text('goods_new_match', $owner->language, [
                     'card' => $this->card($post, $owner->language),
@@ -567,13 +575,15 @@ class GoodsFlow
         // Both may press at the same moment: each records its own press on the locked row
         // and then reads the other's, so one of the two always sees both and finalises.
         $column = $match->isOwner($member) ? 'agreed_owner_at' : 'agreed_requester_at';
-        $open = DB::transaction(function () use ($match, $column): bool {
+        $firstPress = false;
+        $open = DB::transaction(function () use ($match, $column, &$firstPress): bool {
             $fresh = GoodsMatch::query()->lockForUpdate()->find($match->id);
             if (! $fresh || $fresh->status !== 'introduced') {
                 return false;
             }
             if ($fresh->{$column} === null) {
                 $fresh->forceFill([$column => now()])->save();
+                $firstPress = true;
             }
             $match->setRawAttributes($fresh->getAttributes(), true);
 
@@ -594,6 +604,11 @@ class GoodsFlow
 
         $other = $match->other($member);
         $this->say($member, 'goods_agree_waiting', ['name' => e($other->display_name)]);
+
+        // The other side hears it once: pressing "We agreed" again must not nudge them again.
+        if (! $firstPress) {
+            return;
+        }
 
         try {
             $this->telegram->sendText($other->chat_id, $this->messages->text('goods_agree_nudge', $other->language, ['name' => e($member->display_name)]),

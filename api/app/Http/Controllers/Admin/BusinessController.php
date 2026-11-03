@@ -40,10 +40,11 @@ class BusinessController extends Controller
         } elseif ($status !== 'all') {
             $query->where('status', $status);
         }
-        if ($cityId = $request->query('city_id')) {
+        // A number, or no filter: Postgres answers "abc" for an integer column with an error (a 500).
+        if (($cityId = $request->integer('city_id')) > 0) {
             $query->where('city_id', $cityId);
         }
-        if ($category = $request->query('category')) {
+        if (is_string($category = $request->query('category')) && $category !== '') {
             $query->where('category', $category);
         }
         if ($request->boolean('owners')) {
@@ -279,7 +280,7 @@ class BusinessController extends Controller
             'area' => [$req, 'string', 'min:2', 'max:160'],
             'latitude' => ['sometimes', 'nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude' => ['sometimes', 'nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
-            'maps_url' => ['sometimes', 'nullable', 'url', 'max:500'],
+            'maps_url' => ['sometimes', 'nullable', 'url:http,https', 'max:500'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
             'whatsapp' => ['sometimes', 'nullable', 'string', 'max:30'],
             'telegram' => ['sometimes', 'nullable', 'string', 'max:40', 'regex:/^@?[A-Za-z][A-Za-z0-9_]{3,31}$/'],

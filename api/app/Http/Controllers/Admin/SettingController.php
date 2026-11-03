@@ -19,15 +19,19 @@ class SettingController extends Controller
 {
     /** @var array<string, array<int, string>> key => validation rules */
     private const FIELDS = [
-        'public_url' => ['nullable', 'url', 'max:200'],
+        // Links members and the website open: web addresses only, never javascript: or data:.
+        'public_url' => ['nullable', 'url:http,https', 'max:200'],
         'site_url' => ['nullable', 'url:http,https', 'max:200'],
-        'support_telegram_username' => ['nullable', 'string', 'max:40'],
-        'allowed_phone_countries' => ['nullable', 'string', 'max:100'],
-        'telegram_channel_link' => ['nullable', 'url', 'max:200'],
-        'telegram_questions_group_link' => ['nullable', 'url', 'max:200'],
-        'telegram_goods_group_link' => ['nullable', 'url', 'max:200'],
-        'telegram_questions_group_id' => ['nullable', 'string', 'max:32'],
-        'telegram_goods_group_id' => ['nullable', 'string', 'max:32'],
+        // A Telegram username (it becomes https://t.me/<name> on the website).
+        'support_telegram_username' => ['nullable', 'string', 'max:40', 'regex:/^@?[A-Za-z][A-Za-z0-9_]{3,31}$/'],
+        // Country calling codes, comma separated: 971,251.
+        'allowed_phone_countries' => ['nullable', 'string', 'max:100', 'regex:/^\s*\d{1,4}(\s*,\s*\d{1,4})*\s*$/'],
+        'telegram_channel_link' => ['nullable', 'url:http,https', 'max:200'],
+        'telegram_questions_group_link' => ['nullable', 'url:http,https', 'max:200'],
+        'telegram_goods_group_link' => ['nullable', 'url:http,https', 'max:200'],
+        // A group's numeric id (-100…): a typo here sends every group message nowhere.
+        'telegram_questions_group_id' => ['nullable', 'string', 'max:32', 'regex:/^-?\d{4,20}$/'],
+        'telegram_goods_group_id' => ['nullable', 'string', 'max:32', 'regex:/^-?\d{4,20}$/'],
         'community_language' => ['nullable', 'in:am,ti,en,om'],
         'questions_per_day' => ['nullable', 'integer', 'min:1', 'max:50'],
         'assistant_per_day' => ['nullable', 'integer', 'min:0', 'max:500'],
@@ -74,7 +78,12 @@ class SettingController extends Controller
 
     public function update(Request $request): JsonResponse
     {
-        $data = $request->validate(self::FIELDS);
+        $data = $request->validate(self::FIELDS, [
+            'telegram_questions_group_id.regex' => 'Use the group\'s numeric id (-100…); pick it from the list of chats the bot is in.',
+            'telegram_goods_group_id.regex' => 'Use the group\'s numeric id (-100…); pick it from the list of chats the bot is in.',
+            'support_telegram_username.regex' => 'Use a Telegram username, like @habesha_support.',
+            'allowed_phone_countries.regex' => 'Use country calling codes separated by commas, like 971,251.',
+        ]);
 
         $before = [];
         $after = [];

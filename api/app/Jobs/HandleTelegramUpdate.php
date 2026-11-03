@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Bot\Router;
 use App\Models\TelegramUpdate;
+use App\Services\TelegramApiException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
@@ -54,10 +55,23 @@ class HandleTelegramUpdate implements ShouldQueue
             // Handled: keep the id and kind only. A contact card carries a phone number.
             $update->forceFill(['processed_at' => now(), 'error' => null, 'payload' => TelegramUpdate::redact($update->payload)])->save();
         } catch (\Throwable $e) {
-            $update->forceFill(['error' => str($e->getMessage())->limit(500)->toString()])->save();
-            Log::error('Telegram update failed.', ['update_id' => $update->update_id, 'error' => $e->getMessage()]);
+            // Telegram refused a message for good (too long, a bad button, a blocked bot):
+            // running the update again would only repeat whatever happened before the
+            // refusal, a post or a request sent twice. It stays failed for the admin to read.
+            $final = $e instanceof TelegramApiException && $e->isFinal();
 
-            throw $e;
+            // A final failure will never be run again, so its content (a contact card's phone
+            // number) goes now; processed_at stays null so it still shows as failed.
+            $update->forceFill([
+                'error' => str($e->getMessage())->limit(500)->toString(),
+                'attempts' => $final ? max(TelegramUpdate::MAX_ATTEMPTS, (int) $update->attempts) : (int) $update->attempts,
+                'payload' => $final ? TelegramUpdate::redact($update->payload) : $update->payload,
+            ])->save();
+            Log::error('Telegram update failed.', ['update_id' => $update->update_id, 'error' => $e->getMessage(), 'final' => $final]);
+
+            if (! $final) {
+                throw $e;
+            }
         }
     }
 }

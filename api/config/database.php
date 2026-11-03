@@ -97,6 +97,11 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // libpq's connect_timeout: with the database host unreachable, /api/health
+            // answers 503 in seconds rather than hanging on the TCP timeout.
+            'options' => [
+                PDO::ATTR_TIMEOUT => (int) env('DB_CONNECT_TIMEOUT', 5),
+            ],
         ],
 
         'sqlsrv' => [

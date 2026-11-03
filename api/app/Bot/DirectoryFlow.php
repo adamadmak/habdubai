@@ -156,9 +156,8 @@ class DirectoryFlow
 
         $conversation->reset();
 
-        $like = '%'.str_replace(['%', '_'], ['\%', '\_'], mb_strtolower($query)).'%';
-        $businesses = Business::query()->listed()->with('city')
-            ->where(fn ($q) => $q->whereRaw('lower(name) like ?', [$like])->orWhereRaw('lower(area) like ?', [$like]))
+        // The shared helper: the same escaping on Postgres and SQLite, % and _ taken literally.
+        $businesses = \App\Support\Search::anyColumn(Business::query()->listed()->with('city'), ['name', 'area'], mb_substr($query, 0, 80))
             ->orderByDesc('verified')->orderBy('name')->limit(self::PER_PAGE)->get();
 
         if ($businesses->isEmpty()) {
@@ -440,7 +439,7 @@ class DirectoryFlow
         $lines[] = '';
         $lines[] = $this->messages->text('dir_list_footer', $l);
 
-        return mb_substr(implode("\n", $lines), 0, 4000);
+        return \App\Support\TelegramText::clip(implode("\n", $lines), 4000);
     }
 
     /** @param Collection<int, Business> $businesses */

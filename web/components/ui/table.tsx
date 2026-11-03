@@ -59,7 +59,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-b border-default-300 transition-colors  data-[state=selected]:bg-muted",
+      "border-b border-border/80 transition-colors hover:bg-primary-50/40 data-[state=selected]:bg-muted",
       className
     )}
     {...props}
@@ -74,7 +74,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-14 px-4  ltr:text-left rtl:text-right ltr:last:text-right rtl:last:text-left align-middle font-semibold  text-sm  text-default-800    capitalize  ltr:[&:has([role=checkbox])]:pr-0 rtl:[&:has([role=checkbox])]:pl-0",
+      "h-11 px-4 ltr:text-left rtl:text-right ltr:last:text-right rtl:last:text-left align-middle font-semibold text-xs uppercase tracking-[0.06em] text-default-500 bg-default-50/80 whitespace-nowrap ltr:[&:has([role=checkbox])]:pr-0 rtl:[&:has([role=checkbox])]:pl-0",
       className
     )}
     {...props}
@@ -89,7 +89,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "p-4 align-middle  text-sm text-default-600 last:text-right rtl:last:text-left font-normal  ltr:[&:has([role=checkbox])]:pr-0 rtl:[&:has([role=checkbox])]:pl-0",
+      "px-4 py-3 align-middle text-sm text-default-700 last:text-right rtl:last:text-left font-normal ltr:[&:has([role=checkbox])]:pr-0 rtl:[&:has([role=checkbox])]:pl-0",
       className
     )}
     {...props}
