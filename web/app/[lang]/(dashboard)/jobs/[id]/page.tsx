@@ -17,12 +17,12 @@ import { useApiQuery, useApiMutation, formatDateTime, type JobDetail, type Audit
 
 type Payload = { job: JobDetail; audit: AuditEntry[]; choices: { categories: string[]; emirates: string[] } };
 
-type Draft = Pick<JobDetail, "title" | "company" | "category" | "emirate" | "sub_area" | "salary_min" | "salary_max" | "accommodation" | "visa" | "summary_am" | "summary_ti" | "summary_en">;
+type Draft = Pick<JobDetail, "title" | "company" | "category" | "emirate" | "sub_area" | "salary_min" | "salary_max" | "accommodation" | "visa" | "summary_am" | "summary_ti" | "summary_en" | "summary_om">;
 
 const draftOf = (job: JobDetail): Draft => ({
   title: job.title, company: job.company, category: job.category, emirate: job.emirate, sub_area: job.sub_area,
   salary_min: job.salary_min, salary_max: job.salary_max, accommodation: job.accommodation, visa: job.visa,
-  summary_am: job.summary_am, summary_ti: job.summary_ti, summary_en: job.summary_en,
+  summary_am: job.summary_am, summary_ti: job.summary_ti, summary_en: job.summary_en, summary_om: job.summary_om,
 });
 
 const JobPage = () => {
@@ -112,7 +112,7 @@ const JobPage = () => {
                 ))}
               </div>
 
-              {([["summary_am", "Amharic summary"], ["summary_ti", "Tigrinya summary"], ["summary_en", "English summary"]] as const).map(([field, label]) => (
+              {([["summary_am", "Amharic summary"], ["summary_ti", "Tigrinya summary"], ["summary_en", "English summary"], ["summary_om", "Afaan Oromoo summary"]] as const).map(([field, label]) => (
                 <div key={field}>
                   <Label className="mb-1.5 block">{label}</Label>
                   <Textarea rows={3} value={draft[field] ?? ""} onChange={(e) => set(field, e.target.value || null)} className="text-base leading-7" />

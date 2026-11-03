@@ -1,4 +1,4 @@
-/** Every word the website shows, in English. am.ts and ti.ts have the same shape. */
+/** Every word the website shows, in English. am.ts, ti.ts and om.ts have the same shape. */
 export const en = {
   brand: "Habesha Dubai",
   brandNative: "ሐበሻ ዱባይ",
@@ -51,7 +51,7 @@ export const en = {
   home: {
     hello: "Selam, welcome",
     title: "The Habesha community in the Emirates, in one place.",
-    lead: "Jobs checked for scam signs, Habesha places near you, and the news that matters to us. Free, in Amharic, Tigrinya and English.",
+    lead: "Jobs checked for scam signs, Habesha places near you, and the news that matters to us. Free, in Amharic, Tigrinya, Afaan Oromo and English.",
     searchPlaceholder: "Search jobs, places and news",
     scopes: { jobs: "Jobs", directory: "Places", news: "News" },
     searchIn: "Search in",

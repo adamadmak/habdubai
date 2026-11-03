@@ -162,6 +162,7 @@ class ProcessJobListing implements ShouldQueue
             'summary_am' => $c->summaryAm ?: null,
             'summary_ti' => $c->summaryTi ?: null,
             'summary_en' => $c->summaryEn ?: null,
+            'summary_om' => $c->summaryOm ?: null,
             'classified_by' => $c->by,
         ];
     }

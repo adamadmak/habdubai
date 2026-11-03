@@ -55,7 +55,7 @@ class AnnouncementsFlow
 
         switch ($conversation->state) {
             case 'ann_topic':
-                $topic = AnnouncementTopic::postableBy($member)->first(fn (AnnouncementTopic $t) => in_array($text, [$t->label('am'), $t->label('ti'), $t->label('en')], true));
+                $topic = AnnouncementTopic::postableBy($member)->first(fn (AnnouncementTopic $t) => in_array($text, array_map(fn (string $l) => $t->label($l), Choices::LANGUAGES), true));
                 if (! $topic) {
                     $this->begin($member, $conversation);
 
@@ -172,7 +172,7 @@ class AnnouncementsFlow
 
     private function draft(Member $member, array $data): Announcement
     {
-        $translated = $data['translated'] ?? ['am' => $data['text'], 'ti' => $data['text'], 'en' => $data['text']];
+        $translated = $data['translated'] ?? ['am' => $data['text'], 'ti' => $data['text'], 'en' => $data['text'], 'om' => $data['text']];
 
         $announcement = new Announcement([
             'topic_id' => $data['topic_id'],
@@ -181,6 +181,7 @@ class AnnouncementsFlow
             'text_am' => $translated['am'] ?? $data['text'],
             'text_ti' => $translated['ti'] ?? $data['text'],
             'text_en' => $translated['en'] ?? $data['text'],
+            'text_om' => $translated['om'] ?? $data['text'],
             'photo_file_id' => $data['photo'] ?? null,
             'event_date' => $data['date'] ?? null,
             'event_place' => $data['place'] ?? null,

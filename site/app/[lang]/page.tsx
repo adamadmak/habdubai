@@ -11,7 +11,7 @@ import { Night } from "@/components/Night";
 import { GoodsTeaser } from "@/components/goods/GoodsBits";
 import { api, type GoodsBoard, type Home } from "@/lib/api";
 import { dayAndMonth, ethiopianDate, number, relative, weekday } from "@/lib/format";
-import { dict, isLocale, label } from "@/lib/i18n";
+import { dict, isLocale, label, pick, pickLang } from "@/lib/i18n";
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
@@ -42,7 +42,8 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
     <>
       {/* ---- The hero: the night over the Gulf, the thread underneath. ---- */}
       <Night word="ሰላም">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-10 pt-10 md:grid-cols-[1.12fr_0.88fr] md:items-center md:pb-14 md:pt-16 lg:gap-16">
+        {/* grid-cols-1 on phones: one column that never grows past the screen, so a long word or label truncates instead of widening the hero. */}
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 pb-10 pt-10 md:grid-cols-[1.12fr_0.88fr] md:items-center md:pb-14 md:pt-16 lg:gap-16">
           <div className="settle">
             <p className="glass inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
               <span className="tibeb-thin inline-block w-7 rounded-full" aria-hidden="true" />
@@ -91,7 +92,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-accent">{d.home.eventsTitle}</span>
-                  <span className="block truncate font-semibold">{firstLine(event.text[lang] || event.text.en, 80)}</span>
+                  <span className="block truncate font-semibold" lang={pickLang(event.text, lang)}>{firstLine(pick(event.text, lang), 80)}</span>
                   <span className="block truncate text-xs muted-on-night">{weekday(event.event_date, lang)} · {ethiopianDate(event.event_date, lang)}</span>
                 </span>
                 <ArrowUpRight className="size-4 shrink-0 text-white/60" aria-hidden="true" />
@@ -200,7 +201,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
                     <span className="block text-xs opacity-75">{weekday(event.event_date, lang)}</span>
                   </span>
                 </span>
-                <span className="mt-3 line-clamp-2 font-semibold leading-snug">{firstLine(event.text[lang] || event.text.en, 90)}</span>
+                <span className="mt-3 line-clamp-2 font-semibold leading-snug" lang={pickLang(event.text, lang)}>{firstLine(pick(event.text, lang), 90)}</span>
                 <span className="mt-1 text-xs opacity-75">{ethiopianDate(event.event_date, lang)}</span>
               </>
             ) : (

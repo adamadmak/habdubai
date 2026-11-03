@@ -52,7 +52,7 @@ class DirectoryController extends Controller
         return response()->json([
             'cities' => DirectoryCity::listed()->map(fn (DirectoryCity $c) => [
                 'key' => $c->key,
-                'name' => ['en' => $c->name_en, 'am' => $c->name_am, 'ti' => $c->name_ti],
+                'name' => ['en' => $c->name_en, 'am' => $c->name_am, 'ti' => $c->name_ti, 'om' => $c->name_om],
                 'count' => (int) ($byCity[$c->id] ?? 0),
             ])->values(),
             'categories' => collect(Choices::BUSINESS_CATEGORIES)->map(fn (array $labels, string $key) => [

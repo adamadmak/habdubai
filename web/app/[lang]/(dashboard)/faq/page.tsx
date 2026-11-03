@@ -18,7 +18,7 @@ type Payload = { faq: FaqRow[]; knowledge: KnowledgeRow[]; categories: Record<st
 type FaqForm = Omit<FaqRow, "id" | "question_id"> & { id?: number };
 type ArticleForm = Omit<KnowledgeRow, "id"> & { id?: number };
 
-const EMPTY_FAQ: FaqForm = { category: "visa", q_am: "", q_ti: "", q_en: "", a_am: "", a_ti: "", a_en: "", source_url: "", active: true };
+const EMPTY_FAQ: FaqForm = { category: "visa", q_am: "", q_ti: "", q_en: "", q_om: "", a_am: "", a_ti: "", a_en: "", a_om: "", source_url: "", active: true };
 const EMPTY_ARTICLE: ArticleForm = { title: "", body: "", source_name: "", source_url: "", active: true };
 
 const FaqPage = () => {
@@ -61,7 +61,7 @@ const FaqPage = () => {
           {isLoading && <div className="text-default-500">Loading…</div>}
           {data?.faq.length === 0 && <Card><CardContent className="p-6 text-default-500">No entries yet. Solved questions can be added from the Questions page.</CardContent></Card>}
           {data?.faq.map((f) => (
-            <Card key={f.id} className="cursor-pointer hover:border-primary" onClick={() => { setErrors({}); setFaq({ ...f, q_am: f.q_am ?? "", q_ti: f.q_ti ?? "", a_am: f.a_am ?? "", a_ti: f.a_ti ?? "", source_url: f.source_url ?? "" }); }}>
+            <Card key={f.id} className="cursor-pointer hover:border-primary" onClick={() => { setErrors({}); setFaq({ ...f, q_am: f.q_am ?? "", q_ti: f.q_ti ?? "", a_am: f.a_am ?? "", a_ti: f.a_ti ?? "", q_om: f.q_om ?? "", a_om: f.a_om ?? "", source_url: f.source_url ?? "" }); }}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -72,7 +72,7 @@ const FaqPage = () => {
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <Badge color={f.active ? "success" : "warning"} variant="soft">{f.active ? "live" : "draft"}</Badge>
                     <span className="text-xs text-default-500">{data.categories[f.category] ?? f.category}</span>
-                    {(!f.q_am || !f.q_ti) && <span className="text-xs text-warning">missing translations</span>}
+                    {(!f.q_am || !f.q_ti || !f.q_om) && <span className="text-xs text-warning">missing translations</span>}
                   </div>
                 </div>
               </CardContent>
@@ -85,7 +85,7 @@ const FaqPage = () => {
             <CardHeader>
               <CardTitle className="text-base">What belongs here</CardTitle>
               <CardDescription>
-                Published rules you have checked yourself, in plain English: who pays for a visa, what to do about unpaid salary, overstay fines, how to reach the consulate. Give each one its source. The assistant answers in Amharic, Tigrinya or English from these.
+                Published rules you have checked yourself, in plain English: who pays for a visa, what to do about unpaid salary, overstay fines, how to reach the consulate. Give each one its source. The assistant answers in Amharic, Tigrinya, English or Afaan Oromoo from these.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -112,7 +112,7 @@ const FaqPage = () => {
             <>
               <DialogHeader>
                 <DialogTitle>{faq.id ? "Edit FAQ entry" : "Add FAQ entry"}</DialogTitle>
-                <DialogDescription>English is required; Amharic and Tigrinya fall back to English when empty.</DialogDescription>
+                <DialogDescription>English is required; Amharic, Tigrinya and Afaan Oromoo fall back to English when empty.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
@@ -127,7 +127,7 @@ const FaqPage = () => {
                   <Input value={faq.source_url ?? ""} onChange={(e) => setFaq({ ...faq, source_url: e.target.value })} placeholder="https://…" />
                   {err("source_url")}
                 </div>
-                {([["en", "English"], ["am", "Amharic"], ["ti", "Tigrinya"]] as const).map(([l, name]) => (
+                {([["en", "English"], ["am", "Amharic"], ["ti", "Tigrinya"], ["om", "Afaan Oromoo"]] as const).map(([l, name]) => (
                   <div key={l} className="md:col-span-2 grid gap-2 md:grid-cols-2">
                     <div>
                       <Label className="mb-1.5 block">Question, {name}{l === "en" && " *"}</Label>

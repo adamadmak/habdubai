@@ -91,7 +91,7 @@ class JobController extends Controller
             'source' => $host ?: $job->source?->name,
             'open' => $job->status === 'published',
             'published_at' => $job->published_at?->toIso8601String(),
-            'summary' => ['am' => $job->summary('am'), 'ti' => $job->summary('ti'), 'en' => $job->summary('en')],
+            'summary' => ['am' => $job->summary('am'), 'ti' => $job->summary('ti'), 'en' => $job->summary('en'), 'om' => $job->summary('om')],
         ];
 
         if ($full) {

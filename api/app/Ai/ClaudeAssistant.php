@@ -51,7 +51,7 @@ PROMPT;
             $messages[] = ['role' => $role, 'content' => $turn['text']];
         }
 
-        $languageName = ['am' => 'Amharic', 'ti' => 'Tigrinya', 'en' => 'English'][$language] ?? 'English';
+        $languageName = ['am' => 'Amharic', 'ti' => 'Tigrinya', 'en' => 'English', 'om' => 'Afaan Oromoo (Latin script)'][$language] ?? 'English';
         $current = "<question language=\"{$languageName}\">\n".mb_substr($question, 0, 2000)."\n</question>";
 
         if ($messages !== [] && end($messages)['role'] === 'user') {

@@ -19,11 +19,11 @@ class Conversation extends Model
 
     /**
      * Until the person picks a language, Telegram's own hint decides: an
-     * Amharic or Tigrinya client gets that, anything else gets English.
+     * Amharic, Tigrinya or Oromo client gets that, anything else gets English.
      */
     public static function forUser(int $telegramUserId, int $chatId, ?string $languageHint = null): self
     {
-        $hint = in_array($languageHint, ['am', 'ti'], true) ? $languageHint : 'en';
+        $hint = in_array($languageHint, ['am', 'ti', 'om'], true) ? $languageHint : 'en';
 
         $conversation = static::query()->firstOrCreate(
             ['telegram_user_id' => $telegramUserId],

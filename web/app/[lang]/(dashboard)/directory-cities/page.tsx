@@ -13,9 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import PageTitle from "@/components/page-title";
 import { useApiQuery, useApiMutation, ApiError, type DirectoryCity } from "@/lib/api";
 
-type Form = { id?: number; name_en: string; name_am: string; name_ti: string; country: string; sort: number; active: boolean };
+type Form = { id?: number; name_en: string; name_am: string; name_ti: string; name_om: string; country: string; sort: number; active: boolean };
 
-const EMPTY: Form = { name_en: "", name_am: "", name_ti: "", country: "AE", sort: 100, active: true };
+const EMPTY: Form = { name_en: "", name_am: "", name_ti: "", name_om: "", country: "AE", sort: 100, active: true };
 
 const CitiesPage = () => {
   const { data, isLoading, error } = useApiQuery<{ data: DirectoryCity[] }>(["directory-cities"], "/admin/directory-cities");
@@ -79,7 +79,7 @@ const CitiesPage = () => {
                   <TableCell><Link className="text-primary" href={`/directory?status=approved&city_id=${c.id}`}>{c.listed_count ?? 0}</Link></TableCell>
                   <TableCell><Link className="text-primary" href={`/directory?status=pending&city_id=${c.id}`}>{c.pending_count ?? 0}</Link></TableCell>
                   <TableCell className="text-right whitespace-nowrap space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => { setErrors({}); setForm({ id: c.id, name_en: c.name_en, name_am: c.name_am, name_ti: c.name_ti, country: c.country, sort: c.sort, active: c.active }); }}>Edit</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setErrors({}); setForm({ id: c.id, name_en: c.name_en, name_am: c.name_am, name_ti: c.name_ti, name_om: c.name_om ?? "", country: c.country, sort: c.sort, active: c.active }); }}>Edit</Button>
                     {(c.listed_count ?? 0) + (c.pending_count ?? 0) === 0 && (
                       <Button size="sm" variant="outline" color="destructive" onClick={() => window.confirm(`Delete ${c.name_en}?`) && remove.mutateAsync(c.id).then(() => toast.success("Deleted.")).catch((e: Error) => toast.error(e.message))}>Delete</Button>
                     )}
@@ -114,6 +114,11 @@ const CitiesPage = () => {
                   <Label className="mb-1.5 block">Tigrinya *</Label>
                   <Input value={form.name_ti} onChange={(e) => setForm({ ...form, name_ti: e.target.value })} placeholder="ሪያድ" />
                   {err("name_ti")}
+                </div>
+                <div>
+                  <Label className="mb-1.5 block">Afaan Oromoo</Label>
+                  <Input value={form.name_om} onChange={(e) => setForm({ ...form, name_om: e.target.value })} placeholder="Riyaad (English when empty)" />
+                  {err("name_om")}
                 </div>
                 <div>
                   <Label className="mb-1.5 block">Country code</Label>

@@ -24,7 +24,7 @@ class KnowledgeSearch
         }
 
         return FaqEntry::query()->where('active', true)->get()
-            ->map(fn (FaqEntry $f) => [$f, self::score($words, implode(' ', [$f->q_en, $f->q_am, $f->q_ti, $f->q_en, $f->a_en]))])
+            ->map(fn (FaqEntry $f) => [$f, self::score($words, implode(' ', [$f->q_en, $f->q_am, $f->q_ti, $f->q_om, $f->q_en, $f->a_en]))])
             ->filter(fn ($pair) => $pair[1] > 0)
             ->sortByDesc(fn ($pair) => $pair[1])
             ->take($limit)

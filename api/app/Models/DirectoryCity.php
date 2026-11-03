@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DirectoryCity extends Model
 {
-    protected $fillable = ['key', 'name_en', 'name_am', 'name_ti', 'country', 'sort', 'active'];
+    protected $fillable = ['key', 'name_en', 'name_am', 'name_ti', 'name_om', 'country', 'sort', 'active'];
 
     protected function casts(): array
     {
@@ -24,6 +24,7 @@ class DirectoryCity extends Model
         return match ($language) {
             'am' => $this->name_am,
             'ti' => $this->name_ti,
+            'om' => $this->name_om,
             default => $this->name_en,
         } ?: $this->name_en;
     }
@@ -39,6 +40,6 @@ class DirectoryCity extends Model
     {
         $text = trim($text);
 
-        return static::listed()->first(fn (self $c) => in_array($text, [$c->name_en, $c->name_am, $c->name_ti], true));
+        return static::listed()->first(fn (self $c) => in_array($text, [$c->name_en, $c->name_am, $c->name_ti, $c->name_om], true));
     }
 }

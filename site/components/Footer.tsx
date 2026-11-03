@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Send } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
-import type { Locale } from "@/lib/locales";
+import { isGeez, type Locale } from "@/lib/locales";
 import type { Meta } from "@/lib/api";
 import { Mark, Tibeb } from "./Logo";
 
@@ -19,7 +19,7 @@ export function Footer({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
             <Mark className="size-9" />
             <span className="flex flex-col leading-none">
               <span className="font-bold">{d.brand}</span>
-              <span lang={lang === "en" ? "am" : "en"} className="mt-1 text-xs text-white/70">{d.brandNative}</span>
+              <span lang={isGeez(lang) ? "en" : "am"} className="mt-1 text-xs text-white/70">{d.brandNative}</span>
             </span>
           </div>
           <p className="mt-5 text-sm text-white/75">{d.footer.tagline}</p>

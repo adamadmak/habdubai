@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { fromAcceptLanguage, isLocale, LOCALE_COOKIE } from "@/lib/locales";
 
 /**
- * Every page lives under /am, /ti or /en. A path without one goes to the
- * language the visitor chose last time, else the browser's, else English.
+ * Every page lives under /am, /ti, /om or /en. A path without one goes to the
+ * language the visitor chose last time, else the browser's (om or gaz for
+ * Afaan Oromo), else English.
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

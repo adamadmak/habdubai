@@ -172,6 +172,15 @@
     font-style: italic;
     font-variation-settings: "SOFT" 100, "WONK" 1;
   }
+  /*
+   * Afaan Oromo is Latin script, so it keeps the Latin type above (the Ge'ez
+   * rules name am and ti only). Its words run long ("Onkoloolessa",
+   * "Maxxansawwan"): a heading breaks one rather than overflow a phone.
+   */
+  :lang(om) .display,
+  :lang(om) .headline {
+    overflow-wrap: break-word;
+  }
   :lang(am) .gild,
   :lang(ti) .gild {
     font-style: normal;
@@ -276,6 +285,27 @@
     backdrop-filter: saturate(170%) blur(20px);
     border: 1px solid rgb(255 255 255 / 0.1);
     box-shadow: 0 14px 34px -14px rgb(6 12 36 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.09);
+  }
+
+  /*
+   * The language menu on phones and tablets (LangSwitch): a <details> under
+   * the header. Solid night, not blurred: a blur nested in the header's own
+   * would show the page through it unsoftened.
+   */
+  .lang-menu > summary {
+    list-style: none;
+  }
+  .lang-menu > summary::-webkit-details-marker {
+    display: none;
+  }
+  .lang-menu[open] .lang-chevron {
+    rotate: 180deg;
+  }
+  .lang-menu-panel {
+    color: #fff;
+    background: #0a1433;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    box-shadow: 0 18px 40px -12px rgb(6 12 36 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.09);
   }
 
   /* The old name for floating surfaces on the page itself (the job's apply bar). */
@@ -1137,7 +1167,8 @@ html[data-reveal] .reveal:not([data-in]) {
     background: var(--color-bg);
     border-bottom: 1px solid var(--color-fg);
   }
-  .chrome {
+  .chrome,
+  .lang-menu-panel {
     background: #050a1f;
     border-color: #fff;
   }

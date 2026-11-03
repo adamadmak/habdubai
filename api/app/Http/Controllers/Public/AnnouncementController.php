@@ -27,8 +27,8 @@ class AnnouncementController extends Controller
 
         $page = Announcement::query()->with('topic')->where('status', 'published')
             ->when($topic, fn ($q) => $q->where('topic_id', $topic->id))
-            // Any of the three languages, so English words find an Amharic post by its translation.
-            ->when(trim((string) ($data['q'] ?? '')) !== '', fn ($q) => Search::anyColumn($q, ['text_en', 'text_am', 'text_ti', 'event_place'], (string) $data['q']))
+            // Any of its languages, so English words find an Amharic post by its translation.
+            ->when(trim((string) ($data['q'] ?? '')) !== '', fn ($q) => Search::anyColumn($q, ['text_en', 'text_am', 'text_ti', 'text_om', 'event_place'], (string) $data['q']))
             ->when($events, fn ($q) => $q->whereNotNull('event_date')->whereDate('event_date', '>=', now('Asia/Dubai')->toDateString())->orderBy('event_date'))
             ->when(! $events, fn ($q) => $q->orderByDesc('published_at')->orderByDesc('id'))
             ->paginate(12);
@@ -37,7 +37,7 @@ class AnnouncementController extends Controller
             'data' => $page->getCollection()->map(fn (Announcement $a) => self::payload($a))->values(),
             'meta' => ['total' => $page->total(), 'page' => $page->currentPage(), 'last_page' => $page->lastPage()],
             'topics' => AnnouncementTopic::query()->where('active', true)->orderBy('sort')->get()->map(fn (AnnouncementTopic $t) => [
-                'key' => $t->key, 'emoji' => $t->emoji, 'name' => ['en' => $t->name_en, 'am' => $t->name_am, 'ti' => $t->name_ti],
+                'key' => $t->key, 'emoji' => $t->emoji, 'name' => ['en' => $t->name_en, 'am' => $t->name_am, 'ti' => $t->name_ti, 'om' => $t->name_om],
             ])->values(),
         ])->header('Cache-Control', 'public, max-age=60');
     }
@@ -61,8 +61,8 @@ class AnnouncementController extends Controller
 
         return [
             'id' => $a->id,
-            'topic' => $topic ? ['key' => $topic->key, 'emoji' => $topic->emoji, 'name' => ['en' => $topic->name_en, 'am' => $topic->name_am, 'ti' => $topic->name_ti]] : null,
-            'text' => ['am' => $a->text_am, 'ti' => $a->text_ti, 'en' => $a->text_en],
+            'topic' => $topic ? ['key' => $topic->key, 'emoji' => $topic->emoji, 'name' => ['en' => $topic->name_en, 'am' => $topic->name_am, 'ti' => $topic->name_ti, 'om' => $topic->name_om]] : null,
+            'text' => ['am' => $a->text_am, 'ti' => $a->text_ti, 'en' => $a->text_en, 'om' => $a->text_om],
             'original_language' => $a->original_language,
             'event_date' => $a->event_date?->toDateString(),
             'event_place' => $a->event_place,

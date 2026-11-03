@@ -16,7 +16,7 @@ async function all<T>(path: string, maxPages: number): Promise<T[]> {
   return items;
 }
 
-/** Every page in all three languages, each pointing at its two siblings. */
+/** Every page in all four languages, each pointing at its siblings. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [businesses, jobs] = await Promise.all([all<Business>("/public/businesses", 40), all<Job>("/public/jobs", 10)]);
 

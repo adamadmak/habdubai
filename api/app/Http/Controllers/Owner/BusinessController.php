@@ -33,7 +33,7 @@ class BusinessController extends Controller
         return response()->json([
             'categories' => Choices::BUSINESS_CATEGORIES,
             'cities' => DirectoryCity::listed()->map(fn (DirectoryCity $c) => [
-                'id' => $c->id, 'key' => $c->key, 'name' => ['en' => $c->name_en, 'am' => $c->name_am, 'ti' => $c->name_ti],
+                'id' => $c->id, 'key' => $c->key, 'name' => ['en' => $c->name_en, 'am' => $c->name_am, 'ti' => $c->name_ti, 'om' => $c->name_om],
             ])->values(),
             'languages' => Choices::SPOKEN_LANGUAGES,
             'limits' => ['listings' => BusinessOwner::MAX_LISTINGS, 'pending' => BusinessOwner::MAX_PENDING, 'photo_kb' => PhotoStore::MAX_UPLOAD_KB],
@@ -302,7 +302,7 @@ class BusinessController extends Controller
             'name' => $b->name,
             'category' => $b->category,
             'city_id' => $b->city_id,
-            'city' => $b->city ? ['en' => $b->city->name_en, 'am' => $b->city->name_am, 'ti' => $b->city->name_ti] : null,
+            'city' => $b->city ? ['en' => $b->city->name_en, 'am' => $b->city->name_am, 'ti' => $b->city->name_ti, 'om' => $b->city->name_om] : null,
             'area' => $b->area,
             'maps_url' => $b->maps_url,
             'phone' => $b->phone,

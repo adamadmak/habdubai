@@ -85,9 +85,11 @@ class QuestionController extends Controller
             'category' => $question->category,
             'q_am' => $written['q_am'] ?: null,
             'q_ti' => $written['q_ti'] ?: null,
+            'q_om' => ($written['q_om'] ?? '') ?: null,
             'q_en' => $written['q_en'],
             'a_am' => $written['a_am'] ?: null,
             'a_ti' => $written['a_ti'] ?: null,
+            'a_om' => ($written['a_om'] ?? '') ?: null,
             'a_en' => $written['a_en'],
             // A copied draft waits for an admin to tidy it; a written one goes live.
             'active' => $written['by'] === 'claude',

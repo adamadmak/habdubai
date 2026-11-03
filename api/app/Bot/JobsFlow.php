@@ -161,7 +161,7 @@ class JobsFlow
     /** Save or Report on a card, in the channel or in a DM. */
     public function cardButton(?Member $member, Callback $cb, string $action, int $jobId): void
     {
-        $language = $member?->language ?? (in_array($cb->languageCode, ['am', 'ti'], true) ? $cb->languageCode : 'en');
+        $language = $member?->language ?? (in_array($cb->languageCode, ['am', 'ti', 'om'], true) ? $cb->languageCode : 'en');
 
         if (! $member?->isActive()) {
             $link = $this->telegram->startLink('jobs');

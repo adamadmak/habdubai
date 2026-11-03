@@ -46,7 +46,7 @@ class JobSettingsController extends Controller
             'job_review_threshold' => ['required', 'integer', 'min:1', 'max:100'],
             'job_warning_threshold' => ['required', 'integer', 'min:1', 'max:100'],
             'job_auto_publish' => ['required', 'boolean'],
-            'job_card_languages' => ['required', 'string', 'regex:/^(am|ti|en)(,(am|ti|en))*$/'],
+            'job_card_languages' => ['required', 'string', 'regex:/^(am|ti|en|om)(,(am|ti|en|om))*$/'],
             'job_scam_phrases' => ['nullable', 'string', 'max:5000'],
             'job_blocked_companies' => ['nullable', 'string', 'max:10000'],
             'anthropic_model' => ['required', 'string', 'max:64', 'regex:/^claude-[a-z0-9.-]+$/'],

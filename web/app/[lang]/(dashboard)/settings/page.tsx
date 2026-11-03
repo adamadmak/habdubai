@@ -19,7 +19,7 @@ const FIELDS: { key: string; label: string; hint: string; placeholder?: string; 
   { key: "telegram_goods_group_link", label: "Goods board group invite link", hint: "Sent at the end of joining.", placeholder: "https://t.me/+…" },
   { key: "telegram_questions_group_id", label: "Questions group chat id", hint: "Numeric id (starts with -100). Needed to remove a member who leaves or is banned.", placeholder: "-1001234567890" },
   { key: "telegram_goods_group_id", label: "Goods board group chat id", hint: "Same, for the goods group.", placeholder: "-1001234567890" },
-  { key: "community_language", label: "Language of the bot's labels in groups", hint: "am, ti or en. Members' own words stay as they wrote them.", placeholder: "am" },
+  { key: "community_language", label: "Language of the bot's labels in groups", hint: "am, ti, en or om. Members' own words stay as they wrote them.", placeholder: "am" },
   { key: "questions_per_day", label: "Questions a member may ask per day", hint: "Default 5.", placeholder: "5" },
   { key: "assistant_per_day", label: "Assistant answers per member per day", hint: "Each answer is one Claude call. Default 20; 0 turns the assistant off.", placeholder: "20" },
   { key: "safety_consulate_phone", label: "Ethiopian consulate phone, for /safe", hint: "Shown on the safety card when set. Check the number before saving.", placeholder: "+971 …" },

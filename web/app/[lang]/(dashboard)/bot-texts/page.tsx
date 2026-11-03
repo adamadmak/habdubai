@@ -56,7 +56,7 @@ const BotTextsPage = () => {
         </Card>
 
         <Card className="lg:col-span-2">
-          {current ? <Editor key={current.key} row={current} languages={data?.languages ?? ["am", "ti", "en"]} /> : <CardContent className="p-6 text-default-500">Pick a text on the left.</CardContent>}
+          {current ? <Editor key={current.key} row={current} languages={data?.languages ?? ["am", "ti", "en", "om"]} /> : <CardContent className="p-6 text-default-500">Pick a text on the left.</CardContent>}
         </Card>
       </div>
     </div>

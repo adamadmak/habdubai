@@ -8,7 +8,7 @@ import { KindBadge } from "@/components/Cover";
 import { ShareButton } from "@/components/ShareButton";
 import { api, apiOrNull, type Job, type Meta } from "@/lib/api";
 import { formatDate, relative } from "@/lib/format";
-import { dict, fill, isLocale, label } from "@/lib/i18n";
+import { dict, fill, isLocale, label, pick, pickLang } from "@/lib/i18n";
 import { siteUrl } from "@/lib/site";
 
 type Detail = { job: Job; similar: Job[] };
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { job } = data;
   return {
     title: job.company ? `${job.title} · ${job.company}` : job.title,
-    description: (job.summary[lang] || job.summary.en || "").slice(0, 200),
+    description: pick(job.summary, lang).slice(0, 200),
     alternates: { canonical: `/${lang}/jobs/${job.id}` },
     robots: job.open ? undefined : { index: false },
   };
@@ -41,7 +41,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
   const { job, similar } = data;
 
   const place = [job.area, label(meta.labels.emirates[job.emirate], lang)].filter(Boolean).join(", ");
-  const summary = job.summary[lang] || job.summary.en;
+  const summary = pick(job.summary, lang);
   const source = job.source ?? "";
   const emirate = job.emirate !== "unknown" ? label(meta.labels.emirates[job.emirate], "en") : "";
 
@@ -99,7 +99,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
 
       <section className="mt-8">
         <h2 className="eyebrow">{d.jobs.summary}</h2>
-        <p className="prose-plain mt-2 text-[1.0625rem] leading-relaxed" lang={job.summary[lang] ? lang : "en"}>{summary || d.jobs.noSummary}</p>
+        <p className="prose-plain mt-2 text-[1.0625rem] leading-relaxed" lang={summary ? pickLang(job.summary, lang) : lang}>{summary || d.jobs.noSummary}</p>
       </section>
 
       {job.warning && job.warning.length > 0 && (
@@ -112,9 +112,10 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
       <div className="sticky bottom-[calc(var(--tabbar-space)+0.75rem)] z-30 mt-8 md:static">
         <div className="material flex items-center gap-3 rounded-2xl border border-line p-3 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
           {job.open && job.apply_url ? (
-            <a href={job.apply_url} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-primary flex-1 md:flex-none">
-              {source ? fill(d.jobs.apply, { source }) : d.jobs.applyGeneric}
-              <ArrowUpRight className="size-4" aria-hidden="true" />
+            // May shrink beside Share: a long site name, or a language that words it longer, ends in an ellipsis instead of widening the page.
+            <a href={job.apply_url} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-primary min-w-0 flex-1 md:flex-none">
+              <span className="truncate">{source ? fill(d.jobs.apply, { source }) : d.jobs.applyGeneric}</span>
+              <ArrowUpRight className="size-4 shrink-0" aria-hidden="true" />
             </a>
           ) : null}
           <ShareButton title={job.title} url={siteUrl(`${lang}/jobs/${job.id}`)} labels={{ share: d.common.share, copied: d.common.copied }} />

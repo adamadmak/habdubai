@@ -24,7 +24,7 @@ class Job extends Model
     protected $fillable = [
         'raw_id', 'source_id', 'duplicate_of', 'url', 'url_key', 'fingerprint', 'category', 'emirate', 'sub_area',
         'title', 'company', 'salary_min', 'salary_max', 'salary_currency', 'accommodation', 'visa', 'languages',
-        'summary_am', 'summary_ti', 'summary_en', 'scam_score', 'scam_reasons', 'classified_by', 'status',
+        'summary_am', 'summary_ti', 'summary_en', 'summary_om', 'scam_score', 'scam_reasons', 'classified_by', 'status',
         'review_reason', 'reviewed_by', 'reviewed_at', 'published_at', 'closed_at', 'channel_message_id', 'reports_count',
     ];
 
@@ -64,6 +64,7 @@ class Job extends Model
         $summary = match ($language) {
             'am' => $this->summary_am,
             'ti' => $this->summary_ti,
+            'om' => $this->summary_om,
             default => $this->summary_en,
         };
 

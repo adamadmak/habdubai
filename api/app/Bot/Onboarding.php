@@ -66,12 +66,13 @@ class Onboarding
 
     // ---- language -------------------------------------------------------
 
+    /** The greeting in every language the bot speaks, since none is chosen yet. */
     private function askLanguage(Conversation $conversation, Incoming $in): void
     {
         $this->telegram->sendText(
             $conversation->chat_id,
-            $this->messages->text('welcome', 'am')."\n\n".$this->messages->text('welcome', 'ti')."\n\n".$this->messages->text('welcome', 'en'),
-            $this->telegram->replyKeyboard([array_values(Choices::LANGUAGE_LABELS)])
+            implode("\n\n", array_map(fn (string $language) => $this->messages->text('welcome', $language), Choices::LANGUAGES)),
+            $this->telegram->replyKeyboard(Choices::languageRows())
         );
     }
 

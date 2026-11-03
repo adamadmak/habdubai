@@ -6,7 +6,8 @@ import type { Dictionary } from "@/lib/i18n";
 import type { Locale } from "@/lib/locales";
 import { ethiopianDate, formatDate } from "@/lib/format";
 
-const TAG: Record<Locale, string> = { am: "am-ET", ti: "ti-ER", en: "en-GB" };
+// Oromo reads a 24-hour time as English does; en-GB keeps browsers without `om` from using the reader's own locale.
+const TAG: Record<Locale, string> = { am: "am-ET", ti: "ti-ER", om: "en-GB", en: "en-GB" };
 
 function hm(date: Date, timeZone: string, locale: Locale): string {
   return new Intl.DateTimeFormat(TAG[locale], { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone }).format(date);

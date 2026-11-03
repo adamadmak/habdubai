@@ -262,6 +262,7 @@ export interface JobDetail extends JobSummary {
   summary_am: string | null;
   summary_ti: string | null;
   summary_en: string | null;
+  summary_om: string | null;
   languages: string[];
   accommodation: "yes" | "no" | "unknown";
   visa: "yes" | "no" | "unknown";
@@ -383,6 +384,7 @@ export interface DirectoryCity {
   name_en: string;
   name_am: string;
   name_ti: string;
+  name_om: string | null;
   country: string;
   sort: number;
   active: boolean;
@@ -426,6 +428,8 @@ export interface FaqRow {
   a_am: string | null;
   a_ti: string | null;
   a_en: string;
+  q_om: string | null;
+  a_om: string | null;
   source_url: string | null;
   active: boolean;
 }
@@ -457,6 +461,7 @@ export interface AnnouncementTopicRow {
   name_en: string;
   name_am: string;
   name_ti: string;
+  name_om: string | null;
   emoji: string;
   needs_approval: boolean;
   default_on: boolean;
@@ -473,6 +478,7 @@ export interface AnnouncementRow {
   text_am: string;
   text_ti: string;
   text_en: string;
+  text_om: string | null;
   has_photo: boolean;
   event_date: string | null;
   event_place: string | null;
@@ -504,7 +510,7 @@ export const JOB_EMIRATE_NAMES: Record<string, string> = {
   dubai: "Dubai", sharjah: "Sharjah", abu_dhabi: "Abu Dhabi", ajman: "Ajman", other_uae: "Other emirate", outside_uae: "Outside the UAE", unknown: "Not stated",
 };
 
-export const LANGUAGE_NAMES: Record<string, string> = { am: "Amharic", ti: "Tigrinya", en: "English" };
+export const LANGUAGE_NAMES: Record<string, string> = { am: "Amharic", ti: "Tigrinya", om: "Afaan Oromoo", en: "English" };
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";

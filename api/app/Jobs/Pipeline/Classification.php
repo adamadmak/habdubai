@@ -37,6 +37,7 @@ final class Classification
         public readonly int $scamRisk,
         public readonly array $scamSignals,
         public readonly string $by,
+        public readonly string $summaryOm = '',
     ) {}
 
     /** Build from the classifier's JSON, clamping anything out of range rather than trusting it. */
@@ -78,6 +79,7 @@ final class Classification
             summaryAm: $text($data['summary_am'] ?? '', 1200),
             summaryTi: $text($data['summary_ti'] ?? '', 1200),
             summaryEn: $text($data['summary_en'] ?? '', 1200),
+            summaryOm: $text($data['summary_om'] ?? '', 1200),
             scamRisk: max(0, min(100, (int) ($data['scam_risk'] ?? 0))),
             scamSignals: array_slice(array_values(array_filter(array_map(fn ($s) => $text($s, 160), (array) ($data['scam_signals'] ?? [])))), 0, 8),
             by: $by,

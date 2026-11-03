@@ -107,7 +107,7 @@ class Business extends Model
             'slug' => $this->slug ?? self::slugFor($this->name, $this->id),
             'name' => $this->name,
             'category' => $this->category,
-            'city' => $city ? ['key' => $city->key, 'name' => ['en' => $city->name_en, 'am' => $city->name_am, 'ti' => $city->name_ti]] : null,
+            'city' => $city ? ['key' => $city->key, 'name' => ['en' => $city->name_en, 'am' => $city->name_am, 'ti' => $city->name_ti, 'om' => $city->name_om]] : null,
             'area' => $this->area,
             'description' => $this->description,
             'verified' => $this->verified,

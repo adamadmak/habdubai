@@ -28,7 +28,7 @@ class SettingController extends Controller
         'telegram_goods_group_link' => ['nullable', 'url', 'max:200'],
         'telegram_questions_group_id' => ['nullable', 'string', 'max:32'],
         'telegram_goods_group_id' => ['nullable', 'string', 'max:32'],
-        'community_language' => ['nullable', 'in:am,ti,en'],
+        'community_language' => ['nullable', 'in:am,ti,en,om'],
         'questions_per_day' => ['nullable', 'integer', 'min:1', 'max:50'],
         'assistant_per_day' => ['nullable', 'integer', 'min:0', 'max:500'],
         'safety_consulate_phone' => ['nullable', 'string', 'max:40'],

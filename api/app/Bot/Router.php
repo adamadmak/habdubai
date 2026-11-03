@@ -203,7 +203,7 @@ class Router
                 $this->telegram->sendText(
                     $conversation->chat_id,
                     $this->messages->text('choose_language', $language),
-                    $this->telegram->replyKeyboard([array_values(Choices::LANGUAGE_LABELS)])
+                    $this->telegram->replyKeyboard(Choices::languageRows())
                 );
 
                 return;
@@ -359,7 +359,7 @@ class Router
             $this->telegram->sendText(
                 $conversation->chat_id,
                 $this->messages->text('choose_language', $conversation->language),
-                $this->telegram->replyKeyboard([array_values(Choices::LANGUAGE_LABELS)])
+                $this->telegram->replyKeyboard(Choices::languageRows())
             );
 
             return;

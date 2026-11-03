@@ -4,12 +4,13 @@ use App\Models\Conversation;
 use App\Models\Member;
 use App\Models\PlatformSetting;
 
-test('/start greets in all three languages and offers the language buttons', function (): void {
+test('/start greets in every language and offers the language buttons, two to a row', function (): void {
     say(7, '/start');
 
     $last = lastMessage();
-    expect($last['text'])->toContain('Welcome to Habesha Dubai')->toContain('እንኳን ደህና መጡ')->toContain('እንቋዕ ብደሓን')
-        ->and($last['reply_markup']['keyboard'][0])->toHaveCount(3)
+    expect($last['text'])->toContain('Welcome to Habesha Dubai')->toContain('እንኳን ደህና መጡ')->toContain('እንቋዕ ብደሓን')->toContain('Baga nagaan gara Habesha Dubai dhuftan')
+        ->and(collect($last['reply_markup']['keyboard'])->map(fn (array $row) => array_column($row, 'text'))->all())
+        ->toBe([['አማርኛ', 'ትግርኛ'], ['Afaan Oromoo', 'English']])
         ->and(Conversation::query()->where('telegram_user_id', 7)->value('state'))->toBe('language');
 });
 

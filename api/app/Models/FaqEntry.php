@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FaqEntry extends Model
 {
-    protected $fillable = ['question_id', 'category', 'q_am', 'q_ti', 'q_en', 'a_am', 'a_ti', 'a_en', 'source_url', 'active', 'promoted_by'];
+    protected $fillable = ['question_id', 'category', 'q_am', 'q_ti', 'q_en', 'q_om', 'a_am', 'a_ti', 'a_en', 'a_om', 'source_url', 'active', 'promoted_by'];
 
     protected function casts(): array
     {
@@ -21,11 +21,11 @@ class FaqEntry extends Model
 
     public function q(string $language): string
     {
-        return (string) (match ($language) { 'am' => $this->q_am, 'ti' => $this->q_ti, default => null } ?: $this->q_en);
+        return (string) (match ($language) { 'am' => $this->q_am, 'ti' => $this->q_ti, 'om' => $this->q_om, default => null } ?: $this->q_en);
     }
 
     public function a(string $language): string
     {
-        return (string) (match ($language) { 'am' => $this->a_am, 'ti' => $this->a_ti, default => null } ?: $this->a_en);
+        return (string) (match ($language) { 'am' => $this->a_am, 'ti' => $this->a_ti, 'om' => $this->a_om, default => null } ?: $this->a_en);
     }
 }

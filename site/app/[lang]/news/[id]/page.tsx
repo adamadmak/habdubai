@@ -6,7 +6,7 @@ import { DateLeaf, firstLine, NewsCard } from "@/components/Cards";
 import { ShareButton } from "@/components/ShareButton";
 import { apiOrNull, type Announcement } from "@/lib/api";
 import { daysUntil, ethiopianDate, formatDate, weekday } from "@/lib/format";
-import { dict, fill, isLocale, label, LOCALE_NAMES, LOCALES, type Locale } from "@/lib/i18n";
+import { dict, fill, isLocale, label, LOCALE_NAMES, LOCALES, pick, pickLang, type Locale } from "@/lib/i18n";
 import { siteUrl } from "@/lib/site";
 
 type Detail = { announcement: Announcement; more: Announcement[] };
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const data = await load(id);
   if (!data) return {};
   const a = data.announcement;
-  const text = a.text[lang] || a.text.en;
+  const text = pick(a.text, lang);
   return {
     title: firstLine(text, 70),
     description: text.slice(0, 200),
@@ -39,10 +39,14 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
   if (!data) notFound();
   const { announcement: a, more } = data;
 
-  // Every announcement exists in all three languages; read it in another without changing the site's.
+  // An announcement comes in Amharic, Tigrinya and English, and in Afaan Oromo once the API translates it;
+  // read it in another without changing the site's. Only the languages it has are offered.
   const asked = (await searchParams).read;
   const reading: Locale = asked && LOCALES.includes(asked as Locale) ? (asked as Locale) : lang;
-  const text = a.text[reading] || a.text.en;
+  const text = pick(a.text, reading);
+  // The language the text is really in: English stands in for one not translated yet.
+  const textLang = pickLang(a.text, reading);
+  const languages = LOCALES.filter((l) => a.text[l]);
   const soon = a.event_date ? daysUntil(a.event_date) : null;
 
   // An event reads to search engines as one: its name, its day and where it is held.
@@ -50,7 +54,7 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
     ? {
         "@context": "https://schema.org",
         "@type": "Event",
-        name: firstLine(a.text[lang] || a.text.en, 110),
+        name: firstLine(pick(a.text, lang), 110),
         startDate: a.event_date,
         eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
         location: a.event_place ? { "@type": "Place", name: a.event_place, address: a.event_place } : undefined,
@@ -66,7 +70,7 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
       </Link>
 
       <p className="eyebrow mt-6">{a.topic?.emoji} {label(a.topic?.name, lang)}</p>
-      <h1 className="display mt-2 text-[2rem] md:text-[2.75rem]" lang={reading}>{firstLine(text, 140)}</h1>
+      <h1 className="display mt-2 text-[2rem] md:text-[2.75rem]" lang={textLang}>{firstLine(text, 140)}</h1>
       <p className="mt-2 text-sm text-muted">{a.published_at && fill(d.news.posted, { date: formatDate(a.published_at, lang) })}</p>
 
       {a.event_date && (
@@ -99,16 +103,18 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
         </div>
       )}
 
-      <div role="group" aria-label={d.news.readIn} className="mt-6 flex items-center gap-2 text-sm">
-        <span className="text-muted">{d.news.readIn}</span>
-        {LOCALES.map((l) => (
-          <Link key={l} href={l === lang ? `/${lang}/news/${a.id}` : `/${lang}/news/${a.id}?read=${l}`} aria-current={l === reading ? "true" : undefined} className="chip py-1" lang={l} scroll={false}>
-            {LOCALE_NAMES[l]}
-          </Link>
-        ))}
-      </div>
+      {languages.length > 1 && (
+        <div role="group" aria-label={d.news.readIn} className="mt-6 flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted">{d.news.readIn}</span>
+          {languages.map((l) => (
+            <Link key={l} href={l === lang ? `/${lang}/news/${a.id}` : `/${lang}/news/${a.id}?read=${l}`} aria-current={l === textLang ? "true" : undefined} className="chip py-1" lang={l} scroll={false}>
+              {LOCALE_NAMES[l]}
+            </Link>
+          ))}
+        </div>
+      )}
 
-      <div className="prose-plain mt-5 text-[1.0625rem] leading-relaxed" lang={reading}>{text}</div>
+      <div className="prose-plain mt-5 text-[1.0625rem] leading-relaxed" lang={textLang}>{text}</div>
 
       <div className="mt-8">
         <ShareButton title={firstLine(text, 80)} url={siteUrl(`${lang}/news/${a.id}`)} labels={{ share: d.common.share, copied: d.common.copied }} />

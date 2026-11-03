@@ -1,7 +1,13 @@
 import type { Locale } from "./locales";
 
-/** Intl locale tags: Amharic and Tigrinya with their country so month names are right. */
-const TAG: Record<Locale, string> = { am: "am-ET", ti: "ti-ER", en: "en-GB" };
+/**
+ * Intl locale tags: Amharic and Tigrinya with their country so month names
+ * are right. Afaan Oromo writes its numbers as English does (1,500), so Intl
+ * only ever formats numbers and clock times for it, under en-GB: browsers
+ * that know no `om` would otherwise fall back to the reader's own locale.
+ * Its words come from the OM table below.
+ */
+const TAG: Record<Locale, string> = { am: "am-ET", ti: "ti-ER", om: "en-GB", en: "en-GB" };
 const TZ = "Asia/Dubai";
 
 /** A date-only value (2026-11-20) at noon in Dubai, so no timezone moves it a day. */
@@ -22,6 +28,35 @@ const TI = {
   weekdays: ["ሰንበት", "ሰኑይ", "ሰሉስ", "ረቡዕ", "ሓሙስ", "ዓርቢ", "ቀዳም"],
   ethiopicMonths: ["መስከረም", "ጥቅምቲ", "ሕዳር", "ታሕሳስ", "ጥሪ", "ለካቲት", "መጋቢት", "ሚያዚያ", "ጉንበት", "ሰነ", "ሓምለ", "ነሓሰ", "ጷጉሜ"],
 };
+
+/*
+ * Afaan Oromo, in Qubee. Browsers' Intl data for `om` is thin or missing (and
+ * the server's names the Ethiopian months wrongly), so every date in Oromo is
+ * built from this table, on the server and in the browser alike. Dates read
+ * month first, "Sadaasa 3, 2026", as the CLDR data for Oromo has them.
+ */
+const OM = {
+  months: ["Amajjii", "Guraandhala", "Bitootessa", "Ebla", "Caamsaa", "Waxabajjii", "Adoolessa", "Hagayya", "Fuulbana", "Onkoloolessa", "Sadaasa", "Muddee"],
+  monthsShort: ["Ama", "Gur", "Bit", "Elb", "Cam", "Wax", "Ado", "Hag", "Ful", "Onk", "Sad", "Mud"],
+  weekdays: ["Dilbata", "Wiixata", "Qibxata", "Roobii", "Kamiisa", "Jimaata", "Sanbata"],
+  weekdaysShort: ["Dil", "Wix", "Qib", "Rob", "Kam", "Jim", "San"],
+  // Fulbaana is Meskerem; Qaammee the five or six days that close the year. ALI: "akka lakkoofsa Itoophiyaatti".
+  ethiopicMonths: ["Fulbaana", "Onkoloolessa", "Sadaasa", "Muddee", "Amajjii", "Guraandhala", "Bitootessa", "Ebla", "Caamsaa", "Waxabajjii", "Adoolessa", "Hagayya", "Qaammee"],
+  ethiopicEra: "ALI",
+};
+
+/** "sa'aatii 2 dura", "kaleessa": Intl.RelativeTimeFormat has no Oromo in most browsers. */
+function relativeOm(seconds: number): string {
+  const abs = Math.abs(seconds);
+  const say = (unit: string, n: number) => (n < 0 ? `${unit} ${-n} dura` : `${unit} ${n} booda`);
+  if (abs < 60) return "ammuma";
+  if (abs < 3600) return say("daqiiqaa", Math.round(seconds / 60));
+  if (abs < 86400) return say("sa'aatii", Math.round(seconds / 3600));
+  const days = Math.round(seconds / 86400);
+  if (days === -1) return "kaleessa";
+  if (days === 1) return "boru";
+  return say("guyyaa", days);
+}
 
 /** The day in Dubai as numbers: year, month (1–12), day, and weekday (0 is Sunday). */
 function dubaiParts(date: Date): { year: number; month: number; day: number; weekday: number } {
@@ -49,16 +84,23 @@ function toEthiopic(year: number, month: number, day: number): { year: number; m
 
 export function formatDate(value: string | Date | null | undefined, locale: Locale, style: "long" | "medium" = "long"): string {
   if (!value) return "";
+  if (locale === "om") {
+    // CLDR spells the month out in both styles for Oromo; the short names are kept for tight spots.
+    const p = dubaiParts(toDate(value));
+    return `${OM.months[p.month - 1]} ${p.day}, ${p.year}`;
+  }
   return new Intl.DateTimeFormat(TAG[locale], { dateStyle: style, timeZone: TZ }).format(toDate(value));
 }
 
 /** The same day in the Ethiopian calendar, which most of our readers also live by: "11 ኅዳር 2019 ዓ.ም.". */
 export function ethiopianDate(value: string | Date | null | undefined, locale: Locale): string {
   if (!value) return "";
-  if (locale === "ti") {
+  if (locale === "ti" || locale === "om") {
     const p = dubaiParts(toDate(value));
     const e = toEthiopic(p.year, p.month, p.day);
-    return `${TI.ethiopicMonths[e.month - 1]} ${e.day}, ${e.year} ዓ.ም.`;
+    return locale === "ti"
+      ? `${TI.ethiopicMonths[e.month - 1]} ${e.day}, ${e.year} ዓ.ም.`
+      : `${OM.ethiopicMonths[e.month - 1]} ${e.day}, ${e.year} ${OM.ethiopicEra}`;
   }
   const tag = locale === "am" ? "am-ET-u-ca-ethiopic" : "en-u-ca-ethiopic";
   const text = new Intl.DateTimeFormat(tag, { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).format(toDate(value));
@@ -67,14 +109,15 @@ export function ethiopianDate(value: string | Date | null | undefined, locale: L
 
 export function weekday(value: string | Date, locale: Locale): string {
   if (locale === "ti") return TI.weekdays[dubaiParts(toDate(value)).weekday] ?? "";
+  if (locale === "om") return OM.weekdays[dubaiParts(toDate(value)).weekday] ?? "";
   return new Intl.DateTimeFormat(TAG[locale], { weekday: "long", timeZone: TZ }).format(toDate(value));
 }
 
 export function dayAndMonth(value: string | Date, locale: Locale): { day: string; month: string } {
   const date = toDate(value);
-  if (locale === "ti") {
+  if (locale === "ti" || locale === "om") {
     const p = dubaiParts(date);
-    return { day: String(p.day), month: TI.monthsShort[p.month - 1] ?? "" };
+    return { day: String(p.day), month: (locale === "ti" ? TI : OM).monthsShort[p.month - 1] ?? "" };
   }
   return {
     day: new Intl.DateTimeFormat(TAG[locale], { day: "numeric", timeZone: TZ }).format(date),
@@ -87,6 +130,7 @@ export function relative(value: string | null | undefined, locale: Locale, now: 
   if (!value) return "";
   const seconds = Math.round((new Date(value).getTime() - now) / 1000);
   const abs = Math.abs(seconds);
+  if (locale === "om") return abs < 86400 * 30 ? relativeOm(seconds) : formatDate(value, locale, "medium");
   const rtf = new Intl.RelativeTimeFormat(TAG[locale], { numeric: "auto" });
   if (abs < 60) return rtf.format(0, "second");
   if (abs < 3600) return rtf.format(Math.round(seconds / 60), "minute");
@@ -104,9 +148,9 @@ export function monthYear(value: string | null | undefined, locale: Locale): str
   if (!value) return "";
   const date = toDate(/^\d{4}-\d{2}$/.test(value) ? `${value}-15` : value);
   if (Number.isNaN(date.getTime())) return "";
-  if (locale === "ti") {
+  if (locale === "ti" || locale === "om") {
     const p = dubaiParts(date);
-    return `${TI.monthsShort[p.month - 1]} ${p.year}`;
+    return `${(locale === "ti" ? TI : OM).monthsShort[p.month - 1]} ${p.year}`;
   }
   return new Intl.DateTimeFormat(TAG[locale], { month: "short", year: "numeric", timeZone: TZ }).format(date);
 }
@@ -116,6 +160,10 @@ export function shortDate(value: string, locale: Locale): string {
   if (locale === "ti") {
     const p = dubaiParts(toDate(value));
     return `${TI.weekdaysShort[p.weekday]}፣ ${p.day} ${TI.monthsShort[p.month - 1]}`;
+  }
+  if (locale === "om") {
+    const p = dubaiParts(toDate(value));
+    return `${OM.weekdaysShort[p.weekday]}, ${OM.monthsShort[p.month - 1]} ${p.day}`;
   }
   return new Intl.DateTimeFormat(TAG[locale], { weekday: "short", day: "numeric", month: "short", timeZone: TZ }).format(toDate(value));
 }

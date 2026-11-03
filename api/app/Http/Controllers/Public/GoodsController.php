@@ -139,7 +139,7 @@ class GoodsController extends Controller
     /** @return array{am: string, ti: string, en: string} */
     private static function city(string $key): array
     {
-        return Choices::GOODS_CITIES_UAE[$key] ?? Choices::GOODS_CITIES_ET[$key] ?? ['am' => $key, 'ti' => $key, 'en' => $key];
+        return Choices::GOODS_CITIES_UAE[$key] ?? Choices::GOODS_CITIES_ET[$key] ?? ['am' => $key, 'ti' => $key, 'en' => $key, 'om' => $key];
     }
 
     /** The fixed lists the website's form and filters use, from the same place as the bot's buttons. */

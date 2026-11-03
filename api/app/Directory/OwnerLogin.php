@@ -88,7 +88,7 @@ class OwnerLogin
     /** "Yes, sign me in" or "It was not me" under the prompt. */
     public function answer(Callback $cb, bool $approve, int $requestId): void
     {
-        $language = in_array($cb->languageCode, ['am', 'ti'], true) ? $cb->languageCode : 'en';
+        $language = in_array($cb->languageCode, ['am', 'ti', 'om'], true) ? $cb->languageCode : 'en';
         $request = OwnerLoginRequest::query()->find($requestId);
 
         if ($cb->messageId && $cb->chatId) {

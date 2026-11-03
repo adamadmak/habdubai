@@ -43,7 +43,7 @@ final class JobSettings
     public static function cardLanguages(): array
     {
         $raw = RuntimeEnv::get(null, 'job_card_languages', null, 'am,ti');
-        $langs = array_values(array_intersect(array_map('trim', explode(',', $raw)), ['am', 'ti', 'en']));
+        $langs = array_values(array_intersect(array_map('trim', explode(',', $raw)), ['am', 'ti', 'en', 'om']));
 
         return $langs === [] ? ['am'] : $langs;
     }

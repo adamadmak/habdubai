@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * The website says which language its visitor reads (X-Locale: am, ti or en),
+ * The website says which language its visitor reads (X-Locale: am, ti, en or om),
  * so validation messages and owner messages come back in it.
  */
 class UseRequestLocale
@@ -17,7 +17,7 @@ class UseRequestLocale
         $locale = strtolower((string) $request->header('X-Locale', ''));
 
         // Always set, so a long-running worker never carries one visitor's language to the next.
-        app()->setLocale(in_array($locale, ['am', 'ti', 'en'], true) ? $locale : (string) config('app.fallback_locale', 'en'));
+        app()->setLocale(in_array($locale, ['am', 'ti', 'en', 'om'], true) ? $locale : (string) config('app.fallback_locale', 'en'));
 
         return $next($request);
     }

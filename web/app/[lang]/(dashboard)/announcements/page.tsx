@@ -34,7 +34,7 @@ const AnnouncementsPage = () => {
     (req, c) => req("/admin/announcements", "POST", { topic_id: Number(c.topic_id), text: c.text, event_date: c.event_date || null, event_place: c.event_place || null }),
     inv
   );
-  const save = useApiMutation<unknown, AnnouncementRow>((req, a) => req(`/admin/announcements/${a.id}`, "PUT", { text_am: a.text_am, text_ti: a.text_ti, text_en: a.text_en, event_date: a.event_date, event_place: a.event_place }), inv);
+  const save = useApiMutation<unknown, AnnouncementRow>((req, a) => req(`/admin/announcements/${a.id}`, "PUT", { text_am: a.text_am, text_ti: a.text_ti, text_en: a.text_en, text_om: a.text_om || null, event_date: a.event_date, event_place: a.event_place }), inv);
   const act = useApiMutation<{ subscribers?: number }, { id: number; action: "approve" | "reject" | "delete"; note?: string }>(
     (req, { id, action, note }) => (action === "delete" ? req(`/admin/announcements/${id}`, "DELETE") : req(`/admin/announcements/${id}/${action}`, "POST", { note })),
     inv
@@ -83,10 +83,10 @@ const AnnouncementsPage = () => {
                     </div>
                     <div className="text-sm text-default-500">{a.poster?.name ?? "—"} · {formatDateTime(a.published_at ?? a.created_at)}</div>
                   </div>
-                  <div className="grid gap-3 md:grid-cols-3 text-sm">
-                    {(["am", "ti", "en"] as const).map((l) => (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 text-sm">
+                    {(["am", "ti", "en", "om"] as const).map((l) => (
                       <div key={l}>
-                        <div className="text-xs text-default-500 mb-1">{l === "am" ? "Amharic" : l === "ti" ? "Tigrinya" : "English"}{a.original_language === l && " (original)"}</div>
+                        <div className="text-xs text-default-500 mb-1">{l === "am" ? "Amharic" : l === "ti" ? "Tigrinya" : l === "om" ? "Afaan Oromoo" : "English"}{a.original_language === l && " (original)"}</div>
                         <p className="whitespace-pre-wrap text-default-800">{a[`text_${l}`]}</p>
                       </div>
                     ))}
@@ -118,7 +118,7 @@ const AnnouncementsPage = () => {
 
         <TabsContent value="topics" className="mt-4 space-y-3">
           <div className="flex justify-end">
-            <Button variant="outline" onClick={() => { setErrors({}); setTopic({ name_en: "", name_am: "", name_ti: "", emoji: "📣", needs_approval: false, default_on: false, pin: false, sort: 100, active: true }); }}>Add topic</Button>
+            <Button variant="outline" onClick={() => { setErrors({}); setTopic({ name_en: "", name_am: "", name_ti: "", name_om: "", emoji: "📣", needs_approval: false, default_on: false, pin: false, sort: 100, active: true }); }}>Add topic</Button>
           </div>
           {data?.topics.map((t) => (
             <Card key={t.id} className="cursor-pointer hover:border-primary" onClick={() => { setErrors({}); setTopic({ ...t }); }}>
@@ -189,11 +189,11 @@ const AnnouncementsPage = () => {
                 <DialogTitle>Edit wording</DialogTitle>
                 <DialogDescription>The channel post is updated; messages already sent to members stay as they were.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 md:grid-cols-3">
-                {(["am", "ti", "en"] as const).map((l) => (
+              <div className="grid gap-4 md:grid-cols-2">
+                {(["am", "ti", "en", "om"] as const).map((l) => (
                   <div key={l}>
-                    <Label className="mb-1.5 block">{l === "am" ? "Amharic" : l === "ti" ? "Tigrinya" : "English"}</Label>
-                    <Textarea rows={8} value={edit[`text_${l}`]} onChange={(e) => setEdit({ ...edit, [`text_${l}`]: e.target.value })} className="text-base" />
+                    <Label className="mb-1.5 block">{l === "am" ? "Amharic" : l === "ti" ? "Tigrinya" : l === "om" ? "Afaan Oromoo" : "English"}</Label>
+                    <Textarea rows={8} value={edit[`text_${l}`] ?? ""} onChange={(e) => setEdit({ ...edit, [`text_${l}`]: e.target.value })} className="text-base" />
                     {err(`text_${l}`)}
                   </div>
                 ))}
@@ -235,6 +235,11 @@ const AnnouncementsPage = () => {
                   <Label className="mb-1.5 block">Tigrinya *</Label>
                   <Input value={topic.name_ti} onChange={(e) => setTopic({ ...topic, name_ti: e.target.value })} />
                   {err("name_ti")}
+                </div>
+                <div>
+                  <Label className="mb-1.5 block">Afaan Oromoo</Label>
+                  <Input value={topic.name_om ?? ""} onChange={(e) => setTopic({ ...topic, name_om: e.target.value })} placeholder="English when empty" />
+                  {err("name_om")}
                 </div>
                 <label className="flex items-center gap-2 text-sm"><Switch checked={topic.needs_approval} onCheckedChange={(v) => setTopic({ ...topic, needs_approval: v })} /> A moderator approves posts</label>
                 <label className="flex items-center gap-2 text-sm"><Switch checked={topic.default_on} onCheckedChange={(v) => setTopic({ ...topic, default_on: v })} /> On for members by default</label>

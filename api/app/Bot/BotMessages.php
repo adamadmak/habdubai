@@ -8,7 +8,8 @@ use App\Models\BotText;
  * Every bot message goes through here: the admin's override wins, the
  * default in resources/bot/texts.php is the fallback, English is the last
  * resort when a language is missing. Button presses are matched the same
- * way, across all three languages, so an edited label still works.
+ * way, across every language in Choices::LANGUAGES, so an edited label
+ * still works and a member who switched language mid-flow is understood.
  */
 class BotMessages
 {

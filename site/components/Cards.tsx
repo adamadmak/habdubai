@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BadgeCheck, BedDouble, MapPin, MessageCircle, Navigation, Phone, Stamp } from "lucide-react";
-import { dict, fill, label, pick, type Locale } from "@/lib/i18n";
-import { ethiopianDate, formatDate, relative, weekday } from "@/lib/format";
+import { dict, fill, label, pick, pickLang, type Locale } from "@/lib/i18n";
+import { ethiopianDate, formatDate, number, relative, weekday } from "@/lib/format";
 import type { Announcement, Business, Job, Meta } from "@/lib/api";
 import { photoSrcSet } from "@/lib/photos";
 import { Cover, KindBadge } from "./Cover";
@@ -11,6 +11,7 @@ import { DateLeaf } from "./DateLeaf";
 export function JobCard({ job, lang, meta, compact = false }: { job: Job; lang: Locale; meta: Meta | null; compact?: boolean }) {
   const d = dict(lang);
   const place = [job.area, label(meta?.labels.emirates[job.emirate], lang)].filter(Boolean).join(", ");
+  const summary = pick(job.summary, lang);
 
   return (
     <Link href={`/${lang}/jobs/${job.id}`} className="card lift flex h-full flex-col p-4 md:p-5">
@@ -21,7 +22,7 @@ export function JobCard({ job, lang, meta, compact = false }: { job: Job; lang: 
           <p className="mt-0.5 truncate text-sm text-muted">{[job.company, place].filter(Boolean).join(" · ")}</p>
         </div>
       </div>
-      {!compact && job.summary[lang] && <p className="mt-3 line-clamp-2 text-sm text-muted">{job.summary[lang]}</p>}
+      {!compact && summary && <p className="mt-3 line-clamp-2 text-sm text-muted" lang={pickLang(job.summary, lang)}>{summary}</p>}
       <div className="mt-auto flex items-end justify-between gap-3 pt-4">
         <div className="min-w-0 border-t border-dashed border-line pt-3">
           {job.salary ? (
@@ -95,7 +96,8 @@ export function BusinessCard({ business, lang, meta }: { business: Business; lan
 export { DateLeaf };
 
 export function EventCard({ item, lang }: { item: Announcement; lang: Locale }) {
-  const text = item.text[lang] || item.text.en;
+  const text = pick(item.text, lang);
+  const textLang = pickLang(item.text, lang);
   return (
     <Link href={`/${lang}/news/${item.id}`} className="card lift flex h-full gap-4 p-4">
       {item.event_date && <DateLeaf date={item.event_date} lang={lang} />}
@@ -103,7 +105,7 @@ export function EventCard({ item, lang }: { item: Announcement; lang: Locale }) 
         <p className="text-xs font-semibold text-accent-ink">
           {item.topic?.emoji} {label(item.topic?.name, lang)}
         </p>
-        <p className="mt-1 line-clamp-2 font-semibold leading-snug">{firstLine(text)}</p>
+        <p className="mt-1 line-clamp-2 font-semibold leading-snug" lang={textLang}>{firstLine(text)}</p>
         {item.event_date && (
           <p className="mt-1.5 text-xs text-muted">
             {weekday(item.event_date, lang)} · {ethiopianDate(item.event_date, lang)}
@@ -123,7 +125,8 @@ export function EventCard({ item, lang }: { item: Announcement; lang: Locale }) 
 /** An announcement. Without a photo, its topic's emoji stands in, on paper, so the text stays the point. */
 export function NewsCard({ item, lang }: { item: Announcement; lang: Locale }) {
   const d = dict(lang);
-  const text = item.text[lang] || item.text.en;
+  const text = pick(item.text, lang);
+  const textLang = pickLang(item.text, lang);
   return (
     <Link href={`/${lang}/news/${item.id}`} className="card lift flex h-full flex-col overflow-hidden">
       {item.photo ? (
@@ -139,7 +142,7 @@ export function NewsCard({ item, lang }: { item: Announcement; lang: Locale }) {
           {item.topic?.emoji && <span className="grid size-7 place-items-center rounded-full bg-accent-soft text-sm" aria-hidden="true">{item.topic.emoji}</span>}
           {label(item.topic?.name, lang)}
         </p>
-        <p className="line-clamp-3 font-medium leading-snug">{text}</p>
+        <p className="line-clamp-3 font-medium leading-snug" lang={textLang}>{text}</p>
         <p className="mt-auto pt-1 text-xs text-faint">
           {item.event_date ? `${d.news.event} · ${formatDate(item.event_date, lang, "medium")}` : relative(item.published_at, lang)}
         </p>
@@ -180,5 +183,5 @@ export function firstLine(text: string, max = 110): string {
 }
 
 export function countLabel(n: number, one: string, many: string, lang: Locale): string {
-  return n === 1 ? one : fill(many, { n: new Intl.NumberFormat(lang === "en" ? "en-GB" : lang).format(n) });
+  return n === 1 ? one : fill(many, { n: number(n, lang) });
 }

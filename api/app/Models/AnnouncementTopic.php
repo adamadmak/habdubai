@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AnnouncementTopic extends Model
 {
-    protected $fillable = ['key', 'name_en', 'name_am', 'name_ti', 'emoji', 'needs_approval', 'default_on', 'pin', 'sort', 'active'];
+    protected $fillable = ['key', 'name_en', 'name_am', 'name_ti', 'name_om', 'emoji', 'needs_approval', 'default_on', 'pin', 'sort', 'active'];
 
     protected function casts(): array
     {
@@ -15,7 +15,7 @@ class AnnouncementTopic extends Model
 
     public function name(string $language): string
     {
-        return (string) (match ($language) { 'am' => $this->name_am, 'ti' => $this->name_ti, default => $this->name_en } ?: $this->name_en);
+        return (string) (match ($language) { 'am' => $this->name_am, 'ti' => $this->name_ti, 'om' => $this->name_om, default => $this->name_en } ?: $this->name_en);
     }
 
     public function label(string $language): string

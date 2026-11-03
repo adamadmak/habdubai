@@ -22,12 +22,21 @@ write-only secrets on Settings (`SettingController::SECRETS`) are stored as
 
 ## Every bot message goes through `BotMessages`
 
-Defaults in `api/resources/bot/texts.php`, in Amharic, Tigrinya and English;
-an admin override in `bot_texts` wins. Button presses are matched with
-`BotMessages::pressed()` across all three languages, so never compare a
-pressed label to a literal. Fixed lists (emirates, trades) are in
-`App\Bot\Choices`, keyed by what the database stores. The Tigrinya column was
-written without a native reviewer; it is on the launch checklist.
+Defaults in `api/resources/bot/texts.php`, in Amharic, Tigrinya, English and
+Afaan Oromoo (`om`, Latin script, added 3 Nov 2026); an admin override in
+`bot_texts` wins. Button presses are matched with `BotMessages::pressed()`
+across all languages, so never compare a pressed label to a literal. Fixed
+lists (emirates, trades) are in `App\Bot\Choices`, keyed by what the database
+stores; `Choices::LANGUAGES` is the one list of languages. The Tigrinya and
+Oromo columns were written without a native reviewer; both are on the launch
+checklist.
+
+Text kept per language in the database (`jobs_listings.summary_*`,
+`faq_entries.q_*`/`a_*`, `announcements.text_*`, `announcement_topics.name_*`,
+`directory_cities.name_*`) has an `_om` column too, nullable: every reader
+falls back to English. Claude writes all four in one call (`Translator`,
+`ClaudeJobClassifier`); a fifth language means a column per table, the
+prompts, the payloads and the admin forms.
 
 ## The webhook only records; handlers run on the queue
 
@@ -153,9 +162,10 @@ one would pair with before it is made. Rules that are easy to break:
 
 Next.js 15 (App Router, React 19, Tailwind 4), rendered per request with the
 API's answers cached for a minute; nothing is pre-rendered at build time, so
-a build never needs the API. Every page lives under `/am`, `/ti` or `/en`
-(`middleware.ts`); copy is in `site/i18n/*.ts`, one typed shape for all
-three. The fixed lists (kinds of work, emirates, business kinds, languages)
+a build never needs the API. Every page lives under `/am`, `/ti`, `/en` or
+`/om` (`middleware.ts`); copy is in `site/i18n/*.ts`, one typed shape for
+all four. Browsers lack Tigrinya and Oromo date names, so `lib/format.ts`
+carries fixed tables for them. The fixed lists (kinds of work, emirates, business kinds, languages)
 come from the API's `/public/meta`, i.e. from `Choices`, so the site and the
 bot never word them differently.
 

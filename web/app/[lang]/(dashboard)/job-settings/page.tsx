@@ -17,6 +17,7 @@ const LANGS = [
   ["am", "Amharic"],
   ["ti", "Tigrinya"],
   ["en", "English"],
+  ["om", "Afaan Oromoo"],
 ] as const;
 
 const JobSettingsPage = () => {
@@ -112,7 +113,7 @@ const JobSettingsPage = () => {
               {data.anthropic.configured ? <Badge color="success" variant="soft">Claude · key {data.anthropic.hint}</Badge> : <Badge color="warning" variant="soft">Keyword rules only</Badge>}
             </CardTitle>
             <CardDescription>
-              With an Anthropic key, each new listing gets one Claude call: category, place, pay, scam signals, and summaries in Amharic, Tigrinya and English. Without one, keyword rules classify and the card shows English only.
+              With an Anthropic key, each new listing gets one Claude call: category, place, pay, scam signals, and summaries in Amharic, Tigrinya, English and Afaan Oromoo. Without one, keyword rules classify and the card shows English only.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -125,7 +126,7 @@ const JobSettingsPage = () => {
             <div>
               <Label className="mb-1.5 block">Model</Label>
               <Input value={form.anthropic_model} onChange={(e) => setForm({ ...form, anthropic_model: e.target.value })} />
-              <p className="text-xs text-default-500 mt-1">claude-opus-5-5 by default. A cheaper model lowers the cost per listing; check the Amharic and Tigrinya summaries if you change it.</p>
+              <p className="text-xs text-default-500 mt-1">claude-opus-5-5 by default. A cheaper model lowers the cost per listing; check the Amharic, Tigrinya and Oromo summaries if you change it.</p>
               {err("anthropic_model")}
             </div>
           </CardContent>

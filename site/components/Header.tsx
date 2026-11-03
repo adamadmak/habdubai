@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Send } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
-import type { Locale } from "@/lib/locales";
+import { isGeez, type Locale } from "@/lib/locales";
 import type { Meta } from "@/lib/api";
 import { Mark } from "./Logo";
 import { LangSwitch, LangSwitchPlain } from "./LangSwitch";
@@ -19,8 +19,8 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
           <Mark className="size-9" />
           <span className="flex flex-col leading-none">
             <span className="text-[0.9375rem] font-bold tracking-tight">{d.brand}</span>
-            {/* The name in the other script: Ge'ez on English pages, Latin on the others. */}
-            <span lang={lang === "en" ? "am" : "en"} className="mt-1 text-[0.6875rem] font-medium text-white/70">{d.brandNative}</span>
+            {/* The name in the other script: Ge'ez on English and Oromo pages, Latin on Amharic and Tigrinya ones. */}
+            <span lang={isGeez(lang) ? "en" : "am"} className="mt-1 text-[0.6875rem] font-medium text-white/70">{d.brandNative}</span>
           </span>
         </Link>
 

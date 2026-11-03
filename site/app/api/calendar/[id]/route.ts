@@ -1,5 +1,6 @@
 import { apiOrNull, type Announcement } from "@/lib/api";
 import { firstLine } from "@/components/Cards";
+import { pick } from "@/lib/labels";
 import { isLocale } from "@/lib/locales";
 import { siteUrl } from "@/lib/site";
 
@@ -13,7 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const a = data?.announcement;
   if (!a?.event_date) return new Response("Not found", { status: 404 });
 
-  const text = a.text[lang] || a.text.en;
+  const text = pick(a.text, lang);
   const day = a.event_date.replace(/-/g, "");
   const next = new Date(`${a.event_date}T12:00:00Z`);
   next.setUTCDate(next.getUTCDate() + 1);

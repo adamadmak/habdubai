@@ -10,7 +10,7 @@ final class Community
     {
         $lang = RuntimeEnv::get(null, 'community_language', null, 'am');
 
-        return in_array($lang, ['am', 'ti', 'en'], true) ? $lang : 'am';
+        return in_array($lang, ['am', 'ti', 'en', 'om'], true) ? $lang : 'am';
     }
 
     public static function questionsGroup(): string

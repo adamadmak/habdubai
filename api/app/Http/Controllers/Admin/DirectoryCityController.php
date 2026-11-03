@@ -60,6 +60,7 @@ class DirectoryCityController extends Controller
             'name_en' => ['required', 'string', 'min:2', 'max:80'],
             'name_am' => ['required', 'string', 'min:1', 'max:80'],
             'name_ti' => ['required', 'string', 'min:1', 'max:80'],
+            'name_om' => ['nullable', 'string', 'max:80'],
             'country' => ['required', 'string', 'size:2', 'alpha'],
             'sort' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'active' => ['boolean'],

@@ -54,6 +54,7 @@ class JobController extends Controller
             'job' => $this->summary($job) + [
                 'summary_am' => $job->summary_am,
                 'summary_ti' => $job->summary_ti,
+                'summary_om' => $job->summary_om,
                 'summary_en' => $job->summary_en,
                 'languages' => $job->languages ?? [],
                 'accommodation' => $job->accommodation,
@@ -142,6 +143,7 @@ class JobController extends Controller
             'visa' => ['sometimes', Rule::in(Classification::TRISTATE)],
             'summary_am' => ['sometimes', 'nullable', 'string', 'max:1200'],
             'summary_ti' => ['sometimes', 'nullable', 'string', 'max:1200'],
+            'summary_om' => ['sometimes', 'nullable', 'string', 'max:1200'],
             'summary_en' => ['sometimes', 'nullable', 'string', 'max:1200'],
         ]);
     }

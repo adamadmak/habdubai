@@ -17,7 +17,7 @@ class PageViewController extends Controller
     public function store(Request $request): Response
     {
         $data = $request->validate([
-            'path' => ['required', 'string', 'max:200', 'regex:#^/(am|ti|en)(/[A-Za-z0-9_\-/]*)?$#'],
+            'path' => ['required', 'string', 'max:200', 'regex:#^/(am|ti|en|om)(/[A-Za-z0-9_\-/]*)?$#'],
         ]);
 
         // This host does not migrate before the code goes live; a missing table counts nothing.

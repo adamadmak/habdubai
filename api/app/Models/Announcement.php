@@ -13,7 +13,7 @@ class Announcement extends Model
     public const PIN_HOURS = 48;
 
     protected $fillable = [
-        'topic_id', 'member_id', 'user_id', 'original_language', 'text_am', 'text_ti', 'text_en', 'photo_file_id',
+        'topic_id', 'member_id', 'user_id', 'original_language', 'text_am', 'text_ti', 'text_en', 'text_om', 'photo_file_id',
         'event_date', 'event_place', 'status', 'review_note', 'reviewed_by', 'channel_message_id', 'published_at',
         'pinned_until', 'reminder_sent_at', 'dm_count',
     ];
@@ -45,7 +45,7 @@ class Announcement extends Model
 
     public function text(string $language): string
     {
-        return (string) (match ($language) { 'am' => $this->text_am, 'ti' => $this->text_ti, default => $this->text_en } ?: $this->text_en);
+        return (string) (match ($language) { 'am' => $this->text_am, 'ti' => $this->text_ti, 'om' => $this->text_om, default => $this->text_en } ?: $this->text_en);
     }
 
     public function posterName(): string

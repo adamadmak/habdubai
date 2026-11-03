@@ -137,7 +137,8 @@ export interface Job {
   source: string | null;
   open: boolean;
   published_at: string | null;
-  summary: Record<Locale, string>;
+  // {am, ti, en} today; `om` once the API has it. Read through pick(), which falls back to English.
+  summary: Labels;
   apply_url?: string | null;
   languages?: string[];
   warning?: string[];
@@ -181,7 +182,8 @@ export interface Topic {
 export interface Announcement {
   id: number;
   topic: Topic | null;
-  text: Record<Locale, string>;
+  // The same: one text per language, `om` not yet everywhere. Read through pick().
+  text: Labels;
   original_language: Locale;
   event_date: string | null;
   event_place: string | null;

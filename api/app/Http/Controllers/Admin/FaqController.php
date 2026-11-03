@@ -83,6 +83,8 @@ class FaqController extends Controller
             'a_am' => ['nullable', 'string', 'max:3000'],
             'q_ti' => ['nullable', 'string', 'max:500'],
             'a_ti' => ['nullable', 'string', 'max:3000'],
+            'q_om' => ['nullable', 'string', 'max:500'],
+            'a_om' => ['nullable', 'string', 'max:3000'],
             'source_url' => ['nullable', 'url', 'max:500'],
             'active' => ['boolean'],
         ], [], ['q_en' => 'English question', 'a_en' => 'English answer']);

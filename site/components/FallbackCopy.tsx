@@ -5,7 +5,7 @@ import type { Locale } from "@/lib/locales";
 /**
  * The few words the error and not-found pages need. Those pages have to be
  * client components, and importing the dictionaries there would send all
- * three languages to every visitor; the layout hands down just these.
+ * four languages to every visitor; the layout hands down just these.
  */
 export type FallbackCopy = {
   lang: Locale;
