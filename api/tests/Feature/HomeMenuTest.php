@@ -105,3 +105,26 @@ test('someone who left gets no menu back on cancel', function (): void {
     say(36, '/cancel');
     expect(lastMessage()['reply_markup'])->toBe(['remove_keyboard' => true]);
 });
+
+test('a command interrupts a flow, so the next message is never taken as the flow\'s answer', function (): void {
+    joinMember(37);
+
+    say(37, '/ask');
+    say(37, '/start');
+    expect(\App\Models\Conversation::query()->where('telegram_user_id', 37)->value('state'))->toBe('idle');
+
+    say(37, '/jobs');
+    $jobs = lastText();
+    say(37, '/ask');
+    say(37, '💼 Jobs');
+    expect(lastText())->toBe($jobs);
+});
+
+test('"Interested" on a post that no longer exists gets a plain answer, not a failed update', function (): void {
+    joinMember(38);
+
+    say(38, '/start g999999')->assertOk();
+
+    expect(lastText())->toBe(app(\App\Bot\BotMessages::class)->text('goods_post_closed', 'en'))
+        ->and(\App\Models\TelegramUpdate::query()->where('status', 'failed')->count())->toBe(0);
+});

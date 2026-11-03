@@ -143,7 +143,7 @@ class GroupModerator
         $lower = mb_strtolower($text);
         $isNew = $member->verified_at === null || $member->verified_at->greaterThan(now()->subDays(self::NEW_MEMBER_DAYS));
 
-        if ($isNew && ($hiddenLink || preg_match('#(https?://|www\.|t\.me/|\b[a-z0-9-]+\.(com|net|org|ae|et|io|me)\b)#i', $text) || preg_match('/(\+?\d[\d\s-]{7,}\d)/', $text))) {
+        if ($isNew && ($hiddenLink || preg_match('#(https?://|www\.|t\.me/|\b[a-z0-9-]+\.(com|net|org|ae|et|io|me)\b)#i', $text) || preg_match('/\+?\d(?:[\s-]?\d){8,14}(?![\d])/', $text))) {
             return 'mod_removed_link';
         }
 

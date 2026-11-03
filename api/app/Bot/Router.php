@@ -110,6 +110,12 @@ class Router
             return;
         }
 
+        // A command always wins over a flow left half-way: what the member types next is never
+        // taken as that flow's answer. The join flow is the exception, /start picks it up where it was.
+        if ($in->command() !== null && $in->command() !== 'cancel' && $conversation->state !== 'idle' && ! in_array($conversation->state, Onboarding::STATES, true)) {
+            $conversation->reset();
+        }
+
         switch ($in->command()) {
             case 'start':
                 // "Continue with Telegram" on the website: anyone may sign in, member or not.
@@ -418,7 +424,8 @@ class Router
             return;
         }
 
-        $member->forceFill(['left_at' => now()])->save();
+        // Leaving also takes back the agreement to the rules: coming back goes through them again before the groups.
+        $member->forceFill(['left_at' => now(), 'agreed_rules_at' => null])->save();
         AuditLog::record(null, 'member.left', 'member', $member->id);
         $conversation->reset();
 

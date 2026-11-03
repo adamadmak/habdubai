@@ -24,7 +24,8 @@ class SystemTickController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $expected = RuntimeEnv::get('services.host.tick_token', 'tick_token', 'TICK_TOKEN');
-        $provided = (string) ($request->header('X-Tick-Token') ?? $request->query('token', ''));
+        // Header only: a token in the query string would sit in every proxy and access log.
+        $provided = (string) $request->header('X-Tick-Token', '');
 
         if (strlen($expected) < 32 || ! hash_equals($expected, $provided)) {
             return response()->json(['error' => 'Invalid token.'], 401);

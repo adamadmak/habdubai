@@ -401,7 +401,7 @@ class DirectoryFlow
                 }
                 $business = $this->draft($conversation);
                 $business->forceFill(['status' => 'pending', 'submitted_by' => $member->id])->save();
-                $this->attachPhoto($business, (string) ($conversation->data['photo_file_id'] ?? ''));
+                $this->attachPhoto($member, $business, (string) ($conversation->data['photo_file_id'] ?? ''));
                 AuditLog::record(null, 'directory.suggested', 'business', $business->id, null, ['member_id' => $member->id, 'name' => $business->name]);
                 $conversation->reset();
                 $this->say($member, 'biz_submitted', [], $this->messages->menuKeyboard($member->language));
@@ -514,7 +514,7 @@ class DirectoryFlow
      * suggestion, in review like the listing, for the moderator to see and
      * approve with it. The suggestion stands without it if Telegram is slow.
      */
-    private function attachPhoto(Business $business, string $fileId): void
+    private function attachPhoto(Member $member, Business $business, string $fileId): void
     {
         if ($fileId === '') {
             return;
@@ -525,6 +525,9 @@ class DirectoryFlow
             if ($bytes !== null) {
                 $this->photos->store($business, $bytes);
             }
+        } catch (\Illuminate\Validation\ValidationException) {
+            // Too small, unreadable or enormous: the suggestion stands, and the member hears the photo did not.
+            $this->say($member, 'biz_photo_dropped');
         } catch (\Throwable $e) {
             report($e);
         }

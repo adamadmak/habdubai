@@ -72,10 +72,10 @@ return [
         'om' => 'Namni tokko akkaawuntii Telegram biraa irraa lakkoofsa bilbila keessanii mirkaneessuuf yaaleera. Isin yoo hin taane, wanti jijjiirame hin jiru; garuu eenyutu lakkoofsa keessan akka qabu of eeggadhaa.',
     ],
     'phone_country_review' => [
-        'am' => 'ቁጥርዎ ከኤምሬትስና ከኢትዮጵያ ውጭ ነው። መቀጠል ይችላሉ፤ ከመለጠፍዎ በፊት አስተዳዳሪ መለያዎን ያያል።',
-        'ti' => 'ቁጽርኹም ካብ ኢማራትን ኢትዮጵያን ወጻኢ እዩ። ክትቅጽሉ ትኽእሉ፤ ቅድሚ ምልጣፍኩም ኣመሓዳሪ ኣካውንትኩም ክርኢ እዩ።',
-        'en' => 'Your number is from outside the UAE and Ethiopia. You can continue; an admin will look at your account before you can post.',
-        'om' => 'Lakkoofsi keessan Imaaraatii fi Itoophiyaan alaa ti. Itti fufuu dandeessu; osoo hin maxxansiin dura bulchaan akkaawuntii keessan ni ilaala.',
+        'am' => 'ቁጥርዎ ከኤምሬትስና ከኢትዮጵያ ውጭ ነው። መቀጠል ይችላሉ፤ መለያዎን ለማረጋገጥ አስተዳዳሪ ሊያነጋግርዎ ይችላል።',
+        'ti' => 'ቁጽርኹም ካብ ኢማራትን ኢትዮጵያን ወጻኢ እዩ። ክትቅጽሉ ትኽእሉ፤ ኣካውንትኩም ንምርግጋጽ ኣመሓዳሪ ክረኽበኩም ይኽእል እዩ።',
+        'en' => 'Your number is from outside the UAE and Ethiopia. You can continue; a moderator may contact you to confirm your account.',
+        'om' => 'Lakkoofsi keessan Imaaraatii fi Itoophiyaan alaa ti. Itti fufuu dandeessu; akkaawuntii keessan mirkaneessuuf bulchaan isin qunnamuu danda\'a.',
     ],
     'phone_ok' => [
         'am' => 'አመሰግናለሁ፣ ቁጥርዎ ተረጋግጧል። ✅',
@@ -753,6 +753,12 @@ return [
         'ti' => 'ናይቲ ቦታ ስእሊ ስደዱ (ቅድሚት ወይ ውሽጢ)። እንተዘይብልኩም «ዝለል» ጠውቑ።',
         'en' => 'Send a photo of the place (the front or the inside). If you have none, tap Skip.',
         'om' => 'Suuraa bakkichaa ergaa (fuuldura ykn keessa). Yoo hin qabaanne "Darbi" tuqaa.',
+    ],
+    'biz_photo_dropped' => [
+        'am' => 'ፎቶው ሊያገለግል አልቻለም (በጣም ትንሽ ወይም ሊነበብ የማይችል ነው)። ጥቆማዎ ያለ ፎቶ ተልኳል፤ አስተዳዳሪ በኋላ ሊጨምር ይችላል።',
+        'ti' => 'እቲ ስእሊ ክጠቅም ኣይከኣለን (ኣዝዩ ንእሽቶ ወይ ክንበብ ዘይክእል እዩ)። ሓሳብኩም ብዘይ ስእሊ ተላኢኹ፤ ኣመሓዳሪ ድሕሪኡ ክውስኽ ይኽእል።',
+        'en' => 'The photo could not be used (too small or unreadable). Your suggestion went through without it; a moderator can add one later.',
+        'om' => 'Suuraan fayyadamuu hin dandeenye (baay\'ee xiqqaa ykn dubbifamuu hin dandeenye). Yaadni keessan suuraa malee ergameera; bulchaan booda dabaluu danda\'a.',
     ],
     'biz_confirm' => [
         'am' => "እባክዎ ያረጋግጡ፡\n\n{card}\n\nትክክል ከሆነ «ላክ» ይጫኑ።",

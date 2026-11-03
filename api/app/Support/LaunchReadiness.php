@@ -148,6 +148,16 @@ final class LaunchReadiness
             return [false, 'Telegram sends updates to '.($host !== '' ? $host : 'another address').', not to this API.', 'Check the public address on Settings, then press "Register webhook" again.'];
         }
 
+        // The whole address, secret included: a webhook left from an earlier token is answered 403 on every delivery.
+        try {
+            $secret = app(\App\Services\TelegramBotService::class)->webhookSecret();
+        } catch (\Throwable) {
+            $secret = null;
+        }
+        if ($secret === null || $url !== $base.'/api/telegram/webhook/'.$secret) {
+            return [false, 'The webhook is registered to this API with an old secret, so every message Telegram sends is refused.', 'Press "Register webhook" on Settings.'];
+        }
+
         $pending = (int) ($info['pending_update_count'] ?? 0);
         $errorAt = isset($info['last_error_date']) ? CarbonImmutable::createFromTimestamp((int) $info['last_error_date']) : null;
         if ($errorAt !== null && $errorAt->greaterThan(now()->subMinutes(self::WEBHOOK_ERROR_MINUTES))) {

@@ -86,3 +86,24 @@ test('an account that is not a member gets the listings part and the bot link on
 test('the home page needs an owner token', function (): void {
     test()->getJson('/api/owner/home')->assertUnauthorized();
 });
+
+test('a banned member cannot use an owner account made before they joined', function (): void {
+    $token = homeToken(43);
+    expect(\App\Models\BusinessOwner::query()->where('telegram_user_id', 43)->value('member_id'))->toBeNull();
+
+    $member = joinMember(43);
+    // The first owner call after joining links the two.
+    asHome($token)->getJson('/api/owner/home')->assertOk()->assertJsonPath('owner.member', true);
+
+    $member->forceFill(['banned_at' => now(), 'ban_reason' => 'scam'])->save();
+    asHome($token)->getJson('/api/owner/home')->assertForbidden();
+});
+
+test('page views are counted only with the website key once one is set', function (): void {
+    test()->postJson('/api/public/pageview', ['path' => '/en/jobs'])->assertSuccessful();
+
+    PlatformSetting::put('site_api_key', str_repeat('k', 40));
+    test()->postJson('/api/public/pageview', ['path' => '/en/jobs'])->assertForbidden();
+    test()->withHeader('X-Site-Key', str_repeat('k', 40))->postJson('/api/public/pageview', ['path' => '/en/jobs'])->assertSuccessful();
+    test()->flushHeaders();
+});

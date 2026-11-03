@@ -46,9 +46,16 @@ class BusinessOwner extends Authenticatable
         return $this->hasMany(BusinessClaim::class, 'owner_id');
     }
 
+    /** Banned here, or banned as a member: by the link when there is one, else by the Telegram account itself. */
     public function isBanned(): bool
     {
-        return $this->banned_at !== null || $this->member?->isBanned();
+        if ($this->banned_at !== null) {
+            return true;
+        }
+
+        $member = $this->member ?? Member::findByTelegramUser((int) $this->telegram_user_id);
+
+        return $member?->isBanned() === true;
     }
 
     /** Private chats with the bot have the user's id as the chat id. */

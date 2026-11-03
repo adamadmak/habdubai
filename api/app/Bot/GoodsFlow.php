@@ -387,6 +387,14 @@ class GoodsFlow
     public function interest(Member $member, int $postId): void
     {
         $post = GoodsPost::query()->with('member')->find($postId);
+
+        // A deep link or an old button for a post that is gone (removed, or never existed).
+        if ($post === null) {
+            $this->say($member, 'goods_post_closed');
+
+            return;
+        }
+
         $status = $this->ask($member, $post);
 
         if ($status === 'need_post') {

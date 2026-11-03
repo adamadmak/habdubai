@@ -20,13 +20,13 @@ Schedule::command('jobs:send-alerts')->everyFiveMinutes()->withoutOverlapping(5)
 // A tick that arrives while the previous one still runs is refused, and the scheduler
 // never runs a missed minute later. So nothing below is pinned to one minute of the day:
 // each task runs often and does only what is due.
-Schedule::command('jobs:close-stale')->cron('15 */6 * * *')->withoutOverlapping(30);
+Schedule::command('jobs:close-stale')->everyFifteenMinutes()->withoutOverlapping(30);
 
-Schedule::command('questions:close-quiet')->cron('30 */6 * * *')->withoutOverlapping(30);
+Schedule::command('questions:close-quiet')->everyFifteenMinutes()->withoutOverlapping(30);
 
 // Unpins every hour; event reminders go out in the first run after 09:00 in Dubai.
 Schedule::command('announcements:chores --reminders')->hourly()->withoutOverlapping(10);
 
-Schedule::command('goods:chores')->hourlyAt(5)->withoutOverlapping(10);
+Schedule::command('goods:chores')->everyTenMinutes()->withoutOverlapping(10);
 
 Schedule::command('bot:updates-chores')->everyMinute()->withoutOverlapping(5);
