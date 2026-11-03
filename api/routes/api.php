@@ -34,6 +34,9 @@ Route::post('telegram/webhook/{secret}', TelegramWebhookController::class)->name
 // The scheduler's clock: an external timer calls this every minute.
 Route::match(['get', 'post'], 'system/tick', SystemTickController::class)->middleware('throttle:6,1')->name('system.tick');
 
+// Which settings the running API can see, as yes/no (no values).
+Route::get('system/status', \App\Http\Controllers\SystemStatusController::class)->middleware('throttle:20,1')->name('system.status');
+
 // First run on a host with no shell: see SetupController.
 Route::post('setup/migrate', [SetupController::class, 'migrate'])->middleware('throttle:10,1')->name('setup.migrate');
 Route::post('setup/admin', [SetupController::class, 'admin'])->middleware('throttle:10,1')->name('setup.admin');

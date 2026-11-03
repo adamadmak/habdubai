@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Support\RuntimeEnv;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * What the running API can see, as yes/no only: no value, length or hint of
+ * any secret. This host passes environment variables in ways that are easy
+ * to get wrong (see CLAUDE.md), and this is the one place that shows it.
+ */
+class SystemStatusController extends Controller
+{
+    public function __invoke(): JsonResponse
+    {
+        $seen = fn (?string $config, string $env): array => [
+            'config' => $config !== null && trim((string) config($config)) !== '',
+            'getenv' => (getenv($env) ?: '') !== '',
+            'env_file' => RuntimeEnv::fromEnvFile($env) !== '',
+            'server' => ! empty($_SERVER[$env] ?? null) || ! empty($_ENV[$env] ?? null),
+        ];
+
+        try {
+            $driver = DB::connection()->getDriverName();
+            $migrated = Schema::hasTable('owner_login_requests') && Schema::hasColumn('owner_login_requests', 'confirm_code_hash');
+        } catch (\Throwable) {
+            $driver = 'unreachable';
+            $migrated = false;
+        }
+
+        return response()->json([
+            'config_cached' => app()->configurationIsCached(),
+            'env_file_present' => is_readable(base_path('.env')),
+            'database' => $driver,
+            'migrated' => $migrated,
+            'app_key' => $seen('app.key', 'APP_KEY'),
+            'setup_token' => $seen('services.host.setup_token', 'SETUP_TOKEN'),
+            'tick_token' => $seen('services.host.tick_token', 'TICK_TOKEN'),
+            'site_api_key' => $seen('services.host.site_api_key', 'SITE_API_KEY'),
+            'db_url' => $seen(null, 'DB_HOST'),
+        ])->header('Cache-Control', 'no-store');
+    }
+}
