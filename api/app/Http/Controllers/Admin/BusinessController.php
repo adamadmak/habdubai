@@ -12,6 +12,7 @@ use App\Models\BusinessPhoto;
 use App\Models\BusinessReport;
 use App\Models\DirectoryCity;
 use App\Support\MapLocation;
+use App\Support\Search;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -49,7 +50,7 @@ class BusinessController extends Controller
             $query->whereNotNull('owner_id');
         }
         if ($search = trim((string) $request->query('search', ''))) {
-            $query->where(fn ($q) => $q->where('name', 'like', '%'.$search.'%')->orWhere('area', 'like', '%'.$search.'%')->orWhere('phone', 'like', '%'.$search.'%'));
+            Search::anyColumn($query, ['name', 'area', 'phone'], $search);
         }
 
         $page = $query->paginate(min(100, max(10, (int) $request->query('per_page', 25))));
@@ -98,7 +99,19 @@ class BusinessController extends Controller
     {
         $data = $this->validated($request, partial: true);
         $before = $business->only(array_keys($data));
-        $business->fill($data)->save();
+        $business->fill($data);
+
+        // A moderator's correction wins: the owner's queued change to the same field is dropped,
+        // so a later "Approve changes" cannot put the old value back.
+        if (is_array($business->pending_changes)) {
+            $remaining = array_diff_key($business->pending_changes, $data);
+            $business->pending_changes = $remaining === [] ? null : $remaining;
+            if ($remaining === [] && ! $business->photos()->where('approved', false)->exists()) {
+                $business->changes_submitted_at = null;
+            }
+        }
+
+        $business->save();
         AuditLog::record($request->user()->id, 'directory.updated', 'business', $business->id, $before, $data);
 
         return response()->json(['business' => $this->payload($business->fresh(['city', 'submitter', 'owner', 'photos']))]);
@@ -196,21 +209,27 @@ class BusinessController extends Controller
 
     public function approveClaim(Request $request, BusinessClaim $claim): JsonResponse
     {
-        $claim->load(['business', 'owner']);
+        // Locked, so two moderators approving rival claims at once cannot both win.
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $claim): void {
+            $fresh = BusinessClaim::query()->lockForUpdate()->findOrFail($claim->id);
+            $business = \App\Models\Business::query()->lockForUpdate()->findOrFail($fresh->business_id);
 
-        if ($claim->status !== 'pending') {
-            throw ValidationException::withMessages(['claim' => ['This claim was already decided.']]);
-        }
-        if ($claim->business->owner_id !== null && $claim->business->owner_id !== $claim->owner_id) {
-            throw ValidationException::withMessages(['claim' => ['This listing already has another owner. Reject this claim, or remove that owner first.']]);
-        }
+            if ($fresh->status !== 'pending') {
+                throw ValidationException::withMessages(['claim' => ['This claim was already decided.']]);
+            }
+            if ($business->owner_id !== null && $business->owner_id !== $fresh->owner_id) {
+                throw ValidationException::withMessages(['claim' => ['This listing already has another owner. Reject this claim, or remove that owner first.']]);
+            }
 
-        $claim->forceFill(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()])->save();
-        $claim->business->forceFill(['owner_id' => $claim->owner_id])->save();
+            $fresh->forceFill(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()])->save();
+            $business->forceFill(['owner_id' => $fresh->owner_id])->save();
 
-        // One owner per listing: the other claims on it are answered too.
-        BusinessClaim::query()->where('business_id', $claim->business_id)->whereKeyNot($claim->id)->where('status', 'pending')
-            ->update(['status' => 'rejected', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'review_note' => 'Another owner was confirmed for this listing.', 'updated_at' => now()]);
+            // One owner per listing: the other claims on it are answered too.
+            BusinessClaim::query()->where('business_id', $fresh->business_id)->whereKeyNot($fresh->id)->where('status', 'pending')
+                ->update(['status' => 'rejected', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'review_note' => 'Another owner was confirmed for this listing.', 'updated_at' => now()]);
+        });
+
+        $claim->refresh()->load(['business', 'owner']);
 
         AuditLog::record($request->user()->id, 'directory.claim_approved', 'business', $claim->business_id, null, ['owner_id' => $claim->owner_id]);
         $this->publisher->claimDecided($claim);

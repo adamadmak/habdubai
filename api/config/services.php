@@ -44,6 +44,20 @@ return [
         'ca_bundle' => env('TELEGRAM_CA_BUNDLE'),
     ],
 
+    /*
+     * Host secrets. On this host the environment is visible only while the
+     * app builds (the config cache is made then) and empty at runtime, so a
+     * value read with getenv() at runtime is always empty. Reading them
+     * through config works because they are baked into the cache at build.
+     */
+    'host' => [
+        'setup_token' => env('SETUP_TOKEN'),
+        'tick_token' => env('TICK_TOKEN'),
+        // Shared with the public website so the API believes the visitor address it forwards.
+        'site_api_key' => env('SITE_API_KEY'),
+        'site_url' => env('SITE_URL'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

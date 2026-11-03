@@ -247,6 +247,8 @@ class DirectoryFlow
         if ($count >= Business::HIDE_THRESHOLD && ! $business->verified) {
             $business->forceFill(['status' => 'hidden', 'review_note' => $count.' members reported wrong information.'])->save();
             AuditLog::record(null, 'directory.hidden_by_reports', 'business', $business->id, null, ['reports' => $count]);
+            // Hidden here means hidden in the channel too.
+            app(\App\Directory\BusinessPublisher::class)->unpost($business);
         }
 
         $this->telegram->answerCallback($cb->id, $this->messages->text('dir_reported', $l), alert: true);

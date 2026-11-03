@@ -22,9 +22,22 @@ class PhotoStore
 
     public const QUALITY = 82;
 
+    /** Decoding needs about 4 bytes a pixel: a small file can claim a huge picture, so the size is read first. */
+    public const MAX_PIXELS = 40_000_000;
+
+    public const MAX_DECODE_SIDE = 12_000;
+
     public function store(Business $business, string $raw, string $kind = 'cover'): BusinessPhoto
     {
-        $image = $raw !== '' ? @imagecreatefromstring($raw) : false;
+        $size = $raw !== '' ? @getimagesizefromstring($raw) : false;
+        if ($size === false || ! in_array($size[2] ?? null, [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
+            throw ValidationException::withMessages(['photo' => 'That file is not a photo we can read. Use a JPEG, PNG or WebP image.']);
+        }
+        if ($size[0] * $size[1] > self::MAX_PIXELS || max($size[0], $size[1]) > self::MAX_DECODE_SIDE) {
+            throw ValidationException::withMessages(['photo' => 'The photo is too large. Use one under 40 megapixels.']);
+        }
+
+        $image = @imagecreatefromstring($raw);
 
         if ($image === false) {
             throw ValidationException::withMessages(['photo' => 'That file is not a photo we can read. Use a JPEG, PNG or WebP image.']);

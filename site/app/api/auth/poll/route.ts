@@ -1,40 +1,24 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { api } from "@/lib/api";
-import { cookieBase, LOGIN_COOKIE, OWNER_COOKIE, OWNER_DAYS } from "@/lib/owner";
+import { currentClient } from "@/lib/client";
+import { pendingLogin } from "@/lib/login";
+import { LOGIN_COOKIE } from "@/lib/owner";
 
-type Polled = { status: string; token?: string };
-
-/** "Has the person confirmed in Telegram yet?" On yes, the token goes into the session cookie, never to the page. */
+/** "Has the person said yes in Telegram?" When they have, the page asks for the code the bot sent them. */
 export async function POST() {
-  const raw = (await cookies()).get(LOGIN_COOKIE)?.value;
-  let pending: { ref?: string; secret?: string } = {};
-  try {
-    pending = raw ? JSON.parse(raw) : {};
-  } catch {
-    pending = {};
-  }
+  const pending = await pendingLogin();
+  if (!pending) return NextResponse.json({ status: "expired" });
 
-  if (!pending.ref || !pending.secret) {
-    return NextResponse.json({ status: "expired" });
-  }
-
-  let polled: Polled;
+  let status = "pending";
   try {
-    polled = await api<Polled>("/owner/login/poll", { method: "POST", body: { ref: pending.ref, secret: pending.secret } });
+    status = (await api<{ status: string }>("/owner/login/poll", { method: "POST", body: pending, client: await currentClient() })).status;
   } catch {
     return NextResponse.json({ status: "pending" });
   }
 
-  if (polled.status === "approved" && polled.token) {
-    const response = NextResponse.json({ status: "approved" });
-    response.cookies.set(OWNER_COOKIE, polled.token, { ...cookieBase, maxAge: OWNER_DAYS * 24 * 3600 });
-    response.cookies.delete(LOGIN_COOKIE);
-    return response;
-  }
+  const shown = status === "confirmed" ? "code" : status === "unknown" || status === "used" ? "expired" : status;
+  const response = NextResponse.json({ status: shown });
+  if (shown === "declined" || shown === "expired") response.cookies.delete(LOGIN_COOKIE);
 
-  const finished = ["declined", "expired", "used", "unknown"].includes(polled.status);
-  const response = NextResponse.json({ status: polled.status === "unknown" || polled.status === "used" ? "expired" : polled.status });
-  if (finished) response.cookies.delete(LOGIN_COOKIE);
   return response;
 }

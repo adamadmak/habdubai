@@ -6,9 +6,12 @@ use App\Bot\Choices;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\DirectoryCity;
+use App\Support\ClientIp;
+use App\Support\Search;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /** Listed businesses for the website: browse by city and kind, search, and one page each. */
@@ -28,8 +31,7 @@ class DirectoryController extends Controller
         $query = Business::query()->listed()->with(['city', 'photos' => fn ($q) => $q->where('approved', true)->select(['id', 'business_id', 'kind', 'approved', 'updated_at'])])
             ->when($city, fn (Builder $q) => $q->where('city_id', $city->id))
             ->when($data['category'] ?? null, fn (Builder $q, $category) => $q->where('category', $category))
-            ->when(trim((string) ($data['q'] ?? '')), fn (Builder $q, $term) => $q->where(fn ($w) => $w
-                ->where('name', 'like', '%'.$term.'%')->orWhere('area', 'like', '%'.$term.'%')->orWhere('description', 'like', '%'.$term.'%')))
+            ->when(trim((string) ($data['q'] ?? '')), fn (Builder $q, $term) => Search::anyColumn($q, ['name', 'area', 'description'], $term))
             // Verified first, then listings their owners keep up to date, then by name.
             ->orderByDesc('verified')->orderByRaw('owner_id is null')->orderBy('name');
 
@@ -64,13 +66,13 @@ class DirectoryController extends Controller
 
     public function show(string $slug): JsonResponse
     {
-        $business = Business::query()->listed()->with(['city', 'photos' => fn ($q) => $q->where('approved', true)])->where('slug', $slug)->first();
+        // Photo rows without their data: only the link is needed, and the data is hundreds of KB each.
+        $photos = fn ($q) => $q->where('approved', true)->select(['id', 'business_id', 'kind', 'approved', 'updated_at']);
+
+        $business = Business::query()->listed()->with(['city', 'photos' => $photos])->where('slug', $slug)->first();
         abort_if($business === null, 404, 'This business is not listed.');
 
-        // Counted without touching updated_at, which the page shows as "last updated".
-        DB::table('businesses')->where('id', $business->id)->increment('views');
-
-        $nearby = Business::query()->listed()->with(['city', 'photos' => fn ($q) => $q->where('approved', true)])
+        $nearby = Business::query()->listed()->with(['city', 'photos' => $photos])
             ->whereKeyNot($business->id)->where('city_id', $business->city_id)->where('category', $business->category)
             ->orderByDesc('verified')->orderBy('name')->limit(4)->get();
 
@@ -78,5 +80,22 @@ class DirectoryController extends Controller
             'business' => $business->publicPayload(full: true),
             'nearby' => $nearby->map(fn (Business $b) => $b->publicPayload())->values(),
         ])->header('Cache-Control', 'public, max-age=60');
+    }
+
+    /**
+     * A visit, sent by the page in the visitor's browser (the page itself is
+     * cached, so it cannot count). One per visitor per listing every six hours.
+     */
+    public function view(Request $request, string $slug): JsonResponse
+    {
+        $id = Business::query()->listed()->where('slug', $slug)->value('id');
+        abort_if($id === null, 404);
+
+        if (Cache::add('view:'.$id.':'.sha1(ClientIp::of($request)), 1, now()->addHours(6))) {
+            // Without touching updated_at, which the page shows as "last updated".
+            DB::table('businesses')->where('id', $id)->increment('views');
+        }
+
+        return response()->json(['ok' => true]);
     }
 }

@@ -38,8 +38,8 @@ Route::match(['get', 'post'], 'system/tick', SystemTickController::class)->middl
 Route::post('setup/migrate', [SetupController::class, 'migrate'])->middleware('throttle:10,1')->name('setup.migrate');
 Route::post('setup/admin', [SetupController::class, 'admin'])->middleware('throttle:10,1')->name('setup.admin');
 
-// The public website reads these. Its server makes most of the calls, so the limit is generous.
-Route::prefix('public')->name('public.')->middleware('throttle:600,1')->group(function (): void {
+// The public website reads these (rate limits: AppServiceProvider::rateLimits).
+Route::prefix('public')->name('public.')->middleware('throttle:public')->group(function (): void {
     Route::get('home', [PublicHome::class, 'home'])->name('home');
     Route::get('meta', [PublicHome::class, 'meta'])->name('meta');
     Route::get('jobs', [PublicJobs::class, 'index'])->name('jobs');
@@ -47,6 +47,7 @@ Route::prefix('public')->name('public.')->middleware('throttle:600,1')->group(fu
     Route::get('jobs/{job}/apply', [PublicJobs::class, 'apply'])->whereNumber('job')->name('jobs.apply');
     Route::get('directory', [PublicDirectory::class, 'facets'])->name('directory');
     Route::get('businesses', [PublicDirectory::class, 'index'])->name('businesses');
+    Route::post('businesses/{slug}/view', [PublicDirectory::class, 'view'])->where('slug', '[a-z0-9-]{1,170}')->name('businesses.view');
     Route::get('businesses/{slug}', [PublicDirectory::class, 'show'])->where('slug', '[a-z0-9-]{1,170}')->name('businesses.show');
     Route::get('announcements', [PublicAnnouncements::class, 'index'])->name('announcements');
     Route::get('announcements/{announcement}', [PublicAnnouncements::class, 'show'])->whereNumber('announcement')->name('announcements.show');
@@ -59,6 +60,7 @@ Route::prefix('public')->name('public.')->middleware('throttle:600,1')->group(fu
 Route::prefix('owner')->name('owner.')->group(function (): void {
     Route::post('login/start', [OwnerAuth::class, 'start'])->middleware('throttle:owner-login-start')->name('login.start');
     Route::post('login/poll', [OwnerAuth::class, 'poll'])->middleware('throttle:owner-login-poll')->name('login.poll');
+    Route::post('login/verify', [OwnerAuth::class, 'verify'])->middleware('throttle:owner-login-verify')->name('login.verify');
 
     Route::middleware(['auth:sanctum', 'abilities:owner', 'owner', 'throttle:120,1'])->group(function (): void {
         Route::get('me', [OwnerAuth::class, 'me'])->name('me');

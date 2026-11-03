@@ -28,7 +28,7 @@ final class PublicUrls
     /** The website's address, or '' when it has not been set yet. */
     public static function site(string $path = ''): string
     {
-        $base = rtrim(RuntimeEnv::get(null, 'site_url', 'SITE_URL'), '/');
+        $base = rtrim(RuntimeEnv::get(null, 'site_url', null, (string) config('services.host.site_url')), '/');
 
         if ($base === '') {
             return '';

@@ -17,12 +17,25 @@ export class ApiError extends Error {
   }
 }
 
-type Options = { revalidate?: number; token?: string | null; method?: string; body?: unknown };
+/** Proves to the API that a call comes from this website, so it believes the visitor address sent with it. */
+const SITE_KEY = process.env.SITE_API_KEY ?? "";
+
+type Options = {
+  revalidate?: number;
+  token?: string | null;
+  method?: string;
+  body?: unknown;
+  /** The visitor, for calls made on their behalf (never on cached reads: it would split the cache per visitor). */
+  client?: { ip: string | null; agent: string | null };
+};
 
 export async function api<T>(path: string, options: Options = {}): Promise<T> {
   const method = options.method ?? "GET";
   const headers: Record<string, string> = { Accept: "application/json" };
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
+  if (SITE_KEY) headers["X-Site-Key"] = SITE_KEY;
+  if (options.client?.ip) headers["X-Client-Ip"] = options.client.ip;
+  if (options.client?.agent) headers["X-Client-Agent"] = options.client.agent;
 
   let body: string | undefined;
   if (options.body !== undefined) {
@@ -30,7 +43,7 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
     body = JSON.stringify(options.body);
   }
 
-  const cacheable = method === "GET" && !options.token;
+  const cacheable = method === "GET" && !options.token && !options.client;
   const response = await fetch(`${API}${path}`, {
     method,
     headers,

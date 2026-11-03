@@ -23,14 +23,22 @@ function pressLogin(int $userId, string $data, array $from = []): void
     ])->assertOk();
 }
 
-/** The whole "Continue with Telegram" round: start, open the bot, confirm, poll. Returns the owner token. */
+/** The six-digit code the bot last sent this person. */
+function codeSentTo(int $userId): string
+{
+    preg_match('/<b>(\d{6})<\/b>/', lastTo($userId)['text'], $m);
+
+    return $m[1] ?? '';
+}
+
+/** The whole "Continue with Telegram" round: start, open the bot, confirm, type the code. Returns the owner token. */
 function ownerSignIn(int $userId): string
 {
     $start = test()->postJson('/api/owner/login/start')->assertOk()->json();
     say($userId, '/start login_'.$start['ref'], ['language_code' => 'en']);
     pressLogin($userId, 'lg:ok:'.OwnerLoginRequest::query()->where('ref', $start['ref'])->value('id'));
 
-    return test()->postJson('/api/owner/login/poll', ['ref' => $start['ref'], 'secret' => $start['secret']])->json('token');
+    return test()->postJson('/api/owner/login/verify', ['ref' => $start['ref'], 'secret' => $start['secret'], 'code' => codeSentTo($userId)])->json('token');
 }
 
 function asOwner(string $token)
@@ -74,30 +82,57 @@ beforeEach(function (): void {
 
 // ---- signing in ---------------------------------------------------------------------
 
-test('continue with Telegram: the bot shows the code, the person confirms, the website gets a token once', function (): void {
-    $start = $this->postJson('/api/owner/login/start')->assertOk()->json();
+test('continue with Telegram: the person confirms in the bot, gets a code there, and types it on the website for a token, once', function (): void {
+    $start = $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36'])
+        ->postJson('/api/owner/login/start')->assertOk()->json();
     expect($start['link'])->toBe('https://t.me/HabeshaDubaiBot?start=login_'.$start['ref'])
-        ->and($start['code'])->toMatch('/^\d{4}$/')
-        ->and($start['link'])->not->toContain($start['secret']);
+        ->and($start['link'])->not->toContain($start['secret'])
+        ->and($start)->not->toHaveKey('code');
 
     $this->postJson('/api/owner/login/poll', ['ref' => $start['ref'], 'secret' => $start['secret']])->assertJson(['status' => 'pending']);
 
     say(9001, '/start login_'.$start['ref'], ['language_code' => 'en']);
-    $prompt = lastMessage();
-    expect($prompt['text'])->toContain('Sign in to the Habesha Dubai website?')->toContain($start['code'])->toContain('habesha.example');
+    expect(lastMessage()['text'])->toContain('Sign in to the Habesha Dubai website?')->toContain('habesha.example')->toContain('Device: Chrome · Windows');
 
     $request = OwnerLoginRequest::query()->sole();
     pressLogin(9001, 'lg:ok:'.$request->id);
-    expect(lastText())->toContain('You are signed in');
+    $code = codeSentTo(9001);
+    expect($code)->toMatch('/^\d{6}$/')->and(lastText())->toContain('Never give this code to anyone');
 
+    // Confirmed in Telegram: the website learns that, but no token comes without the code.
     $this->postJson('/api/owner/login/poll', ['ref' => $start['ref'], 'secret' => 'wrong-secret'])->assertJson(['status' => 'unknown']);
-    $poll = $this->postJson('/api/owner/login/poll', ['ref' => $start['ref'], 'secret' => $start['secret']])->assertOk()->json();
-    expect($poll['status'])->toBe('approved')->and($poll['token'])->toBeString()->and($poll['owner']['name'])->toBe('Meron Tesfaye')
-        ->and($poll['owner']['member'])->toBeFalse();
-    $this->postJson('/api/owner/login/poll', ['ref' => $start['ref'], 'secret' => $start['secret']])->assertJson(['status' => 'used']);
+    $this->postJson('/api/owner/login/poll', ['ref' => $start['ref'], 'secret' => $start['secret']])->assertExactJson(['status' => 'confirmed']);
 
-    asOwner($poll['token'])->getJson('/api/owner/me')->assertOk()->assertJsonPath('owner.username', 'meron_t');
+    $wrong = $code === '000000' ? '111111' : '000000';
+    $this->postJson('/api/owner/login/verify', ['ref' => $start['ref'], 'secret' => $start['secret'], 'code' => $wrong])
+        ->assertJson(['status' => 'wrong', 'attempts_left' => 4]);
+    $this->postJson('/api/owner/login/verify', ['ref' => $start['ref'], 'secret' => 'wrong-secret', 'code' => $code])->assertJson(['status' => 'unknown']);
+
+    $done = $this->postJson('/api/owner/login/verify', ['ref' => $start['ref'], 'secret' => $start['secret'], 'code' => $code])->assertOk()->json();
+    expect($done['status'])->toBe('approved')->and($done['token'])->toBeString()->and($done['owner']['name'])->toBe('Meron Tesfaye')
+        ->and($done['owner']['member'])->toBeFalse();
+    $this->postJson('/api/owner/login/verify', ['ref' => $start['ref'], 'secret' => $start['secret'], 'code' => $code])->assertJson(['status' => 'expired']);
+
+    asOwner($done['token'])->getJson('/api/owner/me')->assertOk()->assertJsonPath('owner.username', 'meron_t');
     expect(BusinessOwner::query()->sole()->telegram_user_id)->toBe(9001);
+});
+
+test('a sign-in link sent to an owner by someone else gives that someone nothing: the code goes to the owner', function (): void {
+    // The attacker starts a sign-in and sends the owner the bot link; the owner taps Yes.
+    $attacker = $this->postJson('/api/owner/login/start')->json();
+    say(9008, '/start login_'.$attacker['ref'], ['language_code' => 'en']);
+    pressLogin(9008, 'lg:ok:'.OwnerLoginRequest::query()->sole()->id);
+
+    // The attacker's page sees "confirmed" but has no code; guessing ends the attempt.
+    $this->postJson('/api/owner/login/poll', ['ref' => $attacker['ref'], 'secret' => $attacker['secret']])->assertJson(['status' => 'confirmed']);
+    foreach (range(1, 4) as $i) {
+        $this->postJson('/api/owner/login/verify', ['ref' => $attacker['ref'], 'secret' => $attacker['secret'], 'code' => sprintf('%06d', $i)]);
+    }
+    $this->postJson('/api/owner/login/verify', ['ref' => $attacker['ref'], 'secret' => $attacker['secret'], 'code' => '999999'])
+        ->assertJson(['status' => codeSentTo(9008) === '999999' ? 'approved' : 'locked']);
+    $this->postJson('/api/owner/login/verify', ['ref' => $attacker['ref'], 'secret' => $attacker['secret'], 'code' => codeSentTo(9008)])
+        ->assertJson(['status' => 'expired']);
+    expect(\Laravel\Sanctum\PersonalAccessToken::query()->count())->toBe(0);
 });
 
 test('a member signs in under their community name and the account is linked', function (): void {
@@ -246,6 +281,49 @@ test('a photo is re-encoded, previewed through a signed link, and public only on
 
     $public = $this->getJson('/api/public/businesses/'.Business::query()->find($id)->slug)->json('business.photo');
     $this->get(parse_url($public, PHP_URL_PATH))->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+
+    // A small file that claims a huge picture is refused before it is decoded.
+    $huge = imagecreatetruecolor(1, 1);
+    ob_start();
+    imagepng($huge);
+    $png = (string) ob_get_clean();
+    $png = substr_replace($png, pack('NN', 30000, 30000), 16, 8); // IHDR width and height
+    asOwner($token)->post("/api/owner/businesses/{$id}/photo", ['photo' => UploadedFile::fake()->createWithContent('bomb.png', $png)], ['Accept' => 'application/json'])
+        ->assertStatus(422)->assertJsonPath('errors.photo.0', 'The photo is too large. Use one under 40 megapixels.');
+});
+
+test('listing a hidden business again does not publish the owner\'s queued photo; a moderator\'s edit drops the same queued change', function (): void {
+    $token = ownerSignIn(9019);
+    $id = asOwner($token)->postJson('/api/owner/businesses', listing())->json('business.id');
+    asAdmin()->postJson("/api/admin/businesses/{$id}/approve")->assertOk();
+    asAdmin()->postJson("/api/admin/businesses/{$id}/hide", ['note' => 'Checking a complaint'])->assertOk();
+
+    asOwner($token)->post("/api/owner/businesses/{$id}/photo", ['photo' => UploadedFile::fake()->createWithContent('new.jpg', jpegBytes())], ['Accept' => 'application/json'])->assertOk();
+    asOwner($token)->putJson("/api/owner/businesses/{$id}", listing(['hours' => 'Closed on Mondays', 'description' => 'Owner text']))->assertOk();
+    asAdmin()->postJson("/api/admin/businesses/{$id}/approve")->assertOk();
+
+    $business = Business::query()->find($id);
+    expect($business->photos()->where('approved', true)->count())->toBe(0)
+        ->and($business->pending_changes)->toBe(['description' => 'Owner text', 'hours' => 'Closed on Mondays']);
+
+    asAdmin()->putJson("/api/admin/businesses/{$id}", ['hours' => 'Every day 09:00–21:00'])->assertOk();
+    expect($business->fresh()->pending_changes)->toBe(['description' => 'Owner text']);
+});
+
+test('a rejected listing sent again counts toward the listings waiting for review', function (): void {
+    $token = ownerSignIn(9020);
+    $ids = collect(['One', 'Two', 'Three', 'Four'])->map(function (string $name, int $i) use ($token) {
+        if ($i === 3) {
+            return null;
+        }
+
+        return asOwner($token)->postJson('/api/owner/businesses', listing(['name' => "Place {$name}"]))->json('business.id');
+    })->filter()->values();
+    asAdmin()->postJson("/api/admin/businesses/{$ids[0]}/reject", ['note' => 'Unclear'])->assertOk();
+    asOwner($token)->postJson('/api/owner/businesses', listing(['name' => 'Place Four']))->assertCreated();
+
+    asOwner($token)->putJson("/api/owner/businesses/{$ids[0]}", listing(['name' => 'Place One']))->assertStatus(422)
+        ->assertJsonPath('errors.name.0', 'You have 3 listings waiting for review. Send this one again once they are checked.');
 });
 
 test('claiming a listing the community added: the moderator approves and the owner can manage it', function (): void {

@@ -30,9 +30,32 @@ class AppServiceProvider extends ServiceProvider
         // a PHP build that ships without one (see App\Support\TrustedCas).
         \Illuminate\Support\Facades\Http::globalOptions(['verify' => \App\Support\TrustedCas::path()]);
 
-        // The website's server starts and polls sign-ins for every visitor, so
-        // these count per sign-in where they can, not per address.
-        \Illuminate\Support\Facades\RateLimiter::for('owner-login-start', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(30)->by($request->ip()));
-        \Illuminate\Support\Facades\RateLimiter::for('owner-login-poll', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(45)->by('poll:'.substr((string) $request->input('ref'), 0, 32).':'.$request->ip()));
+        $this->rateLimits();
+    }
+
+    /**
+     * The public website calls this API from its own server. Calls that carry
+     * its key are counted per visitor (the address it forwards) or, for its own
+     * cached reads, in one large bucket; anyone else is counted per address.
+     */
+    private function rateLimits(): void
+    {
+        $limit = \Illuminate\Cache\RateLimiting\Limit::class;
+        $client = fn (\Illuminate\Http\Request $r): string => \App\Support\ClientIp::of($r);
+        $ref = fn (\Illuminate\Http\Request $r): string => is_string($r->input('ref')) ? substr($r->input('ref'), 0, 32) : '';
+
+        \Illuminate\Support\Facades\RateLimiter::for('public', function (\Illuminate\Http\Request $r) use ($limit) {
+            if (\App\Support\ClientIp::siteKeyValid($r) && ! $r->hasHeader('X-Client-Ip')) {
+                return $limit::perMinute(3000)->by('site');
+            }
+
+            return $limit::perMinute(120)->by('public:'.\App\Support\ClientIp::of($r));
+        });
+        \Illuminate\Support\Facades\RateLimiter::for('owner-login-start', fn ($r) => $limit::perMinute(10)->by('start:'.$client($r)));
+        \Illuminate\Support\Facades\RateLimiter::for('owner-login-poll', fn ($r) => $limit::perMinute(45)->by('poll:'.$ref($r).':'.$client($r)));
+        \Illuminate\Support\Facades\RateLimiter::for('owner-login-verify', fn ($r) => [
+            $limit::perMinute(10)->by('verify:'.$ref($r)),
+            $limit::perMinute(30)->by('verify-ip:'.$client($r)),
+        ]);
     }
 }

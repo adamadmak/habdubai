@@ -23,7 +23,7 @@ class SystemTickController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
-        $expected = RuntimeEnv::get(null, null, 'TICK_TOKEN');
+        $expected = RuntimeEnv::get('services.host.tick_token', null, 'TICK_TOKEN');
         $provided = (string) ($request->header('X-Tick-Token') ?? $request->query('token', ''));
 
         if (strlen($expected) < 32 || ! hash_equals($expected, $provided)) {

@@ -1,5 +1,18 @@
 import type { NextConfig } from "next";
 
+/*
+ * Server actions check the browser's Origin against the Host the server sees.
+ * Behind the host's TLS proxy those can differ, which would refuse every owner
+ * save; the public address is allowed explicitly.
+ */
+const siteHost = (() => {
+  try {
+    return process.env.SITE_URL ? new URL(process.env.SITE_URL).host : null;
+  } catch {
+    return null;
+  }
+})();
+
 const config: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
@@ -7,7 +20,7 @@ const config: NextConfig = {
   images: { unoptimized: true },
   experimental: {
     // A listing form with a long "about" text; photos go through their own route, not an action.
-    serverActions: { bodySizeLimit: "1mb" },
+    serverActions: { bodySizeLimit: "1mb", ...(siteHost ? { allowedOrigins: [siteHost] } : {}) },
   },
   async headers() {
     return [

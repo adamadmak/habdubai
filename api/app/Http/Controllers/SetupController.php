@@ -29,7 +29,8 @@ class SetupController extends Controller
             AuditLog::record(null, 'setup.migrate', null, null, null, ['output' => str($output)->limit(2000)->toString()]);
         }
 
-        return response()->json(['ok' => true, 'output' => $output]);
+        // Which database actually answered: on this host a missing build-time variable silently means SQLite.
+        return response()->json(['ok' => true, 'driver' => \Illuminate\Support\Facades\DB::connection()->getDriverName(), 'output' => $output]);
     }
 
     /** Creates the first admin; refuses once any administrator exists. */
@@ -60,7 +61,7 @@ class SetupController extends Controller
 
     private function authorise(Request $request): void
     {
-        $token = RuntimeEnv::get(null, null, 'SETUP_TOKEN');
+        $token = RuntimeEnv::get('services.host.setup_token', null, 'SETUP_TOKEN');
         $provided = (string) $request->header('X-Setup-Token', '');
 
         if (strlen($token) < 32 || ! hash_equals($token, $provided)) {

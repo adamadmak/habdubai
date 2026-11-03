@@ -1543,9 +1543,9 @@ return [
     // ---- website sign-in and business owners ------------------------------------
 
     'login_prompt' => [
-        'am' => "🔐 <b>ወደ ሐበሻ ዱባይ ድረ-ገጽ ይግቡ?</b>\n\nድረ-ገጹ ይህን ኮድ ያሳያል፡ <b>{code}</b>\n\nአሁን እርስዎ ራስዎ በ{site} ላይ “በቴሌግራም ይቀጥሉ” ከተጫኑና ኮዱ ከተመሳሰለ ብቻ ያረጋግጡ። መግባት የንግድ ዝርዝሮችን ለመጨመርና ለማስተዳደር ያስችላል፤ የቴሌግራም ስምዎ ብቻ ይጋራል፣ ስልክ ቁጥርዎ አይጋራም።",
-        'ti' => "🔐 <b>ናብ መርበብ ሓበሻ ዱባይ ክትኣትዉ?</b>\n\nእቲ መርበብ ነዚ ኮድ የርኢ፡ <b>{code}</b>\n\nሕጂ ባዕልኹም ኣብ {site} “ብቴሌግራም ቀጽሉ” እንተጠዊቕኩምን እቲ ኮድ እንተተሰማሚዑን ጥራይ ኣረጋግጹ። ምእታው ዝርዝራት ንግዲ ንምውሳኽን ንምምሕዳርን የኽእል፤ ስም ቴሌግራምኩም ጥራይ ይካፈል፣ ቁጽሪ ስልክኹም ኣይካፈልን።",
-        'en' => "🔐 <b>Sign in to the Habesha Dubai website?</b>\n\nThe website shows this code: <b>{code}</b>\n\nConfirm only if you just pressed “Continue with Telegram” on {site} yourself and the code matches. Signing in lets you add and manage business listings. It shares your Telegram name, never your phone number.",
+        'am' => "🔐 <b>ወደ ሐበሻ ዱባይ ድረ-ገጽ ይግቡ?</b>\n\nመሣሪያ፡ {device}\n\nአሁን እርስዎ ራስዎ በ{site} ላይ “በቴሌግራም ይቀጥሉ” ከተጫኑ ብቻ ያረጋግጡ። ካረጋገጡ በኋላ በድረ-ገጹ ላይ የሚጽፉት ኮድ እዚህ ይደርስዎታል። መግባት የንግድ ዝርዝሮችን ለመጨመርና ለማስተዳደር ያስችላል፤ የቴሌግራም ስምዎ ብቻ ይጋራል፣ ስልክ ቁጥርዎ አይጋራም።",
+        'ti' => "🔐 <b>ናብ መርበብ ሓበሻ ዱባይ ክትኣትዉ?</b>\n\nመሳርሒ፡ {device}\n\nሕጂ ባዕልኹም ኣብ {site} “ብቴሌግራም ቀጽሉ” እንተጠዊቕኩም ጥራይ ኣረጋግጹ። ድሕሪ ምርግጋጽኩም ኣብቲ መርበብ እትጽሕፍዎ ኮድ ኣብዚ ክበጽሓኩም እዩ። ምእታው ዝርዝራት ንግዲ ንምውሳኽን ንምምሕዳርን የኽእል፤ ስም ቴሌግራምኩም ጥራይ ይካፈል፣ ቁጽሪ ስልክኹም ኣይካፈልን።",
+        'en' => "🔐 <b>Sign in to the Habesha Dubai website?</b>\n\nDevice: {device}\n\nConfirm only if you just pressed “Continue with Telegram” on {site} yourself. You will then get a code here to type on the website. Signing in lets you add and manage business listings. It shares your Telegram name, never your phone number.",
     ],
     'login_site_fallback' => [
         'am' => 'ድረ-ገጹ',
@@ -1571,6 +1571,11 @@ return [
         'am' => '✅ ገብተዋል። ወደ ድረ-ገጹ ይመለሱ፤ በራሱ ይቀጥላል።',
         'ti' => '✅ ኣቲኹም። ናብቲ መርበብ ተመለሱ፤ ባዕሉ ክቕጽል እዩ።',
         'en' => '✅ You are signed in. Go back to the website; it continues by itself.',
+    ],
+    'login_code' => [
+        'am' => "🔑 የመግቢያ ኮድዎ፡ <b>{code}</b>\n\nለመጨረስ በድረ-ገጹ ላይ ይጻፉት። ይህን ኮድ ለማንም አይስጡ፤ ከሐበሻ ዱባይ ነኝ ለሚል ሰውም ቢሆን። ለ10 ደቂቃ ያገለግላል።",
+        'ti' => "🔑 ናይ ምእታው ኮድኩም፡ <b>{code}</b>\n\nንምውዳእ ኣብቲ መርበብ ጸሓፍዎ። ነዚ ኮድ ንማንም ኣይትሃቡ፤ ካብ ሓበሻ ዱባይ እየ ንዝብል ሰብ እውን እንተኾነ። ን10 ደቒቕ የገልግል።",
+        'en' => "🔑 Your sign-in code: <b>{code}</b>\n\nType it on the website to finish. Never give this code to anyone, not even someone who says they are from Habesha Dubai. It works for 10 minutes.",
     ],
     'login_declined' => [
         'am' => 'እሺ፣ ማንም አልገባም። ይህን ያልጀመሩት እርስዎ ከሆኑ ሊንኩን ለማንም አያጋሩ።',

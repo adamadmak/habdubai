@@ -11,6 +11,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!token) return NextResponse.json({ message: "Sign in first." }, { status: 401 });
   if (!/^\d+$/.test(id)) return NextResponse.json({ message: "Not found." }, { status: 404 });
 
+  // Refused before reading: the body would otherwise be held in memory whatever its size.
+  const length = Number(request.headers.get("content-length") ?? "");
+  if (!Number.isFinite(length) || length <= 0) return NextResponse.json({ errors: { photo: ["Choose a photo."] } }, { status: 411 });
+  if (length > 9 * 1024 * 1024) return NextResponse.json({ errors: { photo: ["The photo is larger than 8 MB."] } }, { status: 413 });
+
   const incoming = await request.formData();
   const photo = incoming.get("photo");
   if (!(photo instanceof File)) return NextResponse.json({ errors: { photo: ["Choose a photo."] } }, { status: 422 });

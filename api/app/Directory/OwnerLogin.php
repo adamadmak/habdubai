@@ -15,35 +15,38 @@ use Illuminate\Support\Str;
 /**
  * "Continue with Telegram" on the website.
  *
- *   website → start(): a ref for the bot link, a secret only the browser keeps, a 4-digit code
- *   bot     → prompt(): /start login_<ref> shows the code and asks "sign in?"
- *   bot     → answer(): the same Telegram user who opened the link says yes or no
- *   website → poll(): with the secret, gets an owner token exactly once
+ *   website → start(): a ref for the bot link, and a secret only the website's server keeps
+ *   bot     → prompt(): /start login_<ref> asks "sign in to the website?"
+ *   bot     → answer(): the person who opened the link says yes, and gets a six-digit code
+ *   website → poll(): learns the person said yes, and asks them for the code
+ *   website → verify(): with the secret and the code, gets an owner token exactly once
  *
- * The QR code on a computer screen carries only the ref, so someone who
- * photographs it cannot collect the token. The code lets the person check
- * the prompt in Telegram belongs to the page in front of them.
+ * The code goes from Telegram to the website, never the other way, so a
+ * sign-in started by someone else and sent to an owner as a link gives that
+ * someone nothing: the code arrives in the owner's chat, not on their screen.
+ * Five wrong codes end the attempt.
  */
 class OwnerLogin
 {
+    public const MAX_ATTEMPTS = 5;
+
     public function __construct(
         private readonly TelegramBotService $telegram,
         private readonly BotMessages $messages,
     ) {}
 
-    /** @return array{ref: string, secret: string, code: string, link: ?string, expires_at: string} */
+    /** @return array{ref: string, secret: string, link: ?string, expires_at: string} */
     public function start(?string $ip, ?string $userAgent): array
     {
         OwnerLoginRequest::query()->where('expires_at', '<', now()->subDay())->delete();
 
         $ref = Str::random(24);
         $secret = Str::random(48);
-        $code = (string) random_int(1000, 9999);
 
         $request = OwnerLoginRequest::query()->create([
             'ref' => $ref,
             'secret_hash' => OwnerLoginRequest::hashSecret($secret),
-            'check_code' => $code,
+            'check_code' => '0000',
             'status' => 'pending',
             'ip' => $ip ? mb_substr($ip, 0, 45) : null,
             'user_agent' => $userAgent ? mb_substr($userAgent, 0, 200) : null,
@@ -53,7 +56,6 @@ class OwnerLogin
         return [
             'ref' => $ref,
             'secret' => $secret,
-            'code' => $code,
             'link' => $this->telegram->startLink('login_'.$ref),
             'expires_at' => $request->expires_at->toIso8601String(),
         ];
@@ -75,15 +77,15 @@ class OwnerLogin
 
         $site = PublicUrls::site();
         $this->telegram->sendText($chatId, $this->messages->text('login_prompt', $language, [
-            'code' => $request->check_code,
             'site' => e($site !== '' ? (string) parse_url($site, PHP_URL_HOST) : $this->messages->text('login_site_fallback', $language)),
+            'device' => e($this->device($request->user_agent)),
         ]), ['inline_keyboard' => [
             [['text' => $this->messages->button('btn_login_yes', $language), 'callback_data' => 'lg:ok:'.$request->id]],
             [['text' => $this->messages->button('btn_login_no', $language), 'callback_data' => 'lg:no:'.$request->id]],
         ]]);
     }
 
-    /** "Yes, sign me in" or "No" under the prompt. */
+    /** "Yes, sign me in" or "It was not me" under the prompt. */
     public function answer(Callback $cb, bool $approve, int $requestId): void
     {
         $language = in_array($cb->languageCode, ['am', 'ti'], true) ? $cb->languageCode : 'en';
@@ -118,38 +120,78 @@ class OwnerLogin
             'language' => $member?->language ?? $language,
         ]);
 
-        $request->forceFill(['status' => 'approved', 'owner_id' => $owner->id, 'approved_at' => now()])->save();
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $request->forceFill([
+            'status' => 'approved',
+            'owner_id' => $owner->id,
+            'approved_at' => now(),
+            'confirm_code_hash' => $this->codeHash($request->ref, $code),
+            'attempts' => 0,
+            // Ten minutes to type the code, from now.
+            'expires_at' => now()->addMinutes(OwnerLoginRequest::LIFETIME_MINUTES),
+        ])->save();
 
         $this->telegram->answerCallback($cb->id);
-        $this->telegram->sendText($cb->userId, $this->messages->text('login_done', $language));
+        $this->telegram->sendText($cb->userId, $this->messages->text('login_code', $language, ['code' => $code]));
     }
 
     /**
-     * The website asks how it went. An approved request hands out its token
-     * once; asking again, or with the wrong secret, gets nothing.
+     * The website asks how it went: still waiting, the person said yes (now
+     * ask for the code), or it is over.
      *
-     * @return array{status: string, token?: string, owner?: array}
+     * @return array{status: string}
      */
     public function poll(string $ref, string $secret): array
     {
-        $request = OwnerLoginRequest::query()->where('ref', $ref)->first();
+        $request = $this->find($ref, $secret);
 
-        if (! $request || ! hash_equals($request->secret_hash, OwnerLoginRequest::hashSecret($secret))) {
+        if ($request === null) {
             return ['status' => 'unknown'];
         }
 
-        if ($request->status === 'pending') {
-            return ['status' => $request->isExpired() ? 'expired' : 'pending'];
+        if (in_array($request->status, ['pending', 'approved'], true) && $request->isExpired()) {
+            return ['status' => 'expired'];
         }
 
+        return ['status' => match ($request->status) {
+            'pending' => 'pending',
+            'approved' => 'confirmed',
+            default => $request->status,
+        }];
+    }
+
+    /**
+     * The code from Telegram, typed on the website. Right once: a token.
+     *
+     * @return array{status: string, token?: string, owner?: array, attempts_left?: int}
+     */
+    public function verify(string $ref, string $secret, string $code): array
+    {
+        $request = $this->find($ref, $secret);
+
+        if ($request === null) {
+            return ['status' => 'unknown'];
+        }
         if ($request->status !== 'approved') {
-            return ['status' => $request->status];
+            return ['status' => $request->status === 'pending' ? 'pending' : 'expired'];
+        }
+        if ($request->isExpired()) {
+            return ['status' => 'expired'];
         }
 
-        // Exactly once, even if two polls arrive together.
+        $code = preg_replace('/\D/', '', $code) ?? '';
+        if (strlen($code) !== 6 || ! hash_equals((string) $request->confirm_code_hash, $this->codeHash($request->ref, $code))) {
+            $attempts = $request->attempts + 1;
+            $locked = $attempts >= self::MAX_ATTEMPTS;
+            $request->forceFill(['attempts' => $attempts, 'status' => $locked ? 'declined' : 'approved'])->save();
+
+            return $locked ? ['status' => 'locked'] : ['status' => 'wrong', 'attempts_left' => self::MAX_ATTEMPTS - $attempts];
+        }
+
+        // Exactly once, even if two submissions arrive together.
         $claimed = OwnerLoginRequest::query()->whereKey($request->id)->where('status', 'approved')->update(['status' => 'used', 'updated_at' => now()]);
         if ($claimed !== 1) {
-            return ['status' => 'used'];
+            return ['status' => 'expired'];
         }
 
         $owner = $request->owner;
@@ -158,5 +200,42 @@ class OwnerLogin
         AuditLog::record(null, 'owner.login', 'business_owner', $owner->id, null, ['ip' => $request->ip]);
 
         return ['status' => 'approved', 'token' => $token, 'owner' => $owner->payload()];
+    }
+
+    private function find(string $ref, string $secret): ?OwnerLoginRequest
+    {
+        $request = OwnerLoginRequest::query()->where('ref', $ref)->first();
+
+        return $request && hash_equals($request->secret_hash, OwnerLoginRequest::hashSecret($secret)) ? $request : null;
+    }
+
+    private function codeHash(string $ref, string $code): string
+    {
+        return hash_hmac('sha256', $ref.':'.$code, (string) config('app.key'));
+    }
+
+    /** "Chrome on Windows": enough for the person to recognise their own screen. */
+    private function device(?string $agent): string
+    {
+        $agent = (string) $agent;
+        $browser = match (true) {
+            str_contains($agent, 'Edg/') => 'Edge',
+            str_contains($agent, 'OPR/') => 'Opera',
+            str_contains($agent, 'SamsungBrowser') => 'Samsung Internet',
+            str_contains($agent, 'Chrome/') => 'Chrome',
+            str_contains($agent, 'Firefox/') => 'Firefox',
+            str_contains($agent, 'Safari/') => 'Safari',
+            default => '',
+        };
+        $system = match (true) {
+            str_contains($agent, 'iPhone') || str_contains($agent, 'iPad') => 'iPhone',
+            str_contains($agent, 'Android') => 'Android',
+            str_contains($agent, 'Windows') => 'Windows',
+            str_contains($agent, 'Mac OS X') => 'Mac',
+            str_contains($agent, 'Linux') => 'Linux',
+            default => '',
+        };
+
+        return trim($browser.($browser !== '' && $system !== '' ? ' · ' : '').$system) ?: '?';
     }
 }

@@ -25,6 +25,9 @@ use Illuminate\Validation\ValidationException;
  */
 class BusinessController extends Controller
 {
+    /** Photo rows without their data: the payload needs only the links. */
+    private const PHOTO_COLUMNS = ['id', 'business_id', 'kind', 'approved', 'updated_at'];
+
     public function choices(): JsonResponse
     {
         return response()->json([
@@ -44,7 +47,7 @@ class BusinessController extends Controller
 
         return response()->json([
             'owner' => $owner->payload(),
-            'businesses' => $owner->businesses()->with(['city', 'photos'])->latest('id')->get()->map(fn (Business $b) => $this->payload($b))->values(),
+            'businesses' => $owner->businesses()->with(['city', 'photos' => fn ($q) => $q->select(self::PHOTO_COLUMNS)])->latest('id')->get()->map(fn (Business $b) => $this->payload($b))->values(),
             'claims' => $owner->claims()->with('business:id,name,slug,status')->latest('id')->get()->map(fn (BusinessClaim $c) => [
                 'id' => $c->id,
                 'status' => $c->status,
@@ -60,7 +63,7 @@ class BusinessController extends Controller
     {
         $this->authorizeOwner($request, $business);
 
-        return response()->json(['business' => $this->payload($business->load(['city', 'photos']))]);
+        return response()->json(['business' => $this->payload($business->load(['city', 'photos' => fn ($q) => $q->select(self::PHOTO_COLUMNS)]))]);
     }
 
     public function store(Request $request): JsonResponse
@@ -87,7 +90,7 @@ class BusinessController extends Controller
         ]);
         AuditLog::record(null, 'directory.owner_submitted', 'business', $business->id, null, ['owner_id' => $owner->id]);
 
-        return response()->json(['business' => $this->payload($business->load(['city', 'photos']))], 201);
+        return response()->json(['business' => $this->payload($business->load(['city', 'photos' => fn ($q) => $q->select(self::PHOTO_COLUMNS)]))], 201);
     }
 
     public function update(Request $request, Business $business): JsonResponse
@@ -98,6 +101,10 @@ class BusinessController extends Controller
         // The pin follows the map link; a pin a moderator placed stays while the link is unchanged.
         if ($data['maps_url'] !== $business->maps_url) {
             $data += $this->pin($data['maps_url']);
+        }
+
+        if ($business->status === 'rejected' && $request->user()->businesses()->where('status', 'pending')->count() >= BusinessOwner::MAX_PENDING) {
+            throw ValidationException::withMessages(['name' => ['You have '.BusinessOwner::MAX_PENDING.' listings waiting for review. Send this one again once they are checked.']]);
         }
 
         if (in_array($business->status, ['pending', 'rejected'], true)) {
@@ -115,7 +122,7 @@ class BusinessController extends Controller
 
         AuditLog::record(null, 'directory.owner_edited', 'business', $business->id, null, ['owner_id' => $business->owner_id]);
 
-        return response()->json(['business' => $this->payload($business->fresh(['city', 'photos']))]);
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'photos' => fn ($q) => $q->select(self::PHOTO_COLUMNS)]))]);
     }
 
     public function photo(Request $request, Business $business, PhotoStore $photos): JsonResponse
@@ -131,7 +138,7 @@ class BusinessController extends Controller
             $business->forceFill(['changes_submitted_at' => now()])->save();
         }
 
-        return response()->json(['business' => $this->payload($business->fresh(['city', 'photos']))]);
+        return response()->json(['business' => $this->payload($business->fresh(['city', 'photos' => fn ($q) => $q->select(self::PHOTO_COLUMNS)]))]);
     }
 
     /** Withdraw a listing that is not live, or take a live one down. */
@@ -150,7 +157,7 @@ class BusinessController extends Controller
         $publisher->unpost($business);
         AuditLog::record(null, 'directory.owner_unlisted', 'business', $business->id);
 
-        return response()->json(['ok' => true, 'deleted' => false, 'business' => $this->payload($business->fresh(['city', 'photos']))]);
+        return response()->json(['ok' => true, 'deleted' => false, 'business' => $this->payload($business->fresh(['city', 'photos' => fn ($q) => $q->select(self::PHOTO_COLUMNS)]))]);
     }
 
     /** "This listing is mine": for listings the community added before the owner arrived. */

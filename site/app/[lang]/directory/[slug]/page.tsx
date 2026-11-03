@@ -5,6 +5,7 @@ import { BadgeCheck, ChevronLeft, Clock, Globe, Languages, MapPin, MessageCircle
 import { BusinessCard } from "@/components/Cards";
 import { BusinessIcon } from "@/components/CategoryIcon";
 import { ShareButton } from "@/components/ShareButton";
+import { ViewPing } from "@/components/ViewPing";
 import { api, apiOrNull, type Business, type Meta } from "@/lib/api";
 import { digits, formatDate, host } from "@/lib/format";
 import { dict, fill, isLocale, label, pick } from "@/lib/i18n";
@@ -70,6 +71,7 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
   return (
     <article className="pb-4">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <ViewPing slug={b.slug} />
 
       <div className="mx-auto max-w-4xl px-4 pt-6 md:pt-10">
         <Link href={`/${lang}/directory`} className="press inline-flex items-center gap-1 text-sm font-semibold text-primary">

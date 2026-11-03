@@ -6,6 +6,7 @@
  */
 import { cookies } from "next/headers";
 import { api, ApiError, type Owner } from "./api";
+import { currentClient } from "./client";
 
 export const OWNER_COOKIE = "hd_owner";
 export const LOGIN_COOKIE = "hd_login";
@@ -22,12 +23,12 @@ export async function ownerToken(): Promise<string | null> {
   return (await cookies()).get(OWNER_COOKIE)?.value ?? null;
 }
 
-/** A call to the owner API with the session's token. Throws ApiError(401) without one. */
+/** A call to the owner API with the session's token, on behalf of this visitor. Throws ApiError(401) without one. */
 export async function ownerApi<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
   const token = await ownerToken();
   if (!token) throw new ApiError(401, "Sign in first.");
 
-  return api<T>(`/owner${path}`, { ...init, token });
+  return api<T>(`/owner${path}`, { ...init, token, client: await currentClient() });
 }
 
 /** The signed-in owner, or null (no cookie, an expired token, a banned account). */

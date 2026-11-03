@@ -9,7 +9,7 @@ class OwnerLoginRequest extends Model
 {
     public const LIFETIME_MINUTES = 10;
 
-    protected $fillable = ['ref', 'secret_hash', 'check_code', 'status', 'telegram_user_id', 'owner_id', 'ip', 'user_agent', 'expires_at', 'approved_at'];
+    protected $fillable = ['ref', 'secret_hash', 'check_code', 'status', 'telegram_user_id', 'owner_id', 'ip', 'user_agent', 'expires_at', 'approved_at', 'confirm_code_hash', 'attempts'];
 
     protected function casts(): array
     {

@@ -79,6 +79,33 @@ test('the home page shows only what is public: published jobs, listed businesses
         ->and($home['meta']['channel'])->toBe('https://t.me/habesha_dubai');
 });
 
+test('search ignores case and takes % and _ literally', function (): void {
+    publicBusiness(['name' => 'HABESHA Corner']);
+    publicBusiness(['name' => 'Discount 100% Store', 'area' => 'Satwa']);
+
+    $this->getJson('/api/public/businesses?q=habesha')->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'HABESHA Corner');
+    $this->getJson('/api/public/businesses?q='.urlencode('100%'))->assertJsonCount(1, 'data');
+    $this->getJson('/api/public/businesses?q='.urlencode('%'))->assertJsonCount(1, 'data');
+    $this->getJson('/api/public/jobs?q=LIGHT%20vehicle')->assertJsonCount(0, 'data');
+    publicJob();
+    $this->getJson('/api/public/jobs?q=LIGHT%20vehicle')->assertJsonCount(1, 'data');
+});
+
+test('the website is counted per visitor when it proves itself with the shared key, and the key is not guessable', function (): void {
+    config(['services.host.site_api_key' => str_repeat('k', 32)]);
+    publicBusiness();
+
+    // Each visitor forwarded by the site has their own budget; a forged forward without the key does not.
+    $site = ['X-Site-Key' => str_repeat('k', 32)];
+    foreach (['203.0.113.1', '203.0.113.2'] as $ip) {
+        $this->withHeaders($site + ['X-Client-Ip' => $ip])->postJson('/api/owner/login/start')->assertOk();
+    }
+    expect(\App\Models\OwnerLoginRequest::query()->pluck('ip')->all())->toBe(['203.0.113.1', '203.0.113.2']);
+
+    $this->withHeaders(['X-Site-Key' => 'wrong', 'X-Client-Ip' => '203.0.113.9'])->postJson('/api/owner/login/start')->assertOk();
+    expect(\App\Models\OwnerLoginRequest::query()->latest('id')->value('ip'))->toBe('127.0.0.1');
+});
+
 test('the home page survives a cache that serializes, as the database store on the host does', function (): void {
     config(['cache.default' => 'database']);
     publicBusiness();
@@ -152,7 +179,14 @@ test('directory: cities and kinds with counts, filters, the page by its address,
     $this->getJson('/api/public/businesses/'.$spices->slug)->assertOk()
         ->assertJsonPath('business.languages', ['am', 'ti'])->assertJsonPath('business.verified', true)
         ->assertJsonPath('nearby.0.name', 'Selam Grocery');
-    expect($spices->fresh()->views)->toBe(1);
+    expect($spices->fresh()->views)->toBe(0);
+
+    // A visit is counted by the page in the visitor's browser, once per visitor every few hours.
+    $this->postJson('/api/public/businesses/'.$spices->slug.'/view')->assertOk();
+    $this->postJson('/api/public/businesses/'.$spices->slug.'/view')->assertOk();
+    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.9'])->postJson('/api/public/businesses/'.$spices->slug.'/view')->assertOk();
+    expect($spices->fresh()->views)->toBe(2);
+    $this->postJson('/api/public/businesses/'.$pending->slug.'/view')->assertNotFound();
 
     $this->getJson('/api/public/businesses/'.$pending->slug)->assertNotFound();
 });

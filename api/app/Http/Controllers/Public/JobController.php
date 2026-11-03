@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Job;
 use App\Support\PublicUrls;
+use App\Support\Search;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,8 +30,7 @@ class JobController extends Controller
         $page = Job::query()->with('source:id,name')->where('status', 'published')
             ->when($data['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
             ->when($data['emirate'] ?? null, fn ($q, $emirate) => $q->where('emirate', $emirate))
-            ->when(trim((string) ($data['q'] ?? '')), fn ($q, $term) => $q->where(fn ($w) => $w
-                ->where('title', 'like', '%'.$term.'%')->orWhere('company', 'like', '%'.$term.'%')->orWhere('sub_area', 'like', '%'.$term.'%')))
+            ->when(trim((string) ($data['q'] ?? '')), fn ($q, $term) => Search::anyColumn($q, ['title', 'company', 'sub_area'], $term))
             ->orderByDesc('published_at')->orderByDesc('id')
             ->paginate(20);
 

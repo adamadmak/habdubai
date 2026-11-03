@@ -196,10 +196,17 @@ class TelegramBotService
         }
     }
 
-    public function editCaption(int|string $chatId, int $messageId, string $caption): bool
+    /** Telegram drops a message's buttons on an edit that does not send them again: pass $replyMarkup to keep them. */
+    public function editCaption(int|string $chatId, int $messageId, string $caption, ?array $replyMarkup = null): bool
     {
         try {
-            $this->post('editMessageCaption', ['chat_id' => $chatId, 'message_id' => $messageId, 'caption' => mb_substr($caption, 0, 1024), 'parse_mode' => 'HTML'], retry: false);
+            $this->post('editMessageCaption', array_filter([
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+                'caption' => mb_substr($caption, 0, 1024),
+                'parse_mode' => 'HTML',
+                'reply_markup' => $replyMarkup,
+            ], fn ($value) => $value !== null), retry: false);
 
             return true;
         } catch (RuntimeException) {

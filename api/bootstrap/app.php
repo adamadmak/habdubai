@@ -17,9 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
             'owner' => \App\Http\Middleware\EnsureBusinessOwner::class,
         ]);
-        // Behind the host's proxy: read the visitor's address from X-Forwarded-For, or
-        // every rate limit would count all visitors as one.
-        $middleware->trustProxies(at: '*');
+        // Behind the host's proxy: read the visitor's address and the scheme from it, or
+        // every rate limit would count all visitors as one. Not X-Forwarded-Host: a
+        // forged one would change the links the API builds.
+        $middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

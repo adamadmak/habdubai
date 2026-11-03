@@ -113,7 +113,7 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
                     {x.changes_in_review && <span className="inline-flex items-center gap-1 text-warning"><Hourglass className="size-3.5" aria-hidden="true" /> {b.changesInReview}</span>}
                     {x.pending_photo && <span className="inline-flex items-center gap-1 text-warning"><Hourglass className="size-3.5" aria-hidden="true" /> {b.photoInReview}</span>}
-                    {x.status === "approved" && <span className="inline-flex items-center gap-1 text-muted"><Eye className="size-3.5" aria-hidden="true" /> {fill(b.views, { n: number(x.views, lang) })}</span>}
+                    {x.status === "approved" && <span className="inline-flex items-center gap-1 text-muted"><Eye className="size-3.5" aria-hidden="true" /> {x.views === 1 ? b.viewOne : fill(b.views, { n: number(x.views, lang) })}</span>}
                   </div>
                   {x.review_note && x.status !== "approved" && <p className="mt-2 rounded-lg bg-surface p-2 text-sm">{fill(b.reason, { note: x.review_note })}</p>}
                 </div>

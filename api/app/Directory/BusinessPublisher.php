@@ -33,14 +33,19 @@ class BusinessPublisher
     {
         $firstTime = in_array($business->status, ['pending', 'rejected'], true);
 
-        DB::transaction(function () use ($business, $adminId): void {
+        DB::transaction(function () use ($business, $adminId, $firstTime): void {
             $business->forceFill([
                 'status' => 'approved',
                 'reviewed_by' => $adminId,
                 'reviewed_at' => now(),
                 'review_note' => null,
             ])->save();
-            $this->photos->approvePending($business);
+            // A first approval takes the submitted photo with it. Listing a hidden
+            // business again does not: its owner's queued photo and edits wait for
+            // their own decision on "Owner edits".
+            if ($firstTime) {
+                $this->photos->approvePending($business);
+            }
         });
 
         if ($business->channel_message_id === null) {
@@ -62,10 +67,19 @@ class BusinessPublisher
     public function unpost(Business $business): void
     {
         $channel = JobSettings::channel();
-        if ($channel !== '' && $business->channel_message_id) {
-            $this->telegram->deleteMessage($channel, (int) $business->channel_message_id);
+        if ($channel === '' || ! $business->channel_message_id) {
+            return;
         }
-        $business->forceFill(['channel_message_id' => null])->save();
+
+        // Forgotten only once it is really gone; otherwise listing it again would post a duplicate
+        // while the old post stays up with nothing pointing at it.
+        if ($this->telegram->deleteMessage($channel, (int) $business->channel_message_id)) {
+            $business->forceFill(['channel_message_id' => null])->save();
+        } else {
+            Log::warning('A directory post could not be removed from the channel; remove it by hand.', [
+                'business_id' => $business->id, 'message_id' => $business->channel_message_id,
+            ]);
+        }
     }
 
     /** An owner's edits to a live listing: applied, the channel post refreshed, the owner told. */
@@ -196,7 +210,7 @@ class BusinessPublisher
         $text = $this->channelText($business);
         // The post is a photo with a caption or a plain message; one of the two edits applies.
         if (! $this->telegram->editText($channel, (int) $business->channel_message_id, $text, $this->keyboard($business))) {
-            $this->telegram->editCaption($channel, (int) $business->channel_message_id, $text);
+            $this->telegram->editCaption($channel, (int) $business->channel_message_id, mb_substr($text, 0, 1024), $this->keyboard($business));
         }
     }
 
