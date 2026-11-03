@@ -54,6 +54,27 @@ final class Choices
         'unknown' => ['am' => 'ቦታ አልተገለጸም', 'ti' => 'ቦታ ኣይተገልጸን', 'en' => 'Location not stated'],
     ];
 
+    /**
+     * Kinds of business in the directory. No money exchange or transfer:
+     * the community rules keep that out of every surface.
+     */
+    public const BUSINESS_CATEGORIES = [
+        'restaurant' => ['am' => '🍽 ምግብ ቤት', 'ti' => '🍽 ቤት መግቢ', 'en' => '🍽 Restaurant'],
+        'cafe' => ['am' => '☕ ካፌ እና ቡና', 'ti' => '☕ ካፈን ቡንን', 'en' => '☕ Cafe and coffee'],
+        'grocery' => ['am' => '🛒 የሐበሻ ሱቅ', 'ti' => '🛒 ድኳን ሓበሻ', 'en' => '🛒 Habesha shop'],
+        'salon' => ['am' => '💇 ሳሎንና ፀጉር ቤት', 'ti' => '💇 ሳሎንን መቖረጺ ጸጉርን', 'en' => '💇 Salon and barber'],
+        'cargo' => ['am' => '📦 ካርጎና መላኪያ', 'ti' => '📦 ካርጎን ምልኣኽን', 'en' => '📦 Cargo and shipping'],
+        'travel' => ['am' => '✈️ የጉዞ ወኪል', 'ti' => '✈️ ወኪል ጉዕዞ', 'en' => '✈️ Travel agency'],
+        'typing' => ['am' => '🧾 ታይፒንግና የመንግሥት አገልግሎት', 'ti' => '🧾 ታይፒንግን ኣገልግሎት መንግስትን', 'en' => '🧾 Typing and government services'],
+        'clinic' => ['am' => '🩺 ጤና', 'ti' => '🩺 ጥዕና', 'en' => '🩺 Health'],
+        'fashion' => ['am' => '👗 የሐበሻ ልብስና ስፌት', 'ti' => '👗 ክዳን ሓበሻን ስፍየትን', 'en' => '👗 Habesha clothes and tailoring'],
+        'events' => ['am' => '🎉 ዝግጅትና አዳራሽ', 'ti' => '🎉 ምድላው በዓልን ኣዳራሽን', 'en' => '🎉 Events and halls'],
+        'worship' => ['am' => '⛪ የአምልኮ ቦታ', 'ti' => '⛪ ቦታ ኣምልኾ', 'en' => '⛪ Places of worship'],
+        'education' => ['am' => '📚 ትምህርት', 'ti' => '📚 ትምህርቲ', 'en' => '📚 Education and classes'],
+        'services' => ['am' => '🛠 አገልግሎቶች', 'ti' => '🛠 ኣገልግሎታት', 'en' => '🛠 Services'],
+        'other' => ['am' => '📌 ሌላ', 'ti' => '📌 ካልእ', 'en' => '📌 Other'],
+    ];
+
     /** Minimum monthly salary choices for job alerts, in AED; 0 = any. */
     public const SALARY_STEPS = [0, 1500, 2500, 4000, 6000];
 

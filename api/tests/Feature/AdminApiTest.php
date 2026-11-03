@@ -103,6 +103,17 @@ test('settings are saved and read back, the token is verified and never returned
     $this->getJson('/api/admin/settings')->assertOk()->assertJsonPath('telegram.username', 'HabeshaDubaiBot');
 });
 
+test('on a local machine the token is saved and the missing webhook is reported, not treated as a failure', function (): void {
+    Sanctum::actingAs(admin(), ['admin']);
+
+    $this->postJson('/api/admin/settings/telegram', ['token' => '7654321:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh'])
+        ->assertOk()
+        ->assertJsonPath('webhook', null)
+        ->assertJsonPath('webhook_error', 'Set the public URL first; Telegram cannot reach localhost.');
+
+    expect(app(\App\Services\TelegramBotService::class)->configured())->toBeTrue();
+});
+
 test('the webhook cannot be registered against localhost', function (): void {
     Sanctum::actingAs(admin(), ['admin']);
 

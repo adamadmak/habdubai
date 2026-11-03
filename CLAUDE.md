@@ -64,6 +64,19 @@ scheduler at most once per fifteen minutes per member. The scheduler only
 runs when something calls `POST /api/system/tick` with `TICK_TOKEN`; the host
 has no cron.
 
+## Business directory
+
+`App\Bot\DirectoryFlow`: members browse by city → kind → a page of eight →
+one business (sent as a map venue when it has a pin), search by name or
+area, and suggest a business (name, city, kind, area, optional pin or Google
+Maps link, optional phone and one line). A suggestion is `pending` until a
+moderator approves it on the admin's Directory page; nothing a member types
+is listed before that. Three reports hide an unverified listing; a verified
+one stays until a moderator acts. Cities are rows in `directory_cities`
+(seeded with the eight UAE cities) so a new city is data, not a deploy.
+Business kinds are fixed in `Choices::BUSINESS_CATEGORIES`, and money
+exchange or transfer is deliberately not one of them.
+
 ## Phone numbers are never stored
 
 A member is keyed on `phone_hash` (HMAC of the digits with the app key) plus

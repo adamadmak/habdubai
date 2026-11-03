@@ -54,6 +54,11 @@ class DashboardController extends Controller
                 'paused' => JobSource::query()->whereNotNull('paused_at')->count(),
                 'failing' => JobSource::query()->where('active', true)->whereNull('paused_at')->where('failures_in_row', '>', 0)->count(),
             ],
+            'directory' => [
+                'listed' => \App\Models\Business::query()->where('status', 'approved')->count(),
+                'pending' => \App\Models\Business::query()->where('status', 'pending')->count(),
+                'hidden' => \App\Models\Business::query()->where('status', 'hidden')->count(),
+            ],
             'tick' => Cache::get(SystemTickController::LAST_TICK_KEY),
         ]);
     }

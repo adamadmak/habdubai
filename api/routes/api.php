@@ -3,7 +3,9 @@
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BotTextController;
+use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DirectoryCityController;
 use App\Http\Controllers\Admin\JobController;
 use App\Http\Controllers\Admin\JobSettingsController;
 use App\Http\Controllers\Admin\JobSourceController;
@@ -60,6 +62,20 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('jobs/{job}/approve', [JobController::class, 'approve'])->name('jobs.approve');
         Route::post('jobs/{job}/reject', [JobController::class, 'reject'])->name('jobs.reject');
         Route::post('jobs/{job}/close', [JobController::class, 'close'])->name('jobs.close');
+
+        Route::get('businesses', [BusinessController::class, 'index'])->name('businesses.index');
+        Route::post('businesses', [BusinessController::class, 'store'])->name('businesses.store');
+        Route::get('businesses/{business}', [BusinessController::class, 'show'])->name('businesses.show');
+        Route::put('businesses/{business}', [BusinessController::class, 'update'])->name('businesses.update');
+        Route::delete('businesses/{business}', [BusinessController::class, 'destroy'])->name('businesses.destroy');
+        Route::post('businesses/{business}/approve', [BusinessController::class, 'approve'])->name('businesses.approve');
+        Route::post('businesses/{business}/reject', [BusinessController::class, 'reject'])->name('businesses.reject');
+        Route::post('businesses/{business}/hide', [BusinessController::class, 'hide'])->name('businesses.hide');
+
+        Route::get('directory-cities', [DirectoryCityController::class, 'index'])->name('directory-cities.index');
+        Route::post('directory-cities', [DirectoryCityController::class, 'store'])->name('directory-cities.store');
+        Route::put('directory-cities/{city}', [DirectoryCityController::class, 'update'])->name('directory-cities.update');
+        Route::delete('directory-cities/{city}', [DirectoryCityController::class, 'destroy'])->name('directory-cities.destroy');
 
         Route::get('job-settings', [JobSettingsController::class, 'show'])->name('job-settings.show');
         Route::put('job-settings', [JobSettingsController::class, 'update'])->name('job-settings.update');

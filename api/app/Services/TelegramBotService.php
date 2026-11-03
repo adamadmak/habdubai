@@ -89,6 +89,16 @@ class TelegramBotService
         return $this->post('getWebhookInfo')->json('result', []);
     }
 
+    /** Long polling, for local development only (bot:poll). Fails while a webhook is set. */
+    public function getUpdates(int $offset, int $timeout = 25): array
+    {
+        return $this->post('getUpdates', [
+            'offset' => $offset,
+            'timeout' => $timeout,
+            'allowed_updates' => ['message', 'edited_message', 'channel_post', 'callback_query'],
+        ], retry: false, timeout: $timeout + 10)->json('result', []);
+    }
+
     public function setWebhook(string $url): array
     {
         return $this->post('setWebhook', [
@@ -138,6 +148,19 @@ class TelegramBotService
             'link_preview_options' => ['is_disabled' => true],
             'reply_markup' => $replyMarkup,
         ], fn ($value) => $value !== null))->json('result', []);
+    }
+
+    /** A map pin with a title and address, which Telegram shows as a tappable place. */
+    public function sendVenue(int|string $chatId, float $latitude, float $longitude, string $title, string $address, ?array $replyMarkup = null): array
+    {
+        return $this->post('sendVenue', array_filter([
+            'chat_id' => $chatId,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'title' => mb_substr($title, 0, 120),
+            'address' => mb_substr($address, 0, 200),
+            'reply_markup' => $replyMarkup,
+        ], fn ($value) => $value !== null), retry: false)->json('result', []);
     }
 
     /** One attempt, five seconds: for a notice sent inside somebody else's request. */

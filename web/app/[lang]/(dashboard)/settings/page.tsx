@@ -30,7 +30,7 @@ const SettingsPage = () => {
   }, [data]);
 
   const save = useApiMutation<SettingsPayload, Record<string, string>>((request, body) => request("/admin/settings", "PUT", body), [["settings"], ["dashboard"]]);
-  const saveToken = useApiMutation<{ bot: { username?: string } }, string>((request, t) => request("/admin/settings/telegram", "POST", { token: t }), [["settings"], ["dashboard"]]);
+  const saveToken = useApiMutation<{ bot: { username?: string }; webhook_error: string | null }, string>((request, t) => request("/admin/settings/telegram", "POST", { token: t }), [["settings"], ["dashboard"]]);
   const setWebhook = useApiMutation<unknown>((request) => request("/admin/settings/webhook", "POST"), [["settings"]]);
 
   if (error) return <div className="text-destructive">{error.message}</div>;
@@ -84,7 +84,14 @@ const SettingsPage = () => {
                   e.preventDefault();
                   saveToken
                     .mutateAsync(token)
-                    .then((r) => { setToken(""); toast.success(`Token saved for @${r.bot.username ?? "bot"} and the webhook registered.`); })
+                    .then((r) => {
+                      setToken("");
+                      if (r.webhook_error) {
+                        toast.success(`Token saved for @${r.bot.username ?? "bot"}. Webhook not registered: ${r.webhook_error}`, { duration: 8000 });
+                      } else {
+                        toast.success(`Token saved for @${r.bot.username ?? "bot"} and the webhook registered.`);
+                      }
+                    })
                     .catch((err) => toast.error(err.message));
                 }}
               >

@@ -22,6 +22,18 @@ final class Incoming
         public readonly array $message = [],
     ) {}
 
+    /** A location pin, as ['latitude' => …, 'longitude' => …], or null. Venues carry one too. */
+    public function location(): ?array
+    {
+        $location = $this->message['location'] ?? $this->message['venue']['location'] ?? null;
+
+        if (! is_array($location) || ! isset($location['latitude'], $location['longitude'])) {
+            return null;
+        }
+
+        return ['latitude' => (float) $location['latitude'], 'longitude' => (float) $location['longitude']];
+    }
+
     /** A message forwarded from somewhere else (a channel post, another chat). */
     public function isForward(): bool
     {

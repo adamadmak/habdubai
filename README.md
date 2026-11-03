@@ -22,6 +22,17 @@ cd web && npm install && cp .env.example .env.local && npm run dev
 The API listens on http://localhost:8000 (`php artisan serve`); the web app on
 http://localhost:3000 and calls the API with the URL in `NEXT_PUBLIC_API_URL`.
 
+To talk to the bot from a phone during development, paste a bot token on the
+admin's Settings page (it is stored encrypted; the webhook step is skipped on
+localhost), then poll Telegram instead of waiting for a webhook:
+
+```bash
+cd api && php artisan bot:poll
+```
+
+It refuses to run while the bot has a webhook registered, so it can never
+take a live bot offline. Use a separate test bot from BotFather for local work.
+
 ## Tests
 
 ```bash

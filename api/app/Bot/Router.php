@@ -24,6 +24,7 @@ class Router
         private readonly Onboarding $onboarding,
         private readonly JobsFlow $jobs,
         private readonly JobIngest $ingest,
+        private readonly DirectoryFlow $directory,
     ) {}
 
     public function handle(TelegramUpdate $update): void
@@ -97,6 +98,15 @@ class Router
                 $member?->isActive() ? $this->jobs->saved($member) : $this->reply($conversation, 'not_member');
 
                 return;
+            case 'directory':
+            case 'businesses':
+                $member?->isActive() ? $this->directory->cities($member) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'addbusiness':
+                $member?->isActive() ? $this->directory->beginSuggest($member, $conversation) : $this->reply($conversation, 'not_member');
+
+                return;
             case 'help':
                 $this->reply($conversation, 'help');
 
@@ -147,6 +157,18 @@ class Router
 
         if (in_array($conversation->state, Onboarding::STATES, true)) {
             $this->onboarding->handle($conversation, $in);
+
+            return;
+        }
+
+        if (in_array($conversation->state, DirectoryFlow::STATES, true) && $member?->isActive()) {
+            $this->directory->handle($member, $conversation, $in);
+
+            return;
+        }
+
+        if ($conversation->state === 'dir_search' && $member?->isActive() && $in->text !== null) {
+            $this->directory->search($member, $conversation, $in->text);
 
             return;
         }
@@ -273,6 +295,13 @@ class Router
 
         if ($parts[0] === 'job' && in_array($parts[1] ?? '', ['save', 'report'], true) && ctype_digit($parts[2] ?? '')) {
             $this->jobs->cardButton($member, $cb, $parts[1], (int) $parts[2]);
+
+            return;
+        }
+
+        if ($parts[0] === 'd' && $member?->isActive() && $cb->inPrivateChat()) {
+            $conversation = Conversation::forUser($cb->userId, (int) $cb->chatId, $cb->languageCode);
+            $this->directory->button($member, $conversation, $cb);
 
             return;
         }

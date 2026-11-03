@@ -165,9 +165,9 @@ return [
         'en' => 'You are not a member yet. Send /start to join.',
     ],
     'help' => [
-        'am' => "ትዕዛዞች፡\n/start — መቀላቀል\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ\n\nጥያቄዎችና የዕቃ ሰሌዳ በቅርቡ ይመጣሉ።",
-        'ti' => "ትእዛዛት፡\n/start — ምጽንባር\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ\n\nሕቶታትን ሰሌዳ ኣቕሑን ኣብ ቀረባ ክመጹ እዮም።",
-        'en' => "Commands:\n/start — join, or welcome back\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/profile — your profile\n/language — change language\n/leave — leave the community\n\nQuestions and the goods board are coming soon.",
+        'am' => "ትዕዛዞች፡\n/start — መቀላቀል\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/directory — የሐበሻ ንግድ ማውጫ\n/addbusiness — ንግድ መጠቆም\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ\n\nጥያቄዎችና የዕቃ ሰሌዳ በቅርቡ ይመጣሉ።",
+        'ti' => "ትእዛዛት፡\n/start — ምጽንባር\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/directory — መምርሒ ንግዲ ሓበሻ\n/addbusiness — ንግዲ ምምልካት\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ\n\nሕቶታትን ሰሌዳ ኣቕሑን ኣብ ቀረባ ክመጹ እዮም።",
+        'en' => "Commands:\n/start — join, or welcome back\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/directory — Habesha business directory\n/addbusiness — suggest a business\n/profile — your profile\n/language — change language\n/leave — leave the community\n\nQuestions and the goods board are coming soon.",
     ],
     'unknown' => [
         'am' => 'አልገባኝም። /help ይላኩ።',
@@ -444,5 +444,204 @@ return [
         'am' => '(ተዘግቷል)',
         'ti' => '(ተዓጽዩ)',
         'en' => '(closed)',
+    ],
+
+    // ---- business directory: browsing -----------------------------------
+    'dir_pick_city' => [
+        'am' => "🏪 <b>የሐበሻ ንግድ ማውጫ</b>\n\nከተማ ይምረጡ።",
+        'ti' => "🏪 <b>መምርሒ ንግዲ ሓበሻ</b>\n\nከተማ ምረጹ።",
+        'en' => "🏪 <b>Habesha business directory</b>\n\nPick a city.",
+    ],
+    'dir_pick_category' => [
+        'am' => "🏪 <b>{city}</b>\n\nምን ይፈልጋሉ?",
+        'ti' => "🏪 <b>{city}</b>\n\nእንታይ ትደልዩ?",
+        'en' => "🏪 <b>{city}</b>\n\nWhat are you looking for?",
+    ],
+    'dir_city_empty' => [
+        'am' => "🏪 <b>{city}</b>\n\nበዚህ ከተማ እስካሁን የተመዘገበ ንግድ የለም። የሚያውቁትን ንግድ ይጠቁሙ።",
+        'ti' => "🏪 <b>{city}</b>\n\nኣብዚ ከተማ ክሳብ ሕጂ ዝተመዝገበ ንግዲ የለን። እትፈልጥዎ ንግዲ ኣመልክቱ።",
+        'en' => "🏪 <b>{city}</b>\n\nNo businesses are listed in this city yet. Suggest one you know.",
+    ],
+    'dir_list_title' => [
+        'am' => '{category} · {city}',
+        'ti' => '{category} · {city}',
+        'en' => '{category} · {city}',
+    ],
+    'dir_list_footer' => [
+        'am' => 'ለካርታና ለዝርዝር ቁጥሩን ይጫኑ።',
+        'ti' => 'ንካርታን ዝርዝርን ቁጽሪ ጠውቑ።',
+        'en' => 'Tap a number for the map and details.',
+    ],
+    'dir_verified' => [
+        'am' => '✅ የተረጋገጠ',
+        'ti' => '✅ ዝተረጋገጸ',
+        'en' => '✅ Verified',
+    ],
+    'dir_search_ask' => [
+        'am' => 'የንግዱን ስም ወይም የስሙን ክፍል ይላኩ።',
+        'ti' => 'ስም ንግዲ ወይ ክፋል ስሙ ስደዱ።',
+        'en' => 'Send the name of the business, or part of it.',
+    ],
+    'dir_search_none' => [
+        'am' => '«{query}» የሚል ንግድ አልተገኘም።',
+        'ti' => '«{query}» ዝብል ንግዲ ኣይተረኽበን።',
+        'en' => 'No business matches "{query}".',
+    ],
+    'dir_search_title' => [
+        'am' => 'የፍለጋ ውጤት፡ «{query}»',
+        'ti' => 'ውጽኢት ምድላይ፡ «{query}»',
+        'en' => 'Results for "{query}"',
+    ],
+    'dir_search_short' => [
+        'am' => 'ቢያንስ 2 ፊደላት ይላኩ።',
+        'ti' => 'እንተወሓደ 2 ፊደላት ስደዱ።',
+        'en' => 'Send at least 2 letters.',
+    ],
+    'btn_dir_search' => [
+        'am' => '🔍 በስም ፈልግ',
+        'ti' => '🔍 ብስም ድለ',
+        'en' => '🔍 Search by name',
+    ],
+    'btn_dir_add' => [
+        'am' => '➕ ንግድ ጠቁም',
+        'ti' => '➕ ንግዲ ኣመልክት',
+        'en' => '➕ Suggest a business',
+    ],
+    'btn_dir_cities' => [
+        'am' => '🏙 ከተሞች',
+        'ti' => '🏙 ከተማታት',
+        'en' => '🏙 Cities',
+    ],
+    'btn_dir_back' => [
+        'am' => '⬅️ ተመለስ',
+        'ti' => '⬅️ ተመለስ',
+        'en' => '⬅️ Back',
+    ],
+    'btn_dir_prev' => [
+        'am' => '◀️ ቀዳሚ',
+        'ti' => '◀️ ዝሓለፈ',
+        'en' => '◀️ Previous',
+    ],
+    'btn_dir_next' => [
+        'am' => 'ቀጣይ ▶️',
+        'ti' => 'ዝቕጽል ▶️',
+        'en' => 'Next ▶️',
+    ],
+    'btn_dir_map' => [
+        'am' => '🗺 ካርታ',
+        'ti' => '🗺 ካርታ',
+        'en' => '🗺 Map',
+    ],
+    'btn_dir_report' => [
+        'am' => '🚩 መረጃው ስህተት ነው',
+        'ti' => '🚩 ሓበሬታ ጌጋ እዩ',
+        'en' => '🚩 Wrong information',
+    ],
+    'dir_reported' => [
+        'am' => 'አመሰግናለሁ፤ አወያዮች መረጃውን ያያሉ።',
+        'ti' => 'የቐንየለይ፤ ኣወያየቲ ነቲ ሓበሬታ ክርእይዎ እዮም።',
+        'en' => 'Thank you. Moderators will check the details.',
+    ],
+    'dir_already_reported' => [
+        'am' => 'ይህን ንግድ ቀድመው ሪፖርት አድርገዋል።',
+        'ti' => 'ነዚ ንግዲ ቀደም ሪፖርት ገይርኩሞ ኢኹም።',
+        'en' => 'You already reported this business.',
+    ],
+    'dir_gone' => [
+        'am' => 'ይህ ንግድ ከማውጫው ተወግዷል።',
+        'ti' => 'እዚ ንግዲ ካብ መምርሒ ተኣልዩ።',
+        'en' => 'This business is no longer listed.',
+    ],
+
+    // ---- business directory: suggesting a business ----------------------
+    'biz_ask_name' => [
+        'am' => "➕ <b>ንግድ መጠቆሚያ</b>\n\nየንግዱ ስም ማን ነው?",
+        'ti' => "➕ <b>ምምልካት ንግዲ</b>\n\nስም እቲ ንግዲ እንታይ እዩ?",
+        'en' => "➕ <b>Suggest a business</b>\n\nWhat is the business called?",
+    ],
+    'biz_name_invalid' => [
+        'am' => 'ስም ከ2 እስከ 80 ፊደላት ነው፤ ሊንክ አይፈቀድም።',
+        'ti' => 'ስም ካብ 2 ክሳብ 80 ፊደላት እዩ፤ ሊንክ ኣይፍቀድን።',
+        'en' => 'A name is 2 to 80 letters, with no links.',
+    ],
+    'biz_ask_city' => [
+        'am' => 'በየትኛው ከተማ ነው?',
+        'ti' => 'ኣብ ኣየናይ ከተማ እዩ?',
+        'en' => 'Which city is it in?',
+    ],
+    'biz_ask_category' => [
+        'am' => 'ምን ዓይነት ንግድ ነው?',
+        'ti' => 'እንታይ ዓይነት ንግዲ እዩ?',
+        'en' => 'What kind of business is it?',
+    ],
+    'biz_ask_area' => [
+        'am' => 'የት ነው ያለው? ሰፈሩን ወይም መንገዱን ይጻፉ፣ ለምሳሌ «ዴይራ፣ አል ሪጋ ሜትሮ አጠገብ»።',
+        'ti' => 'ኣበይ እዩ ዘሎ? ከባቢኡ ወይ ጽርግያኡ ጸሓፉ፣ ንኣብነት «ዴይራ፣ ጥቓ ሜትሮ ኣል ሪጋ»።',
+        'en' => 'Where is it? Type the area or street, for example "Deira, near Al Rigga metro".',
+    ],
+    'biz_area_invalid' => [
+        'am' => 'ቦታው ከ3 እስከ 150 ፊደላት ነው።',
+        'ti' => 'እቲ ቦታ ካብ 3 ክሳብ 150 ፊደላት እዩ።',
+        'en' => 'The location is 3 to 150 letters.',
+    ],
+    'biz_ask_pin' => [
+        'am' => 'የካርታ ምልክት ይላኩ (📎 → Location፣ ቦታውን ይምረጡ) ወይም የGoogle Maps ሊንክ ይለጥፉ። ከሌለ «ዝለል» ይጫኑ።',
+        'ti' => 'ምልክት ካርታ ስደዱ (📎 → Location፣ ቦታ ምረጹ) ወይ ሊንክ Google Maps ለጥፉ። እንተዘየለ «ሕለፍ» ጠውቑ።',
+        'en' => 'Send the map pin (📎 → Location, then move the pin to the place) or paste a Google Maps link. If you do not have one, tap Skip.',
+    ],
+    'biz_pin_invalid' => [
+        'am' => 'ይህ የካርታ ምልክት ወይም የGoogle Maps ሊንክ አይደለም። እንደገና ይሞክሩ ወይም «ዝለል» ይጫኑ።',
+        'ti' => 'እዚ ምልክት ካርታ ወይ ሊንክ Google Maps ኣይኮነን። እንደገና ፈትኑ ወይ «ሕለፍ» ጠውቑ።',
+        'en' => 'That is not a map pin or a Google Maps link. Try again, or tap Skip.',
+    ],
+    'biz_ask_phone' => [
+        'am' => 'የንግዱ ስልክ ወይም ዋትስአፕ ቁጥር? ከሌለ «ዝለል» ይጫኑ።',
+        'ti' => 'ቁጽሪ ስልኪ ወይ ዋትስኣፕ ናይቲ ንግዲ? እንተዘየለ «ሕለፍ» ጠውቑ።',
+        'en' => 'The business phone or WhatsApp number? If you do not know it, tap Skip.',
+    ],
+    'biz_phone_invalid' => [
+        'am' => 'ይህ የስልክ ቁጥር አይመስልም። እንደገና ይጻፉ ወይም «ዝለል» ይጫኑ።',
+        'ti' => 'እዚ ቁጽሪ ስልኪ ኣይመስልን። እንደገና ጸሓፉ ወይ «ሕለፍ» ጠውቑ።',
+        'en' => 'That does not look like a phone number. Type it again, or tap Skip.',
+    ],
+    'biz_ask_description' => [
+        'am' => 'ስለ ንግዱ አንድ መስመር (ለምሳሌ «የሐበሻ ምግብ፣ ቅዳሜ ቡና ሥነ ሥርዓት»)። ወይም «ዝለል»።',
+        'ti' => 'ብዛዕባ እቲ ንግዲ ሓደ መስመር (ንኣብነት «መግቢ ሓበሻ፣ ቀዳም ጀበና ቡን»)። ወይ «ሕለፍ»።',
+        'en' => 'One line about the business (for example "Habesha food, coffee ceremony on Saturdays"). Or Skip.',
+    ],
+    'biz_description_invalid' => [
+        'am' => 'መግለጫው ከ250 ፊደላት መብለጥ የለበትም፤ ሊንክ አይፈቀድም።',
+        'ti' => 'መግለጺ ካብ 250 ፊደላት ክበዝሕ የብሉን፤ ሊንክ ኣይፍቀድን።',
+        'en' => 'The description is at most 250 letters, with no links.',
+    ],
+    'biz_confirm' => [
+        'am' => "እባክዎ ያረጋግጡ፡\n\n{card}\n\nትክክል ከሆነ «ላክ» ይጫኑ።",
+        'ti' => "በጃኹም ኣረጋግጹ፡\n\n{card}\n\nቅኑዕ እንተኾይኑ «ስደድ» ጠውቑ።",
+        'en' => "Please check:\n\n{card}\n\nIf it is right, tap Send.",
+    ],
+    'biz_submitted' => [
+        'am' => 'አመሰግናለሁ! አወያይ ካረጋገጠው በኋላ በማውጫው ይታያል።',
+        'ti' => 'የቐንየለይ! ኣወያዪ ምስ ኣረጋገጾ ኣብ መምርሒ ክርአ እዩ።',
+        'en' => 'Thank you! It appears in the directory once a moderator has checked it.',
+    ],
+    'biz_too_many' => [
+        'am' => 'ቀድመው የጠቆሟቸው {count} ንግዶች እየተረጋገጡ ነው። እስኪያልቁ ይጠብቁ።',
+        'ti' => 'ቀደም ዘመልከትኩምዎም {count} ንግድታት ይረጋገጹ ኣለዉ። ክሳብ ዝውድኡ ተጸበዩ።',
+        'en' => 'You already have {count} suggestions waiting for a moderator. Please wait until they are checked.',
+    ],
+    'biz_duplicate' => [
+        'am' => 'ይህ ንግድ በዚህ ከተማ ቀድሞ አለ ወይም እየተረጋገጠ ነው።',
+        'ti' => 'እዚ ንግዲ ኣብዚ ከተማ ድሮ ኣሎ ወይ ይረጋገጽ ኣሎ።',
+        'en' => 'This business is already listed in this city, or waiting to be checked.',
+    ],
+    'btn_skip' => [
+        'am' => '⏭ ዝለል',
+        'ti' => '⏭ ሕለፍ',
+        'en' => '⏭ Skip',
+    ],
+    'btn_send' => [
+        'am' => '✅ ላክ',
+        'ti' => '✅ ስደድ',
+        'en' => '✅ Send',
     ],
 ];

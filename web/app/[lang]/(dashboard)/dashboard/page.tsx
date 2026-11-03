@@ -59,6 +59,13 @@ const DashboardPage = () => {
         <Stat label="Alerts waiting to send" value={data.jobs.alerts_queued} />
         <Stat label="Classifier" value={data.jobs.classifier === "claude" ? "Claude" : "Rules"} href="/job-settings" tone={data.jobs.classifier === "rules" ? "warning" : undefined} />
       </div>
+      <h2 className="text-lg font-semibold text-default-900 mt-8 mb-3">Business directory</h2>
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Stat label="Listed businesses" value={data.directory.listed} href="/directory?status=approved" />
+        <Stat label="Suggestions waiting" value={data.directory.pending} href="/directory?status=pending" tone={data.directory.pending > 0 ? "warning" : undefined} />
+        <Stat label="Hidden after reports" value={data.directory.hidden} href="/directory?status=hidden" tone={data.directory.hidden > 0 ? "destructive" : undefined} />
+      </div>
+
       {(!data.jobs.channel || !data.tick) && (
         <div className="mt-3 space-y-1 text-sm text-warning">
           {!data.jobs.channel && <div>No jobs channel is set, so jobs reach members only through alerts. <Link href="/job-settings" className="underline">Set the channel</Link>.</div>}

@@ -64,14 +64,23 @@ class SettingController extends Controller
 
         try {
             $bot = $telegram->configureToken($data['token']);
-            $webhook = $this->registerWebhook($telegram);
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
-        AuditLog::record($request->user()->id, 'telegram.token_set', 'settings', null, null, ['username' => $bot['username'] ?? null]);
+        // The token is saved either way; the webhook needs a public URL, which a
+        // local machine does not have (use `php artisan bot:poll` there).
+        $webhook = null;
+        $webhookError = null;
+        try {
+            $webhook = $this->registerWebhook($telegram);
+        } catch (RuntimeException $e) {
+            $webhookError = $e->getMessage();
+        }
 
-        return response()->json(['bot' => $bot, 'webhook' => $webhook, 'telegram' => $this->telegramState($telegram)]);
+        AuditLog::record($request->user()->id, 'telegram.token_set', 'settings', null, null, ['username' => $bot['username'] ?? null, 'webhook' => $webhookError === null]);
+
+        return response()->json(['bot' => $bot, 'webhook' => $webhook, 'webhook_error' => $webhookError, 'telegram' => $this->telegramState($telegram)]);
     }
 
     public function webhook(Request $request, TelegramBotService $telegram): JsonResponse

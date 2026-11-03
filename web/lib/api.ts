@@ -154,6 +154,7 @@ export interface DashboardPayload {
   bot: { configured: boolean; username: string };
   jobs: { published_today: number; open: number; review: number; duplicates_today: number; alerts_queued: number; classifier: "claude" | "rules"; channel: boolean };
   sources: { active: number; paused: number; failing: number };
+  directory: { listed: number; pending: number; hidden: number };
   tick: { at: string; seconds: number } | null;
 }
 
@@ -244,6 +245,51 @@ export interface JobSettingsPayload {
     anthropic_model: string;
   };
   anthropic: { configured: boolean; hint: string | null };
+}
+
+export type BusinessStatus = "pending" | "approved" | "rejected" | "hidden";
+
+export interface Business {
+  id: number;
+  name: string;
+  category: string;
+  city_id: number;
+  city: string | null;
+  area: string;
+  latitude: number | null;
+  longitude: number | null;
+  maps_url: string | null;
+  map_link: string;
+  phone: string | null;
+  telegram: string | null;
+  description: string | null;
+  status: BusinessStatus;
+  verified: boolean;
+  review_note: string | null;
+  reports_count: number;
+  submitted_by: { id: number; name: string } | null;
+  created_at: string;
+  reports?: { member: string | null; reason: string; at: string }[];
+}
+
+export interface DirectoryCity {
+  id: number;
+  key: string;
+  name_en: string;
+  name_am: string;
+  name_ti: string;
+  country: string;
+  sort: number;
+  active: boolean;
+  listed_count?: number;
+  pending_count?: number;
+}
+
+export interface BusinessesPage {
+  data: Business[];
+  meta: { total: number; page: number; last_page: number };
+  counts: Partial<Record<BusinessStatus, number>>;
+  choices: { categories: Record<string, string>; cities: { id: number; name_en: string; active: boolean }[] };
 }
 
 export const CATEGORY_NAMES: Record<string, string> = {
