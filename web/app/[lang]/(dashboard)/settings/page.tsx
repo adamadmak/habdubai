@@ -70,11 +70,17 @@ const SettingsPage = () => {
               className="space-y-5"
               onSubmit={(e) => {
                 e.preventDefault();
+                // Only what this admin changed: another admin's save in the meantime is not reverted.
+                const changed = Object.fromEntries(Object.entries(values).filter(([key, value]) => value !== (data.settings[key] ?? "")));
+                if (Object.keys(changed).length === 0) {
+                  toast("Nothing changed.");
+                  return;
+                }
                 save
-                  .mutateAsync(values)
-                  .then((saved) => {
-                    // What the server now holds; the write-only boxes come back empty.
-                    setForm(saved.settings);
+                  .mutateAsync(changed)
+                  .then(() => {
+                    // The next draft starts from what the server now holds; the write-only boxes come back empty.
+                    setForm(null);
                     toast.success("Settings saved.");
                   })
                   .catch((err) => toast.error(errorText(err)));

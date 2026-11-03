@@ -2,13 +2,17 @@
 import { useApiQuery, ApiError, type HealthPayload, type ReadinessItem, type ReadinessPayload, type ReadinessSeverity } from "@/lib/api";
 import type { RingTone } from "./score-ring";
 
-/** Both launch checks, refreshed every 30 seconds while a page that shows them is open. */
+/**
+ * Both launch checks, refreshed every 30 seconds while a page that shows them is
+ * open, and never served stale: an admin who fixes a setting and comes straight
+ * back sees the item turn green, not the copy from a moment ago.
+ */
 export function useReadiness() {
-  return useApiQuery<ReadinessPayload>(["readiness"], "/admin/readiness", { refetchInterval: 30_000, refetchOnWindowFocus: true });
+  return useApiQuery<ReadinessPayload>(["readiness"], "/admin/readiness", { refetchInterval: 30_000, refetchOnWindowFocus: true, staleTime: 0 });
 }
 
 export function useHealth() {
-  return useApiQuery<HealthPayload>(["health"], "/health", { refetchInterval: 30_000, refetchOnWindowFocus: true });
+  return useApiQuery<HealthPayload>(["health"], "/health", { refetchInterval: 30_000, refetchOnWindowFocus: true, staleTime: 0 });
 }
 
 /** The API has not shipped this endpoint yet (or answers it on another path): not an error to shout about. */

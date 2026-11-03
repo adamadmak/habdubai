@@ -88,7 +88,15 @@ const MemberPage = () => {
             <CardContent className="space-y-5">
               <div>
                 <Label className="mb-2 block">Role</Label>
-                <Select value={m.role} onValueChange={(role) => act(patch.mutateAsync({ role: role as Member["role"] }), `Role set to ${role}.`)}>
+                <Select
+                  value={m.role}
+                  disabled={patch.isPending}
+                  onValueChange={(role) => {
+                    // The two roles with power over others are never one slip away.
+                    if ((role === "admin" || role === "moderator") && !window.confirm(`Make ${m.display_name} a ${role}? They can act on other members at once.`)) return;
+                    act(patch.mutateAsync({ role: role as Member["role"] }), `Role set to ${role}.`);
+                  }}
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {["member", "leader", "moderator", "admin"].map((r) => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}

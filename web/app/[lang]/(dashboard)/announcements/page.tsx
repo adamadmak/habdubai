@@ -51,7 +51,7 @@ const AnnouncementsPage = () => {
   return (
     <div>
       <PageTitle title="Announcements" description="Posted in the channel and sent to each topic's subscribers in their language. Deaths and fundraisers wait here for approval.">
-        <Button onClick={() => { setErrors({}); setCompose({ topic_id: String(data?.topics[0]?.id ?? ""), text: "", event_date: "", event_place: "" }); }}>New announcement</Button>
+        <Button onClick={() => { setErrors({}); setCompose({ topic_id: String(data?.topics.find((t) => t.active)?.id ?? ""), text: "", event_date: "", event_place: "" }); }}>New announcement</Button>
       </PageTitle>
 
       <Tabs defaultValue="list">

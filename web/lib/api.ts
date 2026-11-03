@@ -76,6 +76,11 @@ export async function apiRequest<T>(path: string, token: string | undefined, met
     throw new ApiError(0, "Could not reach the API. Check the connection and try again.");
   }
 
+  return readResponse<T>(response, method, path);
+}
+
+/** What every API answer goes through: the JSON, the sign-out on 401, the readable error. */
+async function readResponse<T>(response: Response, method: string, path: string): Promise<T> {
   const text = await response.text();
   let data: any = null;
   try {
@@ -88,11 +93,16 @@ export async function apiRequest<T>(path: string, token: string | undefined, met
   if (!response.ok) {
     if (response.status === 401 && !signingOut) {
       signingOut = true;
-      // Through next-auth, whose signOut event also revokes the token on the API.
-      // Back to this page after signing in again; the path without the locale prefix, as the login form expects.
-      const path = window.location.pathname.replace(/^\/(en|am|ti|om)(?=\/|$)/, "") + window.location.search;
-      const next = path && path !== "/" && !/^\/auth\//.test(path) ? `&next=${encodeURIComponent(path)}` : "";
-      await signOut({ callbackUrl: `/auth/login?expired=1${next}` });
+      try {
+        // Through next-auth, whose signOut event also revokes the token on the API.
+        // Back to this page after signing in again; the path without the locale prefix, as the login form expects.
+        const current = window.location.pathname.replace(/^\/(en|am|ti|om)(?=\/|$)/, "") + window.location.search;
+        const next = current && current !== "/" && !/^\/auth\//.test(current) ? `&next=${encodeURIComponent(current)}` : "";
+        await signOut({ callbackUrl: `/auth/login?expired=1${next}` });
+      } catch {
+        // The sign-out itself failed (this site's server away): the next 401 tries again.
+        signingOut = false;
+      }
     }
     if (response.status >= 500) console.error(`API ${method} ${path} failed (${response.status})`, data ?? text.slice(0, 500));
     throw new ApiError(response.status, readableError(response.status, data), data?.errors ?? {});
@@ -119,16 +129,7 @@ export async function apiUpload<T>(path: string, token: string | undefined, form
     throw new ApiError(0, "Could not reach the API. Check the connection and try again.");
   }
 
-  const text = await response.text();
-  let data: any = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = null;
-  }
-  if (!response.ok) throw new ApiError(response.status, readableError(response.status, data), data?.errors ?? {});
-
-  return data as T;
+  return readResponse<T>(response, "POST", path);
 }
 
 /** The sentence to put in a toast for any thrown value. */
@@ -172,7 +173,8 @@ export function useApiMutation<TResult, TVars = void>(
 
   return useMutation<TResult, ApiError, TVars>({
     mutationFn: (vars) => fn(request, vars),
-    onSuccess: () => {
+    // On failure too: an action the API refused half-way (a 409 after it hid a listing) has still changed what the lists show.
+    onSettled: () => {
       invalidate.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
     },
   });

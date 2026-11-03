@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const locales = ["en", "am", "ti"];
+const locales = ["en", "am", "ti", "om"];
 const defaultLocale = "en";
 
 /** The locale prefix on this path, or null when there is none. */

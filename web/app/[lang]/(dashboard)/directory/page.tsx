@@ -229,7 +229,11 @@ const DirectoryInner = () => {
     const changes = f.id ? changedBody(f, current) : toBody(f);
     let result: { business: Business } | null = null;
     if (!f.id || Object.keys(changes).length > 0) {
-      result = f.id ? await req(`/admin/businesses/${f.id}`, "PUT", changes) : await req("/admin/businesses", "POST", changes);
+      result = f.id ? await req<{ business: Business }>(`/admin/businesses/${f.id}`, "PUT", changes) : await req<{ business: Business }>("/admin/businesses", "POST", changes);
+      // The listing exists from here on: if the photo fails, a retry uploads again, it never creates a second listing.
+      const saved: Business = result.business;
+      setCurrent(saved);
+      setForm((draft) => (draft ? { ...draft, id: saved.id } : draft));
     }
     const id = result?.business.id ?? f.id;
     if (id && f.removePhoto && !f.photo) result = await req(`/admin/businesses/${id}/photo`, "DELETE");

@@ -37,7 +37,8 @@ class AnnouncementController extends Controller
     public function store(Request $request, Translator $translator, AnnouncementPublisher $publisher): JsonResponse
     {
         $data = $request->validate([
-            'topic_id' => ['required', Rule::exists('announcement_topics', 'id')],
+            // Only a topic that is switched on: a post to a closed topic would reach nobody and still sit in the channel.
+            'topic_id' => ['required', Rule::exists('announcement_topics', 'id')->where('active', true)],
             'text' => ['required', 'string', 'min:10', 'max:2000'],
             'event_date' => ['nullable', 'date', 'after_or_equal:today'],
             'event_place' => ['nullable', 'string', 'max:160'],
