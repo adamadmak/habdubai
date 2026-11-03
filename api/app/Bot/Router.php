@@ -29,6 +29,7 @@ class Router
         private readonly AssistantFlow $assistant,
         private readonly FaqFlow $faq,
         private readonly SafetyFlow $safety,
+        private readonly AnnouncementsFlow $announcements,
     ) {}
 
     public function handle(TelegramUpdate $update): void
@@ -110,6 +111,14 @@ class Router
                 return;
             case 'ask':
                 $member?->isActive() ? $this->questions->begin($member, $conversation) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'announce':
+                $member?->isActive() ? $this->announcements->begin($member, $conversation) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'topics':
+                $member?->isActive() ? $this->announcements->topics($member) : $this->reply($conversation, 'not_member');
 
                 return;
             case 'myquestions':
@@ -194,6 +203,12 @@ class Router
 
         if (in_array($conversation->state, QuestionsFlow::STATES, true) && $member?->isActive()) {
             $this->questions->handle($member, $conversation, $in);
+
+            return;
+        }
+
+        if (in_array($conversation->state, AnnouncementsFlow::STATES, true) && $member?->isActive()) {
+            $this->announcements->handle($member, $conversation, $in);
 
             return;
         }
@@ -372,6 +387,18 @@ class Router
                 'fromai' => $this->askFromAssistant($member, $cb),
                 default => $this->telegram->answerCallback($cb->id),
             };
+
+            return;
+        }
+
+        if ($parts[0] === 'an' && ($parts[1] ?? '') === 'del' && $member?->isActive()) {
+            $this->announcements->deleteButton($member, $cb, (int) ($parts[2] ?? 0));
+
+            return;
+        }
+
+        if ($parts[0] === 'tp' && $member?->isActive() && $cb->inPrivateChat()) {
+            $this->announcements->toggleTopic($member, $cb, (int) ($parts[1] ?? 0));
 
             return;
         }

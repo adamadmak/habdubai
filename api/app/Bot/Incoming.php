@@ -34,6 +34,20 @@ final class Incoming
         return ['latitude' => (float) $location['latitude'], 'longitude' => (float) $location['longitude']];
     }
 
+    /** The largest size of an attached photo, by Telegram file_id, or null. */
+    public function photoFileId(): ?string
+    {
+        $sizes = $this->message['photo'] ?? null;
+
+        if (! is_array($sizes) || $sizes === []) {
+            return null;
+        }
+
+        $largest = end($sizes);
+
+        return isset($largest['file_id']) ? (string) $largest['file_id'] : null;
+    }
+
     /** A message forwarded from somewhere else (a channel post, another chat). */
     public function isForward(): bool
     {

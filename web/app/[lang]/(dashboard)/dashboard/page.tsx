@@ -59,6 +59,15 @@ const DashboardPage = () => {
         <Stat label="Alerts waiting to send" value={data.jobs.alerts_queued} />
         <Stat label="Classifier" value={data.jobs.classifier === "claude" ? "Claude" : "Rules"} href="/job-settings" tone={data.jobs.classifier === "rules" ? "warning" : undefined} />
       </div>
+      <h2 className="text-lg font-semibold text-default-900 mt-8 mb-3">Community</h2>
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Stat label="Open questions" value={data.community.questions_open} href="/questions" />
+        <Stat label="Questions today" value={data.community.questions_today} href="/questions" />
+        <Stat label="Announcements waiting" value={data.community.announcements_pending} href="/announcements" tone={data.community.announcements_pending > 0 ? "warning" : undefined} />
+        <Stat label="Open safety reports" value={data.community.safety_open} href="/safety" tone={data.community.safety_open > 0 ? "destructive" : undefined} />
+        <Stat label="Live FAQ entries" value={data.community.faq_live} href="/faq" />
+      </div>
+
       <h2 className="text-lg font-semibold text-default-900 mt-8 mb-3">Business directory</h2>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Stat label="Listed businesses" value={data.directory.listed} href="/directory?status=approved" />

@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import PageTitle from "@/components/page-title";
+import LeaderTopics from "@/components/leader-topics";
 import { StatusBadge, RoleBadge } from "@/components/member-badges";
 import { useApiQuery, useApiMutation, formatDateTime, type Member, type AuditEntry, LANGUAGE_NAMES } from "@/lib/api";
 
@@ -122,6 +123,8 @@ const MemberPage = () => {
               )}
             </CardContent>
           </Card>
+
+          {m.role === "leader" && <LeaderTopics memberId={m.id} />}
         </div>
       </div>
 

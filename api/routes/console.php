@@ -20,3 +20,7 @@ Schedule::command('jobs:send-alerts')->everyFiveMinutes()->withoutOverlapping(5)
 Schedule::command('jobs:close-stale')->dailyAt('03:15')->timezone('Asia/Dubai')->withoutOverlapping(30);
 
 Schedule::command('questions:close-quiet')->dailyAt('03:30')->timezone('Asia/Dubai')->withoutOverlapping(30);
+
+Schedule::command('announcements:chores')->hourly()->withoutOverlapping(10);
+
+Schedule::command('announcements:chores --reminders')->dailyAt('09:00')->timezone('Asia/Dubai')->withoutOverlapping(10);

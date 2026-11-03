@@ -165,9 +165,9 @@ return [
         'en' => 'You are not a member yet. Send /start to join.',
     ],
     'help' => [
-        'am' => "ማንኛውንም ጥያቄ እዚህ ይጻፉ፤ ረዳቱ ከተረጋገጡ ምንጮች ይመልሳል።\n\nትዕዛዞች፡\n/ask — ማህበረሰቡን መጠየቅ\n/myquestions — የእርስዎ ጥያቄዎች\n/faq — ተደጋግመው የሚጠየቁ\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/directory — የሐበሻ ንግድ ማውጫ\n/addbusiness — ንግድ መጠቆም\n/safe — እርዳታና ደህንነት\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ",
-        'ti' => "ዝኾነ ሕቶ ኣብዚ ጸሓፉ፤ ሓጋዚ ካብ ዝተረጋገጹ ምንጭታት ይምልስ።\n\nትእዛዛት፡\n/ask — ንማሕበረሰብ ምሕታት\n/myquestions — ሕቶታትኩም\n/faq — ብተደጋጋሚ ዝሕተቱ\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/directory — መምርሒ ንግዲ ሓበሻ\n/addbusiness — ንግዲ ምምልካት\n/safe — ሓገዝን ድሕነትን\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ",
-        'en' => "Write any question here and the assistant answers from checked sources.\n\nCommands:\n/ask — ask the community\n/myquestions — your questions\n/faq — frequently asked questions\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/directory — Habesha business directory\n/addbusiness — suggest a business\n/safe — help and safety\n/profile — your profile\n/language — change language\n/leave — leave the community",
+        'am' => "ማንኛውንም ጥያቄ እዚህ ይጻፉ፤ ረዳቱ ከተረጋገጡ ምንጮች ይመልሳል።\n\nትዕዛዞች፡\n/ask — ማህበረሰቡን መጠየቅ\n/myquestions — የእርስዎ ጥያቄዎች\n/faq — ተደጋግመው የሚጠየቁ\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/directory — የሐበሻ ንግድ ማውጫ\n/addbusiness — ንግድ መጠቆም\n/safe — እርዳታና ደህንነት\n/topics — የሚደርስዎ ማስታወቂያ\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ",
+        'ti' => "ዝኾነ ሕቶ ኣብዚ ጸሓፉ፤ ሓጋዚ ካብ ዝተረጋገጹ ምንጭታት ይምልስ።\n\nትእዛዛት፡\n/ask — ንማሕበረሰብ ምሕታት\n/myquestions — ሕቶታትኩም\n/faq — ብተደጋጋሚ ዝሕተቱ\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/directory — መምርሒ ንግዲ ሓበሻ\n/addbusiness — ንግዲ ምምልካት\n/safe — ሓገዝን ድሕነትን\n/topics — ዝበጽሓኩም መወዓውዒ\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ",
+        'en' => "Write any question here and the assistant answers from checked sources.\n\nCommands:\n/ask — ask the community\n/myquestions — your questions\n/faq — frequently asked questions\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/directory — Habesha business directory\n/addbusiness — suggest a business\n/safe — help and safety\n/topics — announcements you receive\n/profile — your profile\n/language — change language\n/leave — leave the community",
     ],
     'unknown' => [
         'am' => 'አልገባኝም። /help ይላኩ።',
@@ -901,5 +901,117 @@ return [
         'am' => 'እባክዎ ትንሽ ተጨማሪ ይጻፉ።',
         'ti' => 'በጃኹም ቁሩብ ወሲኽኩም ጸሓፉ።',
         'en' => 'Please write a little more.',
+    ],
+
+    // ---- announcements ----------------------------------------------------
+    'ann_no_rights' => [
+        'am' => 'ማስታወቂያ መለጠፍ የሚችሉት የማህበረሰብ መሪዎች ናቸው። ቤተ ክርስቲያን፣ መስጊድ ወይም ማህበር የሚመሩ ከሆነ አስተዳዳሪውን ይጠይቁ።',
+        'ti' => 'መወዓውዒ ክለጥፉ ዝኽእሉ መራሕቲ ማሕበረሰብ እዮም። ቤተ ክርስትያን፣ መስጊድ ወይ ማሕበር እንተመሪሕኩም ንኣመሓዳሪ ሕተቱ።',
+        'en' => 'Only community leaders can post announcements. If you run a church, mosque or association, ask an admin.',
+    ],
+    'ann_pick_topic' => [
+        'am' => '📣 ማስታወቂያው ለየትኛው ርዕስ ነው?',
+        'ti' => '📣 እቲ መወዓውዒ ንኣየናይ ኣርእስቲ እዩ?',
+        'en' => '📣 Which topic is this announcement for?',
+    ],
+    'ann_ask_text' => [
+        'am' => 'ማስታወቂያውን በአንድ ቋንቋ ይጻፉ። ስሞች፣ ቀኖችና ቦታዎች እንዳሉ ይቆያሉ፤ ቦቱ ወደ ሌሎቹ ሁለት ቋንቋዎች ይተረጉማል።',
+        'ti' => 'መወዓውዒ ብሓደ ቋንቋ ጸሓፉ። ኣስማት፣ ዕለታትን ቦታታትን ከም ዘለዉ ይጸንሑ፤ ቦት ናብቶም ካልኦት ክልተ ቋንቋታት ይትርጉም።',
+        'en' => 'Write the announcement in one language. Names, dates and places stay exactly as written; the bot translates it into the other two.',
+    ],
+    'ann_text_invalid' => [
+        'am' => 'ማስታወቂያ ከ10 እስከ 2000 ፊደላት ነው።',
+        'ti' => 'መወዓውዒ ካብ 10 ክሳብ 2000 ፊደላት እዩ።',
+        'en' => 'An announcement is 10 to 2000 letters.',
+    ],
+    'ann_ask_photo' => [
+        'am' => 'አንድ ፎቶ ይላኩ፣ ወይም «ዝለል» ይጫኑ።',
+        'ti' => 'ሓደ ስእሊ ስደዱ፣ ወይ «ሕለፍ» ጠውቑ።',
+        'en' => 'Send one photo for it, or tap Skip.',
+    ],
+    'ann_ask_date' => [
+        'am' => 'ዝግጅት ነው? ቀኑን እንደ 2026-11-20 ይላኩ፣ ወይም «ዝለል» ይጫኑ።',
+        'ti' => 'ምድላው ድዩ? ዕለት ከም 2026-11-20 ስደዱ፣ ወይ «ሕለፍ» ጠውቑ።',
+        'en' => 'Is it an event? Send the date like 2026-11-20, or tap Skip.',
+    ],
+    'ann_date_invalid' => [
+        'am' => 'ቀኑ ዛሬ ወይም ወደፊት፣ እንደ 2026-11-20 መሆን አለበት።',
+        'ti' => 'ዕለት ሎሚ ወይ ንቕድሚት፣ ከም 2026-11-20 ክኸውን ኣለዎ።',
+        'en' => 'The date must be today or later, written like 2026-11-20.',
+    ],
+    'ann_ask_place' => [
+        'am' => 'የት ነው? የቦታውን ስም ይጻፉ፣ ወይም «ዝለል» ይጫኑ።',
+        'ti' => 'ኣበይ እዩ? ስም ቦታ ጸሓፉ፣ ወይ «ሕለፍ» ጠውቑ።',
+        'en' => 'Where is it? Type the place, or tap Skip.',
+    ],
+    'ann_preview' => [
+        'am' => "ቅድመ እይታ፡\n\n{card}\n\n{note}«ለጥፍ» ሲጫኑ በቻናሉ ይለጠፋል፣ ለተመዘገቡ አባላትም ይላካል።",
+        'ti' => "ቅድመ ርእይቶ፡\n\n{card}\n\n{note}«ለጥፍ» ምስ ጠወቕኩም ኣብ ቻነል ይለጠፍ፣ ንዝተመዝገቡ ኣባላት እውን ይለኣኽ።",
+        'en' => "Preview:\n\n{card}\n\n{note}Tap Publish to post it in the channel and send it to subscribers.",
+    ],
+    'ann_needs_approval_note' => [
+        'am' => "ይህ ርዕስ ከመለጠፉ በፊት በአወያይ ይታያል።\n\n",
+        'ti' => "እዚ ኣርእስቲ ቅድሚ ምልጣፉ ብኣወያዪ ይረአ።\n\n",
+        'en' => "This topic is checked by a moderator before it is posted.\n\n",
+    ],
+    'btn_publish' => [
+        'am' => '📣 ለጥፍ',
+        'ti' => '📣 ለጥፍ',
+        'en' => '📣 Publish',
+    ],
+    'ann_published' => [
+        'am' => 'ተለጥፏል። {count} አባላት በመልዕክት ይደርሳቸዋል።',
+        'ti' => 'ተለጢፉ። {count} ኣባላት ብመልእኽቲ ክበጽሖም እዩ።',
+        'en' => 'Posted. {count} members will get it as a message.',
+    ],
+    'ann_pending' => [
+        'am' => 'አመሰግናለሁ። አወያይ ካረጋገጠው በኋላ ይለጠፋል።',
+        'ti' => 'የቐንየለይ። ኣወያዪ ምስ ኣረጋገጾ ክለጠፍ እዩ።',
+        'en' => 'Thank you. A moderator will check it before it is posted.',
+    ],
+    'ann_approved_dm' => [
+        'am' => '✅ ማስታወቂያዎ ጸድቆ ተለጥፏል።',
+        'ti' => '✅ መወዓውዒኹም ጸዲቑ ተለጢፉ።',
+        'en' => '✅ Your announcement was approved and posted.',
+    ],
+    'ann_rejected_dm' => [
+        'am' => 'ማስታወቂያዎ አልተለጠፈም። {note}',
+        'ti' => 'መወዓውዒኹም ኣይተለጠፈን። {note}',
+        'en' => 'Your announcement was not posted. {note}',
+    ],
+    'ann_card' => [
+        'am' => "{emoji} <b>{topic}</b>\n\n{text}{event}\n\n— {poster}",
+        'ti' => "{emoji} <b>{topic}</b>\n\n{text}{event}\n\n— {poster}",
+        'en' => "{emoji} <b>{topic}</b>\n\n{text}{event}\n\n— {poster}",
+    ],
+    'ann_event_line' => [
+        'am' => "\n\n📅 {date}{place}",
+        'ti' => "\n\n📅 {date}{place}",
+        'en' => "\n\n📅 {date}{place}",
+    ],
+    'ann_fundraiser_note' => [
+        'am' => "\n\n⚠️ መድረኩ ገንዘብ አይሰበስብም። የሚያውቋቸው ሰዎች ብቻ ይስጡ።",
+        'ti' => "\n\n⚠️ እቲ መድረኽ ገንዘብ ኣይእክብን። ንትፈልጥዎም ሰባት ጥራይ ሃቡ።",
+        'en' => "\n\n⚠️ The platform does not collect money. Give only to people you know.",
+    ],
+    'btn_ann_delete' => [
+        'am' => '🗑 ሰርዝ',
+        'ti' => '🗑 ደምስስ',
+        'en' => '🗑 Delete',
+    ],
+    'ann_deleted' => [
+        'am' => 'ከቻናሉ ተሰርዟል።',
+        'ti' => 'ካብ ቻነል ተደምሲሱ።',
+        'en' => 'Deleted from the channel.',
+    ],
+    'ann_reminder' => [
+        'am' => "⏰ <b>ማሳሰቢያ፡ ነገ</b>\n\n{card}",
+        'ti' => "⏰ <b>መዘኻኸሪ፡ ጽባሕ</b>\n\n{card}",
+        'en' => "⏰ <b>Reminder: tomorrow</b>\n\n{card}",
+    ],
+    'topics_menu' => [
+        'am' => "📣 <b>በመልዕክት የሚደርስዎ ማስታወቂያ</b>\n\nርዕስ ለማብራት ወይም ለማጥፋት ይጫኑ። ሁሉም በቻናሉም ይገኛል።",
+        'ti' => "📣 <b>ብመልእኽቲ ዝበጽሓኩም መወዓውዒ</b>\n\nኣርእስቲ ንምብራህ ወይ ንምጥፋእ ጠውቑ። ኩሉ ኣብ ቻነል እውን ይርከብ።",
+        'en' => "📣 <b>Announcements you get as a message</b>\n\nTap a topic to turn it on or off. Everything is also in the channel.",
     ],
 ];

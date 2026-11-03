@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BotTextController;
+use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DirectoryCityController;
@@ -92,6 +93,16 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('knowledge', [FaqController::class, 'storeArticle'])->name('knowledge.store');
         Route::put('knowledge/{article}', [FaqController::class, 'updateArticle'])->name('knowledge.update');
         Route::delete('knowledge/{article}', [FaqController::class, 'destroyArticle'])->name('knowledge.destroy');
+
+        Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+        Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+        Route::put('announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
+        Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+        Route::post('announcements/{announcement}/approve', [AnnouncementController::class, 'approve'])->name('announcements.approve');
+        Route::post('announcements/{announcement}/reject', [AnnouncementController::class, 'reject'])->name('announcements.reject');
+        Route::post('announcement-topics', [AnnouncementController::class, 'storeTopic'])->name('announcement-topics.store');
+        Route::put('announcement-topics/{topic}', [AnnouncementController::class, 'updateTopic'])->name('announcement-topics.update');
+        Route::match(['get', 'put'], 'members/{member}/leader-topics', [AnnouncementController::class, 'leaderTopics'])->name('members.leader-topics');
 
         Route::get('employer-reports', [EmployerReportController::class, 'index'])->name('employer-reports.index');
         Route::put('employer-reports/{report}', [EmployerReportController::class, 'update'])->name('employer-reports.update');

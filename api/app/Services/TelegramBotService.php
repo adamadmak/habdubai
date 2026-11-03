@@ -150,6 +150,51 @@ class TelegramBotService
         ], fn ($value) => $value !== null))->json('result', []);
     }
 
+    /** A photo already on Telegram (by file_id), with an HTML caption of at most 1024 characters. */
+    public function sendPhotoById(int|string $chatId, string $fileId, string $caption = '', ?array $replyMarkup = null): array
+    {
+        return $this->post('sendPhoto', array_filter([
+            'chat_id' => $chatId,
+            'photo' => $fileId,
+            'caption' => $caption !== '' ? mb_substr($caption, 0, 1024) : null,
+            'parse_mode' => $caption !== '' ? 'HTML' : null,
+            'reply_markup' => $replyMarkup,
+        ], fn ($value) => $value !== null))->json('result', []);
+    }
+
+    public function editCaption(int|string $chatId, int $messageId, string $caption): bool
+    {
+        try {
+            $this->post('editMessageCaption', ['chat_id' => $chatId, 'message_id' => $messageId, 'caption' => mb_substr($caption, 0, 1024), 'parse_mode' => 'HTML'], retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    public function pin(int|string $chatId, int $messageId): bool
+    {
+        try {
+            $this->post('pinChatMessage', ['chat_id' => $chatId, 'message_id' => $messageId, 'disable_notification' => false], retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    public function unpin(int|string $chatId, int $messageId): bool
+    {
+        try {
+            $this->post('unpinChatMessage', ['chat_id' => $chatId, 'message_id' => $messageId], retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
     /** "typing…" in the chat while something slow runs. Best effort. */
     public function typing(int|string $chatId): void
     {

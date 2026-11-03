@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Users, MessageSquare, Settings, ScrollText, Briefcase, Rss, SlidersHorizontal, Store, MapPin,
-  HelpCircle, BookOpen, ShieldAlert,
+  HelpCircle, BookOpen, ShieldAlert, Megaphone,
 } from "lucide-react";
 
 export interface MenuItemProps {
@@ -18,6 +18,7 @@ export interface MenuItemProps {
 const items: MenuItemProps[] = [
   { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { title: "Members", icon: Users, href: "/members" },
+  { title: "Announcements", icon: Megaphone, href: "/announcements" },
   { title: "Questions", icon: HelpCircle, href: "/questions" },
   { title: "FAQ and knowledge", icon: BookOpen, href: "/faq" },
   { title: "Safety reports", icon: ShieldAlert, href: "/safety" },

@@ -156,6 +156,7 @@ export interface DashboardPayload {
   jobs: { published_today: number; open: number; review: number; duplicates_today: number; alerts_queued: number; classifier: "claude" | "rules"; channel: boolean };
   sources: { active: number; paused: number; failing: number };
   directory: { listed: number; pending: number; hidden: number };
+  community: { questions_open: number; questions_today: number; announcements_pending: number; safety_open: number; faq_live: number };
   tick: { at: string; seconds: number } | null;
 }
 
@@ -344,6 +345,40 @@ export interface EmployerReportRow {
   member: { id: number; name: string; username: string | null } | null;
   status: "open" | "closed";
   note: string | null;
+  created_at: string;
+}
+
+export interface AnnouncementTopicRow {
+  id: number;
+  key: string;
+  name_en: string;
+  name_am: string;
+  name_ti: string;
+  emoji: string;
+  needs_approval: boolean;
+  default_on: boolean;
+  pin: boolean;
+  sort: number;
+  active: boolean;
+}
+
+export interface AnnouncementRow {
+  id: number;
+  topic: { id: number; name: string; emoji: string; needs_approval: boolean } | null;
+  poster: { id: number | null; name: string; role: string } | null;
+  original_language: string;
+  text_am: string;
+  text_ti: string;
+  text_en: string;
+  has_photo: boolean;
+  event_date: string | null;
+  event_place: string | null;
+  status: "pending" | "published" | "rejected" | "deleted";
+  review_note: string | null;
+  on_channel: boolean;
+  pinned_until: string | null;
+  dm_count: number;
+  published_at: string | null;
   created_at: string;
 }
 
