@@ -41,7 +41,8 @@ export function AccountChip({ lang, labels }: { lang: Locale; labels: { signIn: 
       <span className={`grid size-8 place-items-center rounded-full text-[0.8125rem] font-bold ${who ? "bg-primary text-primary-fg" : "bg-fg/10 text-fg"}`} aria-hidden="true">
         {who ? initial : <UserRound className="size-4" strokeWidth={2} />}
       </span>
-      <span className="hidden max-w-[7rem] truncate sm:inline">{who ? first : labels.signIn}</span>
+      {/* No word until the answer is in: a member never sees "sign in" flash before their own name. */}
+      {who !== undefined && <span className="hidden max-w-[7rem] truncate sm:inline">{who ? first : labels.signIn}</span>}
     </Link>
   );
 }

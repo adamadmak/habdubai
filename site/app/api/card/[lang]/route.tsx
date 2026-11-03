@@ -32,16 +32,26 @@ const ICONS = [
   <svg key="goods" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 4 7v10l8 4 8-4V7l-8-4ZM4 7l8 4 8-4M12 11v10" /></svg>,
 ];
 
+/** Four pictures, drawn once a day: rendering one costs a second of CPU, and nothing in front of the app caches it. */
+const DRAWN = new Map<Locale, { body: ArrayBuffer; at: number }>();
+const KEEP_MS = 24 * 60 * 60 * 1000;
+
+const png = (body: ArrayBuffer) => new Response(body, { headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=86400, s-maxage=86400" } });
+
 export async function GET(_request: Request, { params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
-  const l: Locale = isLocale(lang) ? lang : "en";
+  if (!isLocale(lang)) return new Response(null, { status: 404 });
+  const l: Locale = lang;
   const w = WORDS[l];
+
+  const drawn = DRAWN.get(l);
+  if (drawn && Date.now() - drawn.at < KEEP_MS) return png(drawn.body);
 
   const diamond = (x: number, y: number, s: number, color: string, opacity = 1) => (
     <div key={`${x}-${y}`} style={{ position: "absolute", left: x, top: y, width: s, height: s, transform: "rotate(45deg)", background: color, opacity }} />
   );
 
-  return new ImageResponse(
+  const image = new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", background: "linear-gradient(160deg, #0a1433 0%, #070c1f 60%, #0b1030 100%)", color: INK, fontFamily: "Arial, Helvetica, sans-serif" }}>
         {/* The aurora, as on the website's night bands: blue high on the left, gold low on the right. */}
@@ -87,10 +97,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ lan
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-      headers: { "Cache-Control": "public, max-age=86400, s-maxage=86400" },
-    },
+    { width: 1200, height: 630 },
   );
+
+  const body = await image.arrayBuffer();
+  DRAWN.set(l, { body, at: Date.now() });
+
+  return png(body);
 }

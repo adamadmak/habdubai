@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { LegalPage } from "@/components/Legal";
 import { dict, isLocale } from "@/lib/i18n";
 
+// The dawn band is tinted by the hour in Dubai; a page with nothing to fetch would otherwise keep its first hour until the next deploy.
+export const revalidate = 900;
+
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};

@@ -463,7 +463,8 @@
   .glass-white {
     color: #10142b;
     --color-fg: #10142b;
-    --color-muted: #586078;
+    /* Darker than the page's muted: through 84% white over the night band the small labels must still reach 4.5:1. */
+    --color-muted: #4e566d;
     --color-faint: #666b83;
     --color-line: #e6dece;
     --color-elevated: #ffffff;
@@ -481,7 +482,7 @@
     box-shadow: inset 0 1px 0 #fff, 0 24px 60px -28px rgb(5 10 31 / 0.7);
   }
   .glass-white .muted-on-night {
-    color: #586078;
+    color: #4e566d;
   }
   .glass-white :focus-visible {
     outline-color: #1b4ddb;

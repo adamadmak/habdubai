@@ -120,7 +120,7 @@ function Home({ lang, d, home, meta }: { lang: Locale; d: Dictionary; home: Owne
           {m && (
             <div className="settle settle-2 mt-8 grid max-w-3xl gap-3 sm:grid-cols-3">
               <Stat label={a.points} value={number(m.helper_points, lang)} note={m.rank ? a.rank[m.rank] : a.noRank} icon={Star} />
-              <Stat label={a.deals} value={number(m.trips_completed, lang)} note={m.rating ? fill(a.rating, { avg: m.rating.avg, count: m.rating.count }) : a.noRating} icon={Package} />
+              <Stat label={a.deals} value={number(m.trips_completed, lang)} note={m.rating ? fill(a.rating, { avg: m.rating.avg.toFixed(1), count: number(m.rating.count, lang) }) : a.noRating} icon={Package} />
               <Stat label={a.tiles.questions} value={number(home.questions?.total ?? 0, lang)} note={fill(a.tiles.questionsLine, { open: number(home.questions?.open ?? 0, lang), total: number(home.questions?.total ?? 0, lang) })} icon={MessageCircleQuestion} />
             </div>
           )}

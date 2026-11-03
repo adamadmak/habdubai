@@ -112,7 +112,8 @@ export function ethiopianDate(value: string | Date | null | undefined, locale: L
   }
   const tag = locale === "am" ? "am-ET-u-ca-ethiopic" : "en-u-ca-ethiopic";
   const text = new Intl.DateTimeFormat(tag, { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).format(toDate(value));
-  return locale === "en" ? text.replace(/\s*AM$/, " (Ethiopian calendar)") : text.replace(/\s*AM$/, " ዓ.ም.");
+  // ICU gives Amharic the date with no era token at all (and some builds "AM"): the era is always ours to add.
+  return locale === "en" ? text.replace(/\s*AM$/, " (Ethiopian calendar)") : text.replace(/\s*(AM|ዓ\.?ም\.?)$/u, "") + " ዓ.ም.";
 }
 
 export function weekday(value: string | Date, locale: Locale): string {
