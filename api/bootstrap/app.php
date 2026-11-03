@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // An API has no login page: a guest gets 401, never a redirect to a route that does not exist (which was a 500).
+        $middleware->redirectGuestsTo(fn () => null);
+
         $middleware->alias([
             'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
             'owner' => \App\Http\Middleware\EnsureBusinessOwner::class,
