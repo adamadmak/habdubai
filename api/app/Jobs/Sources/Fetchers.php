@@ -28,4 +28,17 @@ final class Fetchers
 
         return $class ? $class::configRules() : [];
     }
+
+    /** Readable names for validation messages ("The item selector field is required."). */
+    public const ATTRIBUTES = [
+        'config.url' => 'URL',
+        'config.item' => 'item selector',
+        'config.title' => 'title selector',
+        'config.link' => 'link selector',
+        'config.company' => 'company selector',
+        'config.location' => 'location selector',
+        'config.snippet' => 'description selector',
+        'config.limit' => 'most items per run',
+        'config.chat_id' => 'channel id',
+    ];
 }

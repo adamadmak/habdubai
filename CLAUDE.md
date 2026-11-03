@@ -36,6 +36,34 @@ flows keep their place in `conversations` (`state` + `data`); `idle` means
 nothing is running. Add a new flow as a class like `App\Bot\Onboarding` and a
 branch in the router, not as more cases inside the router.
 
+## Jobs: sources → dedupe → classify → score → publish or review
+
+Sources (`App\Jobs\Sources`): RSS/Atom, HTML pages read with selectors the
+admin configures (the Sources page can test a configuration before saving),
+Telegram channels the bot sits in, and posts a moderator forwards to the bot.
+A source that fails three runs in a row is paused. Only a summary and a link
+are ever published, never a site's page.
+
+`App\Jobs\ProcessJobListing` runs each new listing: `Deduper` first (URL,
+title and company, then text similarity, so a duplicate never costs a model
+call), then the `JobClassifier` (Claude when an Anthropic key is set on Job
+settings, `RulesJobClassifier` otherwise or when the model fails), then
+`ScamScorer`, whose score is the larger of our rules and the model's risk; a
+moderator phrase or a blocked company always lifts it to the review
+threshold. `JobPublisher` is the only thing that posts, holds, rejects or
+closes a job, and the database status is the truth the channel card follows.
+
+The Claude call (`ClaudeJobClassifier`) is one request per listing:
+`claude-opus-5-5` by default (Job settings can change it), low effort,
+JSON-schema output, the default server-side refusal fallback. Its tests run
+the real SDK against a fake PSR-18 transport (`fakeTransport()` in
+`tests/Pest.php`); keep the request shape covered there when you change it.
+
+Alerts are queued on publish (`JobAlerts::queueFor`) and sent by the
+scheduler at most once per fifteen minutes per member. The scheduler only
+runs when something calls `POST /api/system/tick` with `TICK_TOKEN`; the host
+has no cron.
+
 ## Phone numbers are never stored
 
 A member is keyed on `phone_hash` (HMAC of the digits with the app key) plus

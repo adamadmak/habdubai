@@ -48,6 +48,24 @@ const DashboardPage = () => {
         <Stat label="Failed updates" value={data.updates.failed} tone={data.updates.failed > 0 ? "destructive" : undefined} />
       </div>
 
+      <h2 className="text-lg font-semibold text-default-900 mt-8 mb-3">Jobs</h2>
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Stat label="Published today" value={data.jobs.published_today} href="/jobs?status=published" />
+        <Stat label="Open jobs" value={data.jobs.open} href="/jobs?status=published" />
+        <Stat label="Waiting for review" value={data.jobs.review} href="/jobs?status=review" tone={data.jobs.review > 0 ? "warning" : undefined} />
+        <Stat label="Duplicates caught today" value={data.jobs.duplicates_today} href="/jobs?status=duplicate" />
+        <Stat label="Sources running" value={data.sources.active} href="/job-sources" />
+        <Stat label="Sources failing or paused" value={data.sources.failing + data.sources.paused} href="/job-sources" tone={data.sources.failing + data.sources.paused > 0 ? "destructive" : undefined} />
+        <Stat label="Alerts waiting to send" value={data.jobs.alerts_queued} />
+        <Stat label="Classifier" value={data.jobs.classifier === "claude" ? "Claude" : "Rules"} href="/job-settings" tone={data.jobs.classifier === "rules" ? "warning" : undefined} />
+      </div>
+      {(!data.jobs.channel || !data.tick) && (
+        <div className="mt-3 space-y-1 text-sm text-warning">
+          {!data.jobs.channel && <div>No jobs channel is set, so jobs reach members only through alerts. <Link href="/job-settings" className="underline">Set the channel</Link>.</div>}
+          {!data.tick && <div>The scheduler has not ticked yet, so sources are not fetched and alerts are not sent on their own.</div>}
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 mt-6">
         <Card>
           <CardHeader><CardTitle className="text-base">Active members by emirate</CardTitle></CardHeader>

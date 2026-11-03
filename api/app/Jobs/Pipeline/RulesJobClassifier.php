@@ -63,7 +63,8 @@ class RulesJobClassifier implements JobClassifier
     {
         foreach ($map as $key => $words) {
             foreach ($words as $word) {
-                if (preg_match('/(?<![\p{L}])'.preg_quote($word, '/').'(?![\p{L}])/u', $text)) {
+                // Plurals count: "drivers", "cleaners", "nurses".
+                if (preg_match('/(?<![\p{L}])'.preg_quote($word, '/').'(?:s|es)?(?![\p{L}])/u', $text)) {
                     return $key;
                 }
             }
@@ -76,6 +77,9 @@ class RulesJobClassifier implements JobClassifier
     private function salary(string $text): array
     {
         $amount = '(\d{1,2}[,.]?\d{3}|\d{3,5})';
+
+        // A fee or deposit amount is not a salary.
+        $text = preg_replace('/\b(fee|fees|deposit|charge|charges|cost)\b[^.\n]{0,25}?(aed|dhs?|dirhams?)?\s*\d[\d,.]*\s*(aed|dhs?|dirhams?)?/u', ' ', $text) ?? $text;
 
         if (preg_match('/(aed|dhs?|dirhams?)\s*'.$amount.'(?:\s*(?:-|–|to)\s*(?:aed|dhs?)?\s*'.$amount.')?/u', $text, $m)
             || preg_match('/'.$amount.'(?:\s*(?:-|–|to)\s*'.$amount.')?\s*(aed|dhs?|dirhams?)/u', $text, $m2)) {

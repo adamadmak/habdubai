@@ -152,7 +152,109 @@ export interface DashboardPayload {
   by_language: Record<string, number>;
   updates: { today: number; failed: number };
   bot: { configured: boolean; username: string };
+  jobs: { published_today: number; open: number; review: number; duplicates_today: number; alerts_queued: number; classifier: "claude" | "rules"; channel: boolean };
+  sources: { active: number; paused: number; failing: number };
+  tick: { at: string; seconds: number } | null;
 }
+
+export type JobStatus = "pending" | "review" | "published" | "rejected" | "duplicate" | "closed";
+
+export interface JobSummary {
+  id: number;
+  title: string;
+  company: string | null;
+  category: string;
+  emirate: string;
+  salary: string | null;
+  status: JobStatus;
+  review_reason: string | null;
+  scam_score: number;
+  reports_count: number;
+  url: string | null;
+  source: string | null;
+  source_id: number | null;
+  on_channel: boolean;
+  created_at: string;
+  published_at: string | null;
+}
+
+export interface JobDetail extends JobSummary {
+  summary_am: string | null;
+  summary_ti: string | null;
+  summary_en: string | null;
+  languages: string[];
+  accommodation: "yes" | "no" | "unknown";
+  visa: "yes" | "no" | "unknown";
+  sub_area: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string | null;
+  scam_reasons: string[];
+  classified_by: string;
+  duplicate_of: number | null;
+  raw_text: string | null;
+  reports: { member: string | null; reason: string; at: string }[];
+}
+
+export interface JobsPage {
+  data: JobSummary[];
+  meta: { total: number; page: number; last_page: number };
+  counts: Partial<Record<JobStatus, number>>;
+}
+
+export type SourceKind = "rss" | "html" | "telegram";
+
+export interface JobSourceRow {
+  id: number;
+  key: string;
+  name: string;
+  kind: SourceKind;
+  config: Record<string, string | number | null>;
+  interval_minutes: number;
+  active: boolean;
+  built_in: boolean;
+  status: "ok" | "failing" | "paused" | "off";
+  paused_at: string | null;
+  pause_reason: string | null;
+  last_run_at: string | null;
+  last_success_at: string | null;
+  last_error: string | null;
+  failures_in_row: number;
+  last_found: number;
+  last_new: number;
+  last_7_days?: Partial<Record<JobStatus, number>>;
+}
+
+export interface SourceTestResult {
+  ok: boolean;
+  error?: string;
+  found?: number;
+  listings: { external_key: string; url: string | null; title: string | null; company: string | null; location: string | null; text: string; posted_at: string | null }[];
+}
+
+export interface JobSettingsPayload {
+  settings: {
+    job_channel_id: string;
+    job_review_threshold: number;
+    job_warning_threshold: number;
+    job_auto_publish: boolean;
+    job_card_languages: string;
+    job_scam_phrases: string;
+    job_blocked_companies: string;
+    anthropic_model: string;
+  };
+  anthropic: { configured: boolean; hint: string | null };
+}
+
+export const CATEGORY_NAMES: Record<string, string> = {
+  domestic: "Domestic work", driver: "Driver", security: "Security", cleaning: "Cleaning", hospitality: "Hospitality",
+  salon: "Salon and beauty", retail: "Retail and sales", warehouse: "Warehouse and delivery", nursing: "Nursing and care",
+  office: "Office and admin", construction: "Construction and technical", other: "Other",
+};
+
+export const JOB_EMIRATE_NAMES: Record<string, string> = {
+  dubai: "Dubai", sharjah: "Sharjah", abu_dhabi: "Abu Dhabi", ajman: "Ajman", other_uae: "Other emirate", outside_uae: "Outside the UAE", unknown: "Not stated",
+};
 
 export const LANGUAGE_NAMES: Record<string, string> = { am: "Amharic", ti: "Tigrinya", en: "English" };
 

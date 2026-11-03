@@ -38,7 +38,7 @@ builds at once leave both stuck):
 
 | App | Root | Framework | Env it needs |
 | --- | --- | --- | --- |
-| `habesha-api` | `api` | Laravel | `APP_KEY`, `APP_URL`, `APP_ENV=production`, `APP_DEBUG=false`, `LOG_CHANNEL=stderr`, `TRUSTED_PROXIES=*`, `QUEUE_CONNECTION=sync`, `CACHE_STORE=database`, `SESSION_DRIVER=array`, `SETUP_TOKEN`, plus the database variables the host injects |
+| `habesha-api` | `api` | Laravel | `APP_KEY`, `APP_URL`, `APP_ENV=production`, `APP_DEBUG=false`, `LOG_CHANNEL=stderr`, `TRUSTED_PROXIES=*`, `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `SESSION_DRIVER=array`, `SETUP_TOKEN`, `TICK_TOKEN`, plus the database variables the host injects |
 | `habesha` (web) | `web` | Next.js | `NEXT_PUBLIC_API_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` |
 
 The host has no shell, so the first run goes through two token-guarded
@@ -53,7 +53,19 @@ curl -X POST https://<api>/api/setup/admin -H "X-Setup-Token: $SETUP_TOKEN" -H "
 ```
 
 The admin route works only while there is no administrator; migrations can
-be re-run after every deploy that adds one. The bot token and the other
+be re-run after every deploy that adds one.
+
+The host runs no cron and no queue worker either. An external timer (the
+same kind that drives the betting sites) must call the tick once a minute;
+it runs `schedule:run`, which fetches due job sources, drains the queue,
+sends job alerts and closes stale jobs:
+
+```bash
+curl -X POST https://<api>/api/system/tick -H "X-Tick-Token: $TICK_TOKEN"
+```
+
+Telegram updates do not wait for the tick: they run right after the
+webhook's response, in the same process. The bot token and the other
 operator values live in `platform_settings` and are set on the admin's
 Settings page, never in environment variables (the host builds the config
 cache without the runtime environment).

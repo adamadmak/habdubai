@@ -84,7 +84,7 @@ class JobSourceController extends Controller
         $kind = (string) $request->input('kind');
         abort_unless(in_array($kind, ['rss', 'html'], true), 422, 'Only RSS and HTML sources can be tested.');
 
-        $request->validate(Fetchers::configRules($kind));
+        $request->validate(Fetchers::configRules($kind), [], Fetchers::ATTRIBUTES);
 
         $source = new JobSource(['kind' => $kind, 'config' => $request->input('config'), 'name' => 'test']);
 
@@ -111,7 +111,7 @@ class JobSourceController extends Controller
             'interval_minutes' => ['nullable', 'integer', 'min:15', 'max:1440'],
             'active' => ['boolean'],
             'config' => ['required', 'array'],
-        ] + Fetchers::configRules($kind));
+        ] + Fetchers::configRules($kind), [], Fetchers::ATTRIBUTES);
 
         $allowed = array_map(fn (string $rule) => substr($rule, 7), array_keys(Fetchers::configRules($kind)));
         $data['config'] = array_intersect_key($data['config'], array_flip($allowed));

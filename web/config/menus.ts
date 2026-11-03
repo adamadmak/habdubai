@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, MessageSquare, Settings, ScrollText } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Settings, ScrollText, Briefcase, Rss, SlidersHorizontal } from "lucide-react";
 
 export interface MenuItemProps {
   title: string;
@@ -15,6 +15,9 @@ export interface MenuItemProps {
 const items: MenuItemProps[] = [
   { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { title: "Members", icon: Users, href: "/members" },
+  { title: "Jobs", icon: Briefcase, href: "/jobs" },
+  { title: "Job sources", icon: Rss, href: "/job-sources" },
+  { title: "Job settings", icon: SlidersHorizontal, href: "/job-settings" },
   { title: "Bot texts", icon: MessageSquare, href: "/bot-texts" },
   { title: "Settings", icon: Settings, href: "/settings" },
   { title: "Audit log", icon: ScrollText, href: "/audit" },
