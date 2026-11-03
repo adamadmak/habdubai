@@ -44,14 +44,18 @@ class AppServiceProvider extends ServiceProvider
         $client = fn (\Illuminate\Http\Request $r): string => \App\Support\ClientIp::of($r);
         $ref = fn (\Illuminate\Http\Request $r): string => is_string($r->input('ref')) ? substr($r->input('ref'), 0, 32) : '';
 
-        \Illuminate\Support\Facades\RateLimiter::for('public', function (\Illuminate\Http\Request $r) use ($limit) {
+        // Until SITE_API_KEY is set on both apps, every visitor arrives as the website's
+        // server; the limits are then generous enough that the site is not throttled as one.
+        $keyed = fn (): bool => \App\Support\RuntimeEnv::get('services.host.site_api_key', null, 'SITE_API_KEY') !== '';
+
+        \Illuminate\Support\Facades\RateLimiter::for('public', function (\Illuminate\Http\Request $r) use ($limit, $keyed) {
             if (\App\Support\ClientIp::siteKeyValid($r) && ! $r->hasHeader('X-Client-Ip')) {
                 return $limit::perMinute(3000)->by('site');
             }
 
-            return $limit::perMinute(120)->by('public:'.\App\Support\ClientIp::of($r));
+            return $limit::perMinute($keyed() ? 120 : 1500)->by('public:'.\App\Support\ClientIp::of($r));
         });
-        \Illuminate\Support\Facades\RateLimiter::for('owner-login-start', fn ($r) => $limit::perMinute(10)->by('start:'.$client($r)));
+        \Illuminate\Support\Facades\RateLimiter::for('owner-login-start', fn ($r) => $limit::perMinute($keyed() ? 10 : 30)->by('start:'.$client($r)));
         \Illuminate\Support\Facades\RateLimiter::for('owner-login-poll', fn ($r) => $limit::perMinute(45)->by('poll:'.$ref($r).':'.$client($r)));
         \Illuminate\Support\Facades\RateLimiter::for('owner-login-verify', fn ($r) => [
             $limit::perMinute(10)->by('verify:'.$ref($r)),
