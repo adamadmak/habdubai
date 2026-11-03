@@ -16,7 +16,7 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
 
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 md:px-4">
-      <div className="chrome mx-auto flex h-[var(--header-h)] max-w-6xl items-center gap-3 rounded-full pl-2 pr-2 md:gap-5 md:pl-2.5">
+      <div className="chrome mx-auto flex h-[var(--header-h)] max-w-7xl items-center gap-3 rounded-full pl-2 pr-2 md:gap-5 md:pl-2.5">
         <Link href={`/${lang}`} className="press flex shrink-0 items-center gap-2.5 rounded-full pr-1" aria-label={d.brand}>
           <Mark className="size-9" />
           <span className="flex flex-col leading-none">

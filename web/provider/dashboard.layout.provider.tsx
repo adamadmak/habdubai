@@ -65,7 +65,7 @@ const DashBoardLayoutProvider = ({ children, trans }: { children: React.ReactNod
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduceMotion ? 0.12 : 0.22, ease: [0.2, 0.8, 0.2, 1] }}
           >
-            <main id="main" className="mx-auto max-w-[1440px]">{children}</main>
+            <main id="main" className="mx-auto max-w-[1760px]">{children}</main>
           </motion.div>
           <MobileSidebar trans={trans} />
           <HeaderSearch open={open} setOpen={setOpen} />

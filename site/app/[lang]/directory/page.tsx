@@ -48,7 +48,7 @@ export default async function DirectoryIndex({ params, searchParams }: { params:
         </Link>
       </PageHead>
 
-      <div className="mx-auto mt-6 flex max-w-6xl flex-col gap-3 px-4">
+      <div className="mx-auto mt-6 flex max-w-7xl flex-col gap-3 px-4">
         <SearchBox action={base} q={current.q} placeholder={d.directory.searchPlaceholder} keep={{ city: current.city, category: current.category }} labels={{ search: d.common.search, clear: d.common.clear }} />
         {cities.length > 1 && (
           <ChipRow label={d.directory.allCities}>
@@ -71,7 +71,7 @@ export default async function DirectoryIndex({ params, searchParams }: { params:
         </ChipRow>
       </div>
 
-      <div className="mx-auto mt-6 max-w-6xl px-4">
+      <div className="mx-auto mt-6 max-w-7xl px-4">
         <h2 className="sr-only">{d.common.results}</h2>
         <p className="mb-3 text-sm text-muted" aria-live="polite">{countLabel(list.meta.total, d.directory.countOne, d.directory.count, lang)}</p>
         {list.data.length === 0 ? (

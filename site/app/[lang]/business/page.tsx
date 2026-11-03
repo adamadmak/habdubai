@@ -37,7 +37,7 @@ function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
   return (
     <>
       <Night>
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-12 pt-10 md:grid-cols-[1.15fr_0.85fr] md:items-center md:pb-16 md:pt-16">
+        <div className="mx-auto grid max-w-7xl gap-12 px-4 pb-12 pt-10 md:grid-cols-[1.15fr_0.85fr] md:items-center md:pb-16 md:pt-16">
           <div className="settle">
             <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
               <span className="tibeb-thin inline-block w-7 rounded-full" aria-hidden="true" /> {d.nav.business}
@@ -64,7 +64,7 @@ function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
         </div>
       </Night>
 
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-7xl px-4">
         <ol className="reveal mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {d.business.steps.map((step, i) => (
             <li key={step.title} className="card relative overflow-hidden p-5 md:p-6">

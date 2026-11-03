@@ -167,7 +167,7 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
       </div>
 
       {nearby.length > 0 && (
-        <section className="mx-auto mt-12 max-w-6xl px-4">
+        <section className="mx-auto mt-12 max-w-7xl px-4">
           <h2 className="headline text-[1.75rem]">{d.directory.nearby}</h2>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {nearby.map((n) => <BusinessCard key={n.id} business={n} lang={lang} meta={meta} />)}

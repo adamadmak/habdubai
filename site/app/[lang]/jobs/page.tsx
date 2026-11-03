@@ -42,7 +42,7 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
     <>
       <PageHead title={d.jobs.title} lead={d.jobs.lead} word="ሥራ" />
 
-      <div className="mx-auto mt-6 flex max-w-6xl flex-col gap-3 px-4">
+      <div className="mx-auto mt-6 flex max-w-7xl flex-col gap-3 px-4">
         <SearchBox action={base} q={current.q} placeholder={d.jobs.searchPlaceholder} keep={{ category: current.category, emirate: current.emirate }} labels={{ search: d.common.search, clear: d.common.clear }} />
         <ChipRow label={d.jobs.facts.kind}>
           <Chip href={hrefWith(base, current, { category: undefined })} active={!current.category}>{d.jobs.allKinds}</Chip>
@@ -64,7 +64,7 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
         )}
       </div>
 
-      <div className="mx-auto mt-6 max-w-6xl px-4">
+      <div className="mx-auto mt-6 max-w-7xl px-4">
         <h2 className="sr-only">{d.common.results}</h2>
         <p className="mb-3 text-sm text-muted" aria-live="polite">{countLabel(jobs.meta.total, d.jobs.countOne, d.jobs.count, lang)}</p>
         {jobs.data.length === 0 ? (

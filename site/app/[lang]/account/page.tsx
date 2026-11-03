@@ -47,7 +47,7 @@ function SignedOut({ lang, d }: { lang: Locale; d: Dictionary }) {
   return (
     <>
       <PageHead title={a.signInTitle} lead={a.signInLead} />
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 md:grid-cols-[1fr_0.9fr] md:gap-12">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-[1fr_0.9fr] md:gap-12">
         <div className="mt-8">
           <LoginPanel
             lang={lang}
@@ -92,7 +92,7 @@ function Home({ lang, d, home, meta }: { lang: Locale; d: Dictionary; home: Owne
   return (
     <>
       <Night>
-        <div className="mx-auto max-w-6xl px-4 pb-10 pt-8 md:pb-14 md:pt-12">
+        <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 md:pb-14 md:pt-12">
           <div className="settle flex flex-wrap items-start justify-between gap-6">
             <div className="min-w-0">
               <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
@@ -127,7 +127,7 @@ function Home({ lang, d, home, meta }: { lang: Locale; d: Dictionary; home: Owne
         </div>
       </Night>
 
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-7xl px-4">
         {!m && (
           <div className="card reveal relative mt-8 overflow-hidden p-6 md:p-8">
             <div className="tibeb-thin absolute inset-x-0 top-0" aria-hidden="true" />

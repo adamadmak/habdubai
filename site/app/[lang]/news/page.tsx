@@ -36,7 +36,7 @@ export default async function NewsIndex({ params, searchParams }: { params: Prom
     <>
       <PageHead title={d.news.title} lead={d.news.lead} word="ዜና" />
 
-      <div className="mx-auto mt-6 flex max-w-6xl flex-col gap-3 px-4">
+      <div className="mx-auto mt-6 flex max-w-7xl flex-col gap-3 px-4">
         <SearchBox action={base} q={current.q} placeholder={d.news.searchPlaceholder} keep={{ topic: current.topic, events: current.events }} labels={{ search: d.common.search, clear: d.common.clear }} />
         <ChipRow label={d.news.title}>
           <Chip href={hrefWith(base, { q: current.q, topic: current.topic }, {})} active={!events}>{d.news.all}</Chip>
@@ -52,7 +52,7 @@ export default async function NewsIndex({ params, searchParams }: { params: Prom
         </ChipRow>
       </div>
 
-      <div className="mx-auto mt-6 max-w-6xl px-4">
+      <div className="mx-auto mt-6 max-w-7xl px-4">
         <h2 className="sr-only">{d.common.results}</h2>
         {news.data.length === 0 ? (
           <Empty>{current.q ? d.news.noMatch : d.news.empty}</Empty>

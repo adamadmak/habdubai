@@ -16,7 +16,7 @@ const Footer = (_: { handleOpenSearch?: () => void }) => {
         "ltr:xl:ml-[72px] rtl:xl:mr-[72px]": collapsed,
       })}
     >
-      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-2 text-xs text-default-500">
+      <div className="mx-auto flex max-w-[1760px] flex-wrap items-center justify-between gap-2 text-xs text-default-500">
         <p>© {new Date().getFullYear()} Habesha Dubai · Admin</p>
         <p>Phase one: no money moves through the platform.</p>
       </div>
