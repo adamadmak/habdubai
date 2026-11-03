@@ -28,6 +28,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'http' => [
+        // Optional: a CA bundle file for all outgoing HTTPS. Without it the
+        // system list is used, or Mozilla's bundle from composer/ca-bundle.
+        'ca_bundle' => env('HTTP_CA_BUNDLE'),
+    ],
+
     'telegram' => [
         // The admin's Settings page is the normal home for the token; these
         // are only for a local .env during development.

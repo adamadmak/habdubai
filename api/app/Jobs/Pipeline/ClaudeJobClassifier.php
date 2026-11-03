@@ -50,7 +50,12 @@ PROMPT;
 
     public function classify(JobRaw $raw): Classification
     {
-        $client = $this->client ?? new Client(apiKey: JobSettings::anthropicKey(), requestOptions: ['timeout' => 90, 'maxRetries' => 2]);
+        $client = $this->client ?? new Client(apiKey: JobSettings::anthropicKey(), requestOptions: [
+            'timeout' => 90,
+            'maxRetries' => 2,
+            // The SDK's own HTTP client, verified against the same CA list as everything else.
+            'transporter' => new \GuzzleHttp\Client(['verify' => \App\Support\TrustedCas::path(), 'connect_timeout' => 10]),
+        ]);
 
         try {
             $message = $client->beta->messages->create(

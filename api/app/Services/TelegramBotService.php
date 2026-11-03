@@ -346,8 +346,6 @@ class TelegramBotService
 
     private function http(): PendingRequest
     {
-        $caBundle = trim((string) config('services.telegram.ca_bundle'));
-
-        return Http::withOptions(['verify' => $caBundle !== '' ? $caBundle : true])->connectTimeout(5);
+        return Http::withOptions(['verify' => \App\Support\TrustedCas::path()])->connectTimeout(5);
     }
 }

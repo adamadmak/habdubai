@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        // Every outgoing HTTPS call is verified against a real CA list, even on
+        // a PHP build that ships without one (see App\Support\TrustedCas).
+        \Illuminate\Support\Facades\Http::globalOptions(['verify' => \App\Support\TrustedCas::path()]);
     }
 }
