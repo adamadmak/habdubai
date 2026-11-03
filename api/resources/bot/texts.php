@@ -155,9 +155,9 @@ return [
         'en' => 'Let us finish setting up your account.',
     ],
     'profile' => [
-        'am' => "👤 {name}\n✅ ከ{since} የተረጋገጠ\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ የረዳት ነጥብ፡ {points}",
-        'ti' => "👤 {name}\n✅ ካብ {since} ዝተረጋገጸ\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ ነጥቢ ሓጋዚ፡ {points}",
-        'en' => "👤 {name}\n✅ Verified since {since}\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ Helper points: {points}",
+        'am' => "👤 {name}\n✅ ከ{since} የተረጋገጠ\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ የረዳት ነጥብ፡ {points}{rank}",
+        'ti' => "👤 {name}\n✅ ካብ {since} ዝተረጋገጸ\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ ነጥቢ ሓጋዚ፡ {points}{rank}",
+        'en' => "👤 {name}\n✅ Verified since {since}\n📍 {emirate}\n🛠 {trades}\n🌐 {language}\n⭐ Helper points: {points}{rank}",
     ],
     'not_member' => [
         'am' => 'ገና አባል አይደሉም። ለመቀላቀል /start ይላኩ።',
@@ -165,9 +165,9 @@ return [
         'en' => 'You are not a member yet. Send /start to join.',
     ],
     'help' => [
-        'am' => "ትዕዛዞች፡\n/start — መቀላቀል\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/directory — የሐበሻ ንግድ ማውጫ\n/addbusiness — ንግድ መጠቆም\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ\n\nጥያቄዎችና የዕቃ ሰሌዳ በቅርቡ ይመጣሉ።",
-        'ti' => "ትእዛዛት፡\n/start — ምጽንባር\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/directory — መምርሒ ንግዲ ሓበሻ\n/addbusiness — ንግዲ ምምልካት\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ\n\nሕቶታትን ሰሌዳ ኣቕሑን ኣብ ቀረባ ክመጹ እዮም።",
-        'en' => "Commands:\n/start — join, or welcome back\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/directory — Habesha business directory\n/addbusiness — suggest a business\n/profile — your profile\n/language — change language\n/leave — leave the community\n\nQuestions and the goods board are coming soon.",
+        'am' => "ማንኛውንም ጥያቄ እዚህ ይጻፉ፤ ረዳቱ ከተረጋገጡ ምንጮች ይመልሳል።\n\nትዕዛዞች፡\n/ask — ማህበረሰቡን መጠየቅ\n/myquestions — የእርስዎ ጥያቄዎች\n/faq — ተደጋግመው የሚጠየቁ\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/directory — የሐበሻ ንግድ ማውጫ\n/addbusiness — ንግድ መጠቆም\n/safe — እርዳታና ደህንነት\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ",
+        'ti' => "ዝኾነ ሕቶ ኣብዚ ጸሓፉ፤ ሓጋዚ ካብ ዝተረጋገጹ ምንጭታት ይምልስ።\n\nትእዛዛት፡\n/ask — ንማሕበረሰብ ምሕታት\n/myquestions — ሕቶታትኩም\n/faq — ብተደጋጋሚ ዝሕተቱ\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/directory — መምርሒ ንግዲ ሓበሻ\n/addbusiness — ንግዲ ምምልካት\n/safe — ሓገዝን ድሕነትን\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ",
+        'en' => "Write any question here and the assistant answers from checked sources.\n\nCommands:\n/ask — ask the community\n/myquestions — your questions\n/faq — frequently asked questions\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/directory — Habesha business directory\n/addbusiness — suggest a business\n/safe — help and safety\n/profile — your profile\n/language — change language\n/leave — leave the community",
     ],
     'unknown' => [
         'am' => 'አልገባኝም። /help ይላኩ።',
@@ -643,5 +643,263 @@ return [
         'am' => '✅ ላክ',
         'ti' => '✅ ስደድ',
         'en' => '✅ Send',
+    ],
+
+    // ---- questions --------------------------------------------------------
+    'ask_question' => [
+        'am' => "❓ <b>ማህበረሰቡን ይጠይቁ</b>\n\nጥያቄዎን በማንኛውም ቋንቋ ይጻፉ። ጠቃሚ ዝርዝሮችን ያካትቱ (ኢማራት፣ የቪዛ ዓይነት፣ ምን ያህል ጊዜ)።",
+        'ti' => "❓ <b>ንማሕበረሰብ ሕተቱ</b>\n\nሕቶኹም ብዝኾነ ቋንቋ ጸሓፉ። ኣገደስቲ ዝርዝራት ኣእትዉ (ኢማራት፣ ዓይነት ቪዛ፣ ክንደይ ግዜ)።",
+        'en' => "❓ <b>Ask the community</b>\n\nWrite your question in any language. Include the details that matter (emirate, visa type, how long).",
+    ],
+    'ask_too_short' => [
+        'am' => 'ጥያቄው ከ15 እስከ 2000 ፊደላት ነው።',
+        'ti' => 'ሕቶ ካብ 15 ክሳብ 2000 ፊደላት እዩ።',
+        'en' => 'A question is 15 to 2000 letters.',
+    ],
+    'ask_pick_category' => [
+        'am' => 'ጥያቄው ስለ ምንድን ነው?',
+        'ti' => 'ሕቶ ብዛዕባ እንታይ እዩ?',
+        'en' => 'What is the question about?',
+    ],
+    'ask_anonymous' => [
+        'am' => 'በስምዎ ይለጠፍ ወይስ ስም ሳይጠቀስ?',
+        'ti' => 'ብስምኩም ይለጠፍ ወይስ ስም ከይተጠቕሰ?',
+        'en' => 'Post it with your name, or anonymously?',
+    ],
+    'btn_ask_named' => [
+        'am' => '👤 በስሜ',
+        'ti' => '👤 ብስመይ',
+        'en' => '👤 With my name',
+    ],
+    'btn_ask_anonymous' => [
+        'am' => '🙈 ስም ሳይጠቀስ',
+        'ti' => '🙈 ስም ከይተጠቕሰ',
+        'en' => '🙈 Anonymously',
+    ],
+    'ask_posted' => [
+        'am' => "ጥያቄዎ ተለጥፏል። መልስ ሲመጣ መልዕክት እልክልዎታለሁ።\n\nመልሱ ሲፈታልዎ ከጥያቄዎ ስር «✅ ተፈቷል» ይጫኑ ወይም /myquestions ይላኩ።",
+        'ti' => "ሕቶኹም ተለጢፉ። መልሲ ምስ መጸ መልእኽቲ ክሰደልኩም እየ።\n\nመልሲ ምስ ፈትሓልኩም ኣብ ትሕቲ ሕቶኹም «✅ ተፈቲሑ» ጠውቑ ወይ /myquestions ስደዱ።",
+        'en' => "Your question is posted. I will message you when someone answers.\n\nWhen an answer solves it, tap ✅ Mark solved under your question, or send /myquestions.",
+    ],
+    'ask_no_group' => [
+        'am' => 'የጥያቄ ቡድኑ ገና አልተዘጋጀም። አስተዳዳሪ በቅርቡ ይከፍተዋል።',
+        'ti' => 'ጉጅለ ሕቶታት ገና ኣይተዳለወን። ኣመሓዳሪ ኣብ ቀረባ ክኸፍቶ እዩ።',
+        'en' => 'The questions group is not set up yet. An admin will open it soon.',
+    ],
+    'ask_limit' => [
+        'am' => 'ዛሬ {count} ጥያቄዎችን ጠይቀዋል። ነገ እንደገና ይሞክሩ።',
+        'ti' => 'ሎሚ {count} ሕቶታት ሓቲትኩም። ጽባሕ እንደገና ፈትኑ።',
+        'en' => 'You have asked {count} questions today. Try again tomorrow.',
+    ],
+    'q_group_post' => [
+        'am' => "❓ <b>{title}</b>\n\n{body}\n\n{asker} · #{category}",
+        'ti' => "❓ <b>{title}</b>\n\n{body}\n\n{asker} · #{category}",
+        'en' => "❓ <b>{title}</b>\n\n{body}\n\n{asker} · #{category}",
+    ],
+    'q_anonymous_asker' => [
+        'am' => '🙈 አንድ አባል',
+        'ti' => '🙈 ሓደ ኣባል',
+        'en' => '🙈 A member',
+    ],
+    'q_solved_tag' => [
+        'am' => '✅ ተፈቷል',
+        'ti' => '✅ ተፈቲሑ',
+        'en' => '✅ Solved',
+    ],
+    'btn_q_solve' => [
+        'am' => '✅ ተፈቷል',
+        'ti' => '✅ ተፈቲሑ',
+        'en' => '✅ Mark solved',
+    ],
+    'q_new_answer' => [
+        'am' => "💬 «{title}» ለሚለው ጥያቄዎ {name} መልስ ሰጥቷል፡\n\n{excerpt}",
+        'ti' => "💬 ንሕቶኹም «{title}» {name} መልሲ ሂቡ፡\n\n{excerpt}",
+        'en' => "💬 {name} answered your question \"{title}\":\n\n{excerpt}",
+    ],
+    'q_pick_answer' => [
+        'am' => '«{title}» የሚለውን የፈታው የትኛው መልስ ነው?',
+        'ti' => 'ነቲ «{title}» ዝፈትሖ ኣየናይ መልሲ እዩ?',
+        'en' => 'Which answer solved "{title}"?',
+    ],
+    'q_no_answers' => [
+        'am' => 'እስካሁን ማንም አልመለሰም።',
+        'ti' => 'ክሳብ ሕጂ ዝመለሰ የለን።',
+        'en' => 'No one has answered yet.',
+    ],
+    'q_check_dm' => [
+        'am' => 'መልሱን እንዲመርጡ በግል መልዕክት ልኬልዎታለሁ።',
+        'ti' => 'መልሲ ክትመርጹ ብውልቂ መልእኽቲ ሰዲደልኩም።',
+        'en' => 'I sent you a private message to pick the answer.',
+    ],
+    'q_not_allowed' => [
+        'am' => 'ተፈቷል ማለት የሚችለው የጠየቀው ሰው ወይም አወያይ ብቻ ነው።',
+        'ti' => 'ተፈቲሑ ክብል ዝኽእል ዝሓተተ ሰብ ወይ ኣወያዪ ጥራይ እዩ።',
+        'en' => 'Only the person who asked, or a moderator, can mark this solved.',
+    ],
+    'q_already_solved' => [
+        'am' => 'ይህ ጥያቄ ቀድሞ ተፈቷል።',
+        'ti' => 'እዚ ሕቶ ድሮ ተፈቲሑ።',
+        'en' => 'This question is already solved.',
+    ],
+    'q_solved_dm' => [
+        'am' => 'ተፈቷል ተብሎ ተመዝግቧል። አመሰግናለሁ!',
+        'ti' => 'ተፈቲሑ ተባሂሉ ተመዝጊቡ። የቐንየለይ!',
+        'en' => 'Marked as solved. Thank you!',
+    ],
+    'q_solved_group' => [
+        'am' => '✅ ተፈቷል፤ የ{name} መልስ ረድቷል።',
+        'ti' => '✅ ተፈቲሑ፤ መልሲ {name} ሓጊዙ።',
+        'en' => '✅ Solved: the answer by {name} helped.',
+    ],
+    'q_points_dm' => [
+        'am' => '⭐ «{title}» ለሚለው ጥያቄ የሰጡት መልስ መፍትሔ ሆኗል። +{points} የረዳት ነጥብ (አሁን {total})።',
+        'ti' => '⭐ ንሕቶ «{title}» ዝሃብኩምዎ መልሲ መፍትሒ ኮይኑ። +{points} ነጥቢ ሓጋዚ (ሕጂ {total})።',
+        'en' => '⭐ Your answer to "{title}" was marked as the solution. +{points} helper points (now {total}).',
+    ],
+    'myq_title' => [
+        'am' => 'የእርስዎ ጥያቄዎች',
+        'ti' => 'ሕቶታትኩም',
+        'en' => 'Your questions',
+    ],
+    'myq_none' => [
+        'am' => 'እስካሁን ጥያቄ አልጠየቁም። ለመጠየቅ /ask ይላኩ።',
+        'ti' => 'ክሳብ ሕጂ ሕቶ ኣይሓተትኩምን። ንምሕታት /ask ስደዱ።',
+        'en' => 'You have not asked anything yet. Send /ask to ask.',
+    ],
+    'myq_answers' => [
+        'am' => '{count} መልስ',
+        'ti' => '{count} መልሲ',
+        'en' => '{count} answers',
+    ],
+    'rank_helper' => [
+        'am' => 'ረዳት',
+        'ti' => 'ሓጋዚ',
+        'en' => 'Helper',
+    ],
+    'rank_trusted' => [
+        'am' => 'የታመነ',
+        'ti' => 'እሙን',
+        'en' => 'Trusted',
+    ],
+    'rank_elder' => [
+        'am' => 'ሽማግሌ',
+        'ti' => 'ሽማግለ',
+        'en' => 'Elder',
+    ],
+
+    // ---- FAQ ----------------------------------------------------------------
+    'faq_pick_category' => [
+        'am' => "📚 <b>ተደጋግመው የሚጠየቁ ጥያቄዎች</b>\n\nርዕስ ይምረጡ፣ ወይም ለመፈለግ «/faq ቃል» ይላኩ።",
+        'ti' => "📚 <b>ብተደጋጋሚ ዝሕተቱ ሕቶታት</b>\n\nኣርእስቲ ምረጹ፣ ወይ ንምድላይ «/faq ቃል» ስደዱ።",
+        'en' => "📚 <b>Frequently asked questions</b>\n\nPick a topic, or send \"/faq word\" to search.",
+    ],
+    'faq_empty' => [
+        'am' => 'እስካሁን የተዘጋጀ ጥያቄና መልስ የለም። ማህበረሰቡን በ /ask ይጠይቁ።',
+        'ti' => 'ክሳብ ሕጂ ዝተዳለወ ሕቶን መልስን የለን። ንማሕበረሰብ ብ /ask ሕተቱ።',
+        'en' => 'There are no FAQ entries yet. Ask the community with /ask.',
+    ],
+    'faq_search_none' => [
+        'am' => '«{query}» የሚል አልተገኘም። ማህበረሰቡን በ /ask ይጠይቁ።',
+        'ti' => '«{query}» ዝብል ኣይተረኽበን። ንማሕበረሰብ ብ /ask ሕተቱ።',
+        'en' => 'Nothing matches "{query}". Ask the community with /ask.',
+    ],
+    'btn_faq_topics' => [
+        'am' => '📚 ርዕሶች',
+        'ti' => '📚 ኣርእስትታት',
+        'en' => '📚 Topics',
+    ],
+
+    // ---- assistant --------------------------------------------------------
+    'ai_footer' => [
+        'am' => 'ጉዳይዎ የተለየ ከሆነ ማህበረሰቡን ይጠይቁ።',
+        'ti' => 'ጉዳይኩም ፍሉይ እንተኾይኑ ንማሕበረሰብ ሕተቱ።',
+        'en' => 'Ask the group if your case is different.',
+    ],
+    'ai_sources' => [
+        'am' => 'ምንጭ፡',
+        'ti' => 'ምንጪ፡',
+        'en' => 'Sources:',
+    ],
+    'btn_ai_ask_group' => [
+        'am' => '❓ ማህበረሰቡን ጠይቅ',
+        'ti' => '❓ ንማሕበረሰብ ሕተት',
+        'en' => '❓ Ask the community',
+    ],
+    'ai_limit' => [
+        'am' => 'ዛሬ ረዳቱን {limit} ጊዜ ጠይቀዋል። ማህበረሰቡን በ /ask ይጠይቁ ወይም ነገ ይሞክሩ።',
+        'ti' => 'ሎሚ ንሓጋዚ {limit} ግዜ ሓቲትኩም። ንማሕበረሰብ ብ /ask ሕተቱ ወይ ጽባሕ ፈትኑ።',
+        'en' => 'You have asked the assistant {limit} times today. Ask the community with /ask, or try again tomorrow.',
+    ],
+    'ai_unavailable' => [
+        'am' => 'ረዳቱ አሁን መመለስ አልቻለም። ማህበረሰቡን በ /ask ይጠይቁ።',
+        'ti' => 'ሓጋዚ ሕጂ ክምልስ ኣይከኣለን። ንማሕበረሰብ ብ /ask ሕተቱ።',
+        'en' => 'The assistant cannot answer right now. Ask the community with /ask.',
+    ],
+    'ai_faq_matches' => [
+        'am' => 'ጥያቄና መልሱ እንዲህ ይላል፡',
+        'ti' => 'ሕቶን መልስን ከምዚ ይብል፡',
+        'en' => 'Here is what the FAQ says:',
+    ],
+    'ai_no_match' => [
+        'am' => 'ለዚህ መልስ የለኝም። ማህበረሰቡን ይጠይቁ፤ የሚያውቁ ሰዎች አሉ።',
+        'ti' => 'ነዚ መልሲ የብለይን። ንማሕበረሰብ ሕተቱ፤ ዝፈልጡ ሰባት ኣለዉ።',
+        'en' => 'I do not have an answer for that. Ask the community; people there will know.',
+    ],
+
+    // ---- safety desk ------------------------------------------------------
+    'safe_card' => [
+        'am' => "🆘 <b>እርዳታና ደህንነት</b>\n\n🚓 የፖሊስ አስቸኳይ ጥሪ፡ 999\n🚓 የዱባይ ፖሊስ (አስቸኳይ ያልሆነ)፡ 901\n{extra}\n<b>መብትዎን ይወቁ</b>\n• የቪዛና የምልመላ ወጪ የአሠሪው ነው፤ ሠራተኛው አይከፍልም።\n• አሠሪ ፓስፖርትዎን መያዝ አይፈቀድለትም።\n• ያልተከፈለ ደሞዝን ለሰው ኃይል ሚኒስቴር (MoHRE) ማመልከት ይችላሉ።\n\nአሠሪ እየበደለዎት ወይም ደሞዝ ካልከፈለዎት ለአወያዮች በግል መናገር ይችላሉ።",
+        'ti' => "🆘 <b>ሓገዝን ድሕነትን</b>\n\n🚓 ህጹጽ ፖሊስ፡ 999\n🚓 ፖሊስ ዱባይ (ህጹጽ ዘይኮነ)፡ 901\n{extra}\n<b>መሰልኩም ፍለጡ</b>\n• ወጻኢ ቪዛን ምልመላን ናይ ኣስራሒ እዩ፤ ሰራሕተኛ ኣይከፍልን።\n• ኣስራሒ ፓስፖርትኹም ክሕዝ ኣይፍቀደሉን።\n• ዘይተኸፍለ ደሞዝ ናብ ሚኒስትሪ ሓይሊ ሰብ (MoHRE) ከተመልክቱ ትኽእሉ።\n\nኣስራሒ እንተበደለኩም ወይ ደሞዝ እንተዘይከፊሉኩም ንኣወያየቲ ብውልቂ ክትነግሩ ትኽእሉ።",
+        'en' => "🆘 <b>Help and safety</b>\n\n🚓 Police emergency: 999\n🚓 Dubai Police (not urgent): 901\n{extra}\n<b>Know your rights</b>\n• Your employer pays for your visa and recruitment, not you.\n• Your employer may not keep your passport.\n• You can complain about unpaid salary to the Ministry of Human Resources (MoHRE).\n\nIf an employer is mistreating you or not paying you, you can tell our moderators privately.",
+    ],
+    'safe_line_consulate' => [
+        'am' => '🇪🇹 የኢትዮጵያ ቆንስላ፡ {phone}',
+        'ti' => '🇪🇹 ቆንስላ ኢትዮጵያ፡ {phone}',
+        'en' => '🇪🇹 Ethiopian consulate: {phone}',
+    ],
+    'safe_line_mohre' => [
+        'am' => '🏛 MoHRE፡ {phone}',
+        'ti' => '🏛 MoHRE፡ {phone}',
+        'en' => '🏛 MoHRE: {phone}',
+    ],
+    'btn_safe_report' => [
+        'am' => '🚩 አሠሪን በግል ሪፖርት አድርግ',
+        'ti' => '🚩 ኣስራሒ ብውልቂ ሪፖርት ግበር',
+        'en' => '🚩 Report an employer privately',
+    ],
+    'safe_ask_employer' => [
+        'am' => 'የአሠሪው ስም (ሰው ወይም ድርጅት) ማን ነው? እዚህ የሚልኩት ምንም ነገር የትም አይለጠፍም።',
+        'ti' => 'ስም ኣስራሒ (ሰብ ወይ ትካል) መን እዩ? ኣብዚ እትሰዱዎ ዝኾነ ነገር ኣበይ ኣይለጠፍን።',
+        'en' => 'What is the employer\'s name (a person or a company)? Nothing you send here is posted anywhere.',
+    ],
+    'safe_ask_what' => [
+        'am' => 'ምን ሆነ? የፈለጉትን ያህል ይጻፉ።',
+        'ti' => 'እንታይ ኮይኑ? ዝደለኹምዎ ክሳብ ጸሓፉ።',
+        'en' => 'What happened? Write as much as you want.',
+    ],
+    'safe_ask_contact' => [
+        'am' => 'አወያይ ስለዚህ ጉዳይ እንዲያነጋግርዎት ይፈቅዳሉ?',
+        'ti' => 'ኣወያዪ ብዛዕባ እዚ ጉዳይ ከዘራርበኩም ትፈቕዱ ዶ?',
+        'en' => 'May a moderator contact you about it?',
+    ],
+    'btn_yes' => [
+        'am' => 'አዎ',
+        'ti' => 'እወ',
+        'en' => 'Yes',
+    ],
+    'btn_no' => [
+        'am' => 'አይ',
+        'ti' => 'ኣይፋል',
+        'en' => 'No',
+    ],
+    'safe_thanks' => [
+        'am' => 'አመሰግናለሁ። ይህንን የሚያዩት አወያዮች ብቻ ናቸው። አደጋ ላይ ከሆኑ አሁኑኑ 999 ይደውሉ።',
+        'ti' => 'የቐንየለይ። እዚ ዝርእይዎ ኣወያየቲ ጥራይ እዮም። ኣብ ሓደጋ እንተሃሊኹም ሕጂ 999 ደውሉ።',
+        'en' => 'Thank you. Only moderators see this. If you are in danger, call 999 now.',
+    ],
+    'safe_too_short' => [
+        'am' => 'እባክዎ ትንሽ ተጨማሪ ይጻፉ።',
+        'ti' => 'በጃኹም ቁሩብ ወሲኽኩም ጸሓፉ።',
+        'en' => 'Please write a little more.',
     ],
 ];

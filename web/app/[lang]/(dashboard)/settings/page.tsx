@@ -18,6 +18,11 @@ const FIELDS: { key: string; label: string; hint: string; placeholder?: string }
   { key: "telegram_goods_group_link", label: "Goods board group invite link", hint: "Sent at the end of joining.", placeholder: "https://t.me/+…" },
   { key: "telegram_questions_group_id", label: "Questions group chat id", hint: "Numeric id (starts with -100). Needed to remove a member who leaves or is banned.", placeholder: "-1001234567890" },
   { key: "telegram_goods_group_id", label: "Goods board group chat id", hint: "Same, for the goods group.", placeholder: "-1001234567890" },
+  { key: "community_language", label: "Language of the bot's labels in groups", hint: "am, ti or en. Members' own words stay as they wrote them.", placeholder: "am" },
+  { key: "questions_per_day", label: "Questions a member may ask per day", hint: "Default 5.", placeholder: "5" },
+  { key: "assistant_per_day", label: "Assistant answers per member per day", hint: "Each answer is one Claude call. Default 20; 0 turns the assistant off.", placeholder: "20" },
+  { key: "safety_consulate_phone", label: "Ethiopian consulate phone, for /safe", hint: "Shown on the safety card when set. Check the number before saving.", placeholder: "+971 …" },
+  { key: "safety_mohre_phone", label: "MoHRE phone, for /safe", hint: "Shown on the safety card when set. Check the number before saving.", placeholder: "…" },
 ];
 
 const SettingsPage = () => {
@@ -109,6 +114,39 @@ const SettingsPage = () => {
               <Button variant="outline" className="w-full" disabled={!telegram.configured || setWebhook.isPending} onClick={() => setWebhook.mutateAsync().then(() => toast.success("Webhook registered.")).catch((err) => toast.error(err.message))}>
                 Register the webhook again
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Groups and channels the bot is in</CardTitle>
+              <CardDescription>
+                Add the bot to a group or channel as an admin and it appears here. For questions, use a group with Topics turned on, so every question gets its own thread.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(data.chats ?? []).length === 0 && <div className="text-sm text-default-500">None yet.</div>}
+              {(data.chats ?? []).map((c) => (
+                <div key={c.chat_id} className="rounded-md border border-default-200 p-3 text-sm space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-default-900">{c.title ?? c.chat_id}</span>
+                    <span className="flex gap-1">
+                      <Badge color="secondary" variant="soft">{c.type}</Badge>
+                      {c.is_forum && <Badge color="success" variant="soft">topics</Badge>}
+                      {c.bot_status !== "administrator" && <Badge color="warning" variant="soft">not admin</Badge>}
+                    </span>
+                  </div>
+                  <div className="font-mono text-xs text-default-600">{c.chat_id}{c.username && ` · @${c.username}`}</div>
+                  {c.type !== "channel" ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="xs" variant="outline" onClick={() => { setForm({ ...form, telegram_questions_group_id: String(c.chat_id) }); toast.success("Set as the questions group; press Save settings."); }}>Use for questions</Button>
+                      <Button size="xs" variant="outline" onClick={() => { setForm({ ...form, telegram_goods_group_id: String(c.chat_id) }); toast.success("Set as the goods group; press Save settings."); }}>Use for goods</Button>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-default-500">A channel: set it as the jobs channel on Job settings{c.username ? ` (@${c.username})` : ` (${c.chat_id})`}.</div>
+                  )}
+                </div>
+              ))}
             </CardContent>
           </Card>
         </div>

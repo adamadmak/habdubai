@@ -139,6 +139,7 @@ export interface BotTextRow {
 
 export interface SettingsPayload {
   settings: Record<string, string>;
+  chats?: BotChatRow[];
   telegram: {
     configured: boolean;
     username: string;
@@ -290,6 +291,69 @@ export interface BusinessesPage {
   meta: { total: number; page: number; last_page: number };
   counts: Partial<Record<BusinessStatus, number>>;
   choices: { categories: Record<string, string>; cities: { id: number; name_en: string; active: boolean }[] };
+}
+
+export interface QuestionRow {
+  id: number;
+  title: string;
+  category: string;
+  status: "open" | "solved" | "closed";
+  anonymous: boolean;
+  asker: { id: number; name: string } | null;
+  replies_count: number;
+  faq_id: number | null;
+  on_forum: boolean;
+  created_at: string;
+  last_activity_at: string | null;
+}
+
+export interface QuestionDetail extends QuestionRow {
+  body: string;
+  replies: { id: number; member: { id: number; name: string; points: number } | null; text: string; points_awarded: number; is_solution: boolean; created_at: string }[];
+}
+
+export interface FaqRow {
+  id: number;
+  question_id: number | null;
+  category: string;
+  q_am: string | null;
+  q_ti: string | null;
+  q_en: string;
+  a_am: string | null;
+  a_ti: string | null;
+  a_en: string;
+  source_url: string | null;
+  active: boolean;
+}
+
+export interface KnowledgeRow {
+  id: number;
+  title: string;
+  body: string;
+  source_name: string | null;
+  source_url: string | null;
+  active: boolean;
+}
+
+export interface EmployerReportRow {
+  id: number;
+  employer_name: string;
+  times_named: number;
+  text: string;
+  contactable: boolean;
+  member: { id: number; name: string; username: string | null } | null;
+  status: "open" | "closed";
+  note: string | null;
+  created_at: string;
+}
+
+export interface BotChatRow {
+  chat_id: number;
+  type: string;
+  title: string | null;
+  username: string | null;
+  is_forum: boolean;
+  bot_status: string;
 }
 
 export const CATEGORY_NAMES: Record<string, string> = {

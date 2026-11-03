@@ -6,6 +6,9 @@ use App\Http\Controllers\Admin\BotTextController;
 use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DirectoryCityController;
+use App\Http\Controllers\Admin\EmployerReportController;
+use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\JobController;
 use App\Http\Controllers\Admin\JobSettingsController;
 use App\Http\Controllers\Admin\JobSourceController;
@@ -76,6 +79,22 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('directory-cities', [DirectoryCityController::class, 'store'])->name('directory-cities.store');
         Route::put('directory-cities/{city}', [DirectoryCityController::class, 'update'])->name('directory-cities.update');
         Route::delete('directory-cities/{city}', [DirectoryCityController::class, 'destroy'])->name('directory-cities.destroy');
+
+        Route::get('questions', [QuestionController::class, 'index'])->name('questions.index');
+        Route::get('questions/{question}', [QuestionController::class, 'show'])->name('questions.show');
+        Route::post('questions/{question}/solve', [QuestionController::class, 'solve'])->name('questions.solve');
+        Route::post('questions/{question}/promote', [QuestionController::class, 'promote'])->name('questions.promote');
+
+        Route::get('faq', [FaqController::class, 'index'])->name('faq.index');
+        Route::post('faq', [FaqController::class, 'storeFaq'])->name('faq.store');
+        Route::put('faq/{faq}', [FaqController::class, 'updateFaq'])->name('faq.update');
+        Route::delete('faq/{faq}', [FaqController::class, 'destroyFaq'])->name('faq.destroy');
+        Route::post('knowledge', [FaqController::class, 'storeArticle'])->name('knowledge.store');
+        Route::put('knowledge/{article}', [FaqController::class, 'updateArticle'])->name('knowledge.update');
+        Route::delete('knowledge/{article}', [FaqController::class, 'destroyArticle'])->name('knowledge.destroy');
+
+        Route::get('employer-reports', [EmployerReportController::class, 'index'])->name('employer-reports.index');
+        Route::put('employer-reports/{report}', [EmployerReportController::class, 'update'])->name('employer-reports.update');
 
         Route::get('job-settings', [JobSettingsController::class, 'show'])->name('job-settings.show');
         Route::put('job-settings', [JobSettingsController::class, 'update'])->name('job-settings.update');

@@ -18,3 +18,5 @@ Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3 --sleep=
 Schedule::command('jobs:send-alerts')->everyFiveMinutes()->withoutOverlapping(5);
 
 Schedule::command('jobs:close-stale')->dailyAt('03:15')->timezone('Asia/Dubai')->withoutOverlapping(30);
+
+Schedule::command('questions:close-quiet')->dailyAt('03:30')->timezone('Asia/Dubai')->withoutOverlapping(30);

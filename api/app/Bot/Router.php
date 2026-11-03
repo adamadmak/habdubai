@@ -25,6 +25,10 @@ class Router
         private readonly JobsFlow $jobs,
         private readonly JobIngest $ingest,
         private readonly DirectoryFlow $directory,
+        private readonly QuestionsFlow $questions,
+        private readonly AssistantFlow $assistant,
+        private readonly FaqFlow $faq,
+        private readonly SafetyFlow $safety,
     ) {}
 
     public function handle(TelegramUpdate $update): void
@@ -37,13 +41,19 @@ class Router
             return;
         }
 
+        if (isset($payload['my_chat_member'])) {
+            \App\Models\BotChat::fromMembershipUpdate($payload);
+
+            return;
+        }
+
         // A post in a channel or group registered as a job source.
         $post = $payload['channel_post'] ?? null;
         if ($post === null && isset($payload['message']['chat']['type']) && $payload['message']['chat']['type'] !== 'private') {
             $post = $payload['message'];
         }
         if (is_array($post)) {
-            $this->sourcePost($post);
+            $this->groupPost($post);
 
             return;
         }
@@ -96,6 +106,27 @@ class Router
                 return;
             case 'saved':
                 $member?->isActive() ? $this->jobs->saved($member) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'ask':
+                $member?->isActive() ? $this->questions->begin($member, $conversation) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'myquestions':
+                $member?->isActive() ? $this->questions->myQuestions($member) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'faq':
+                $member?->isActive() ? $this->faq->menu($member, $in->commandArgument()) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'safe':
+                // Safety information is for everyone who reaches the bot, member or not.
+                if ($member?->isActive()) {
+                    $this->safety->card($member);
+                } else {
+                    $this->reply($conversation, 'safe_card', ['extra' => '']);
+                }
 
                 return;
             case 'directory':
@@ -161,6 +192,18 @@ class Router
             return;
         }
 
+        if (in_array($conversation->state, QuestionsFlow::STATES, true) && $member?->isActive()) {
+            $this->questions->handle($member, $conversation, $in);
+
+            return;
+        }
+
+        if (in_array($conversation->state, SafetyFlow::STATES, true) && $member?->isActive()) {
+            $this->safety->handle($member, $conversation, $in);
+
+            return;
+        }
+
         if (in_array($conversation->state, DirectoryFlow::STATES, true) && $member?->isActive()) {
             $this->directory->handle($member, $conversation, $in);
 
@@ -187,6 +230,13 @@ class Router
 
         if ($conversation->state === 'confirm_leave') {
             $this->leave($conversation, $member, $in);
+
+            return;
+        }
+
+        // Free text from a member, outside any flow, is a question for the assistant.
+        if ($member?->isActive() && $conversation->state === 'idle' && $in->text !== null && trim($in->text) !== '') {
+            $this->assistant->ask($member, $in->text);
 
             return;
         }
@@ -232,6 +282,7 @@ class Router
             'trades' => $trades === [] ? '—' : implode(', ', $trades),
             'language' => Choices::LANGUAGE_LABELS[$language] ?? $language,
             'points' => $member->helper_points,
+            'rank' => ($rank = Choices::rank((int) $member->helper_points)) ? ' · '.$this->messages->text('rank_'.$rank, $language) : '',
         ]);
     }
 
@@ -313,7 +364,55 @@ class Router
             return;
         }
 
+        // Questions: "Mark solved" works under the question in the group and in DMs.
+        if ($parts[0] === 'q' && $member?->isActive()) {
+            match ($parts[1] ?? '') {
+                'solve' => $this->questions->solveButton($member, $cb, (int) ($parts[2] ?? 0)),
+                'pick' => $this->questions->pickButton($member, $cb, (int) ($parts[2] ?? 0)),
+                'fromai' => $this->askFromAssistant($member, $cb),
+                default => $this->telegram->answerCallback($cb->id),
+            };
+
+            return;
+        }
+
+        if ($parts[0] === 'f' && $member?->isActive() && $cb->inPrivateChat()) {
+            $this->faq->button($member, $cb);
+
+            return;
+        }
+
+        if ($parts[0] === 's' && ($parts[1] ?? '') === 'report' && $member?->isActive() && $cb->inPrivateChat()) {
+            $this->safety->beginReport($member, Conversation::forUser($cb->userId, (int) $cb->chatId, $cb->languageCode));
+            $this->telegram->answerCallback($cb->id);
+
+            return;
+        }
+
         $this->telegram->answerCallback($cb->id);
+    }
+
+    private function askFromAssistant(Member $member, Callback $cb): void
+    {
+        $conversation = Conversation::forUser($cb->userId, (int) $cb->chatId, $cb->languageCode);
+        $this->questions->begin($member, $conversation, AssistantFlow::lastQuestion($member));
+        $this->telegram->answerCallback($cb->id);
+    }
+
+    /** A message in a group or channel: the questions group, or a job source. */
+    private function groupPost(array $post): void
+    {
+        $chatId = (string) ($post['chat']['id'] ?? '');
+        \App\Models\BotChat::touchFromMessage($post['chat'] ?? []);
+        $questionsGroup = \App\Support\Community::questionsGroup();
+
+        if ($questionsGroup !== '' && $chatId === $questionsGroup && isset($post['from']['id']) && empty($post['from']['is_bot'])) {
+            $this->questions->groupMessage($post, Member::findByTelegramUser((int) $post['from']['id']));
+
+            return;
+        }
+
+        $this->sourcePost($post);
     }
 
     private function sourcePost(array $post): void

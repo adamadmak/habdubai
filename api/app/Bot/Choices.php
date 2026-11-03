@@ -75,6 +75,32 @@ final class Choices
         'other' => ['am' => '📌 ሌላ', 'ti' => '📌 ካልእ', 'en' => '📌 Other'],
     ];
 
+    public const QUESTION_CATEGORIES = [
+        'visa' => ['am' => '🛂 ቪዛና መኖሪያ', 'ti' => '🛂 ቪዛን መንበሪን', 'en' => '🛂 Visa and residence'],
+        'work' => ['am' => '💼 ሥራና ደሞዝ', 'ti' => '💼 ስራሕን ደሞዝን', 'en' => '💼 Work and salary'],
+        'complaint' => ['am' => '⚖️ የሥራ ቅሬታ', 'ti' => '⚖️ ጥርዓን ስራሕ', 'en' => '⚖️ Labour complaint'],
+        'housing' => ['am' => '🏠 መኖሪያ ቤት', 'ti' => '🏠 መንበሪ ገዛ', 'en' => '🏠 Housing'],
+        'health' => ['am' => '🩺 ጤና', 'ti' => '🩺 ጥዕና', 'en' => '🩺 Health'],
+        'banking' => ['am' => '🏦 ባንክና ሰነድ', 'ti' => '🏦 ባንክን ሰነድን', 'en' => '🏦 Banking and papers'],
+        'transport' => ['am' => '🚌 ትራንስፖርት', 'ti' => '🚌 መጓዓዝያ', 'en' => '🚌 Transport'],
+        'life' => ['am' => '🌍 የዕለት ኑሮ', 'ti' => '🌍 መዓልታዊ ናብራ', 'en' => '🌍 Daily life'],
+        'other' => ['am' => '📌 ሌላ', 'ti' => '📌 ካልእ', 'en' => '📌 Other'],
+    ];
+
+    /** Helper ranks by points: shown on the profile, they carry no rights. */
+    public const RANKS = [500 => 'elder', 100 => 'trusted', 20 => 'helper'];
+
+    public static function rank(int $points): ?string
+    {
+        foreach (self::RANKS as $min => $rank) {
+            if ($points >= $min) {
+                return $rank;
+            }
+        }
+
+        return null;
+    }
+
     /** Minimum monthly salary choices for job alerts, in AED; 0 = any. */
     public const SALARY_STEPS = [0, 1500, 2500, 4000, 6000];
 

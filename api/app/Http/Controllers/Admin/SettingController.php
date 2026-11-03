@@ -27,18 +27,33 @@ class SettingController extends Controller
         'telegram_goods_group_link' => ['nullable', 'url', 'max:200'],
         'telegram_questions_group_id' => ['nullable', 'string', 'max:32'],
         'telegram_goods_group_id' => ['nullable', 'string', 'max:32'],
+        'community_language' => ['nullable', 'in:am,ti,en'],
+        'questions_per_day' => ['nullable', 'integer', 'min:1', 'max:50'],
+        'assistant_per_day' => ['nullable', 'integer', 'min:0', 'max:500'],
+        'safety_consulate_phone' => ['nullable', 'string', 'max:40'],
+        'safety_mohre_phone' => ['nullable', 'string', 'max:40'],
+    ];
+
+    /** Shown when nothing is saved, so the form says what the bot actually uses. */
+    private const DEFAULTS = [
+        'allowed_phone_countries' => '971,251',
+        'community_language' => 'am',
+        'questions_per_day' => '5',
+        'assistant_per_day' => '20',
     ];
 
     public function show(TelegramBotService $telegram): JsonResponse
     {
         $settings = [];
         foreach (array_keys(self::FIELDS) as $key) {
-            $settings[$key] = RuntimeEnv::get(null, $key, null, $key === 'allowed_phone_countries' ? '971,251' : '');
+            $settings[$key] = RuntimeEnv::get(null, $key, null, self::DEFAULTS[$key] ?? '');
         }
 
         return response()->json([
             'settings' => $settings,
             'telegram' => $this->telegramState($telegram),
+            // Groups and channels the bot has been added to, to pick from instead of typing ids.
+            'chats' => \App\Models\BotChat::query()->whereIn('bot_status', ['administrator', 'member', 'creator'])->latest('updated_at')->get(['chat_id', 'type', 'title', 'username', 'is_forum', 'bot_status']),
         ]);
     }
 

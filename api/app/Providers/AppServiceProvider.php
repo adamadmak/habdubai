@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Ai\ClaudeJson;
 use App\Jobs\Pipeline\ClaudeJobClassifier;
 use App\Jobs\Pipeline\JobClassifier;
 use App\Jobs\Pipeline\RulesJobClassifier;
@@ -11,7 +12,13 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Claude when an Anthropic key is set (Configuration → Jobs), rules otherwise.
+        // Built by hand: left to the container, the optional Anthropic client
+        // argument would be filled with a bare client that has neither the key
+        // saved on the admin nor the CA list, and every call would fail.
+        $this->app->bind(ClaudeJson::class, fn () => new ClaudeJson);
+        $this->app->bind(ClaudeJobClassifier::class, fn () => new ClaudeJobClassifier);
+
+        // Claude when an Anthropic key is set (Job settings), rules otherwise.
         $this->app->bind(JobClassifier::class, fn ($app) => ClaudeJobClassifier::configured()
             ? $app->make(ClaudeJobClassifier::class)
             : $app->make(RulesJobClassifier::class));

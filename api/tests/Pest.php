@@ -14,13 +14,25 @@ pest()->extend(TestCase::class)
         // Nothing reaches the network: every Bot API call answers ok, and any
         // other host must be faked by the test that calls it.
         Http::preventStrayRequests();
-        Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1, 'username' => 'HabeshaDubaiBot']])]);
+        TelegramFake::$results = [];
+        Http::fake(['api.telegram.org/*' => function ($request) {
+            $method = basename((string) parse_url($request->url(), PHP_URL_PATH));
+
+            return Http::response(['ok' => true, 'result' => TelegramFake::$results[$method] ?? ['message_id' => 1, 'username' => 'HabeshaDubaiBot']]);
+        }]);
         \App\Bot\BotMessages::flush();
         \App\Models\PlatformSetting::flushValueCache();
     })
     ->in('Feature');
 
 pest()->extend(TestCase::class)->in('Unit');
+
+/** What the faked Bot API answers, per method; anything not set answers a plain ok. */
+final class TelegramFake
+{
+    /** @var array<string, mixed> */
+    public static array $results = [];
+}
 
 /*
 |--------------------------------------------------------------------------

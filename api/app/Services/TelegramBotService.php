@@ -95,7 +95,7 @@ class TelegramBotService
         return $this->post('getUpdates', [
             'offset' => $offset,
             'timeout' => $timeout,
-            'allowed_updates' => ['message', 'edited_message', 'channel_post', 'callback_query'],
+            'allowed_updates' => ['message', 'edited_message', 'channel_post', 'callback_query', 'my_chat_member'],
         ], retry: false, timeout: $timeout + 10)->json('result', []);
     }
 
@@ -148,6 +148,63 @@ class TelegramBotService
             'link_preview_options' => ['is_disabled' => true],
             'reply_markup' => $replyMarkup,
         ], fn ($value) => $value !== null))->json('result', []);
+    }
+
+    /** "typing…" in the chat while something slow runs. Best effort. */
+    public function typing(int|string $chatId): void
+    {
+        try {
+            $this->post('sendChatAction', ['chat_id' => $chatId, 'action' => 'typing'], retry: false, timeout: 5);
+        } catch (RuntimeException) {
+        }
+    }
+
+    /** A message in a group, optionally inside a forum topic. */
+    public function sendToGroup(int|string $chatId, string $text, ?int $threadId = null, ?array $replyMarkup = null, ?int $replyTo = null): array
+    {
+        return $this->post('sendMessage', array_filter([
+            'chat_id' => $chatId,
+            'message_thread_id' => $threadId,
+            'text' => $text,
+            'parse_mode' => 'HTML',
+            'link_preview_options' => ['is_disabled' => true],
+            'reply_markup' => $replyMarkup,
+            'reply_parameters' => $replyTo ? ['message_id' => $replyTo, 'allow_sending_without_reply' => true] : null,
+        ], fn ($value) => $value !== null))->json('result', []);
+    }
+
+    /** A new forum topic; returns its message_thread_id, or null when the group has no topics. */
+    public function createForumTopic(int|string $chatId, string $name): ?int
+    {
+        try {
+            $result = $this->post('createForumTopic', ['chat_id' => $chatId, 'name' => mb_substr($name, 0, 128)], retry: false)->json('result', []);
+
+            return isset($result['message_thread_id']) ? (int) $result['message_thread_id'] : null;
+        } catch (RuntimeException) {
+            return null;
+        }
+    }
+
+    public function editForumTopic(int|string $chatId, int $threadId, string $name): bool
+    {
+        try {
+            $this->post('editForumTopic', ['chat_id' => $chatId, 'message_thread_id' => $threadId, 'name' => mb_substr($name, 0, 128)], retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    public function closeForumTopic(int|string $chatId, int $threadId): bool
+    {
+        try {
+            $this->post('closeForumTopic', ['chat_id' => $chatId, 'message_thread_id' => $threadId], retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
     }
 
     /** A map pin with a title and address, which Telegram shows as a tappable place. */
