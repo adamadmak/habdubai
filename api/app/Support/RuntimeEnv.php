@@ -45,10 +45,18 @@ final class RuntimeEnv
         return $value !== '' ? $value : $default;
     }
 
-    /** A secret saved from Settings, encrypted with the app key; a plain value as it is. */
+    /** A secret saved from Settings, encrypted (SecretBox); a plain value as it is. */
     public static function conceal(string $value): string
     {
-        return self::ENCRYPTED.\Illuminate\Support\Facades\Crypt::encryptString($value);
+        return self::ENCRYPTED.SecretBox::seal($value);
+    }
+
+    /** A setting saved encrypted that can no longer be read: as good as unset, and worth saying so. */
+    public static function isUnreadable(string $settingKey): bool
+    {
+        $stored = trim((string) PlatformSetting::valueFor($settingKey, ''));
+
+        return str_starts_with($stored, self::ENCRYPTED) && SecretBox::open(substr($stored, strlen(self::ENCRYPTED))) === null;
     }
 
     private static function reveal(string $value): string
@@ -57,12 +65,7 @@ final class RuntimeEnv
             return $value;
         }
 
-        try {
-            return trim(\Illuminate\Support\Facades\Crypt::decryptString(substr($value, strlen(self::ENCRYPTED))));
-        } catch (\Throwable) {
-            // Encrypted under another app key: as good as unset.
-            return '';
-        }
+        return trim((string) SecretBox::open(substr($value, strlen(self::ENCRYPTED))));
     }
 
     public static function fromEnvFile(string $key): string

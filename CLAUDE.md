@@ -17,8 +17,16 @@ dashboard. Resolve operator values with `App\Support\RuntimeEnv::get()`
 the admin's Settings page. The bot token is stored encrypted by
 `TelegramBotService::configureToken()` and never returned to a page. Other
 write-only secrets on Settings (`SettingController::SECRETS`) are stored as
-`enc:` + `Crypt`, written with `RuntimeEnv::conceal()` and decrypted by
+`enc:` + `SecretBox`, written with `RuntimeEnv::conceal()` and decrypted by
 `RuntimeEnv::get()`.
+
+**Nothing that must outlive a deploy may depend on `APP_KEY`.** A saved bot token
+became unreadable after a deploy, and every delivery from Telegram was answered
+403 until someone saved it again. Secrets go through `App\Support\SecretBox`, and
+anything else keyed (the phone hash, sign-in codes) uses `App\Support\StableKey`,
+which comes from the database password. Never `Crypt` or `config('app.key')`.
+A value that can no longer be read answers 503 at the webhook, and the Launch
+page and Settings say which one to save again.
 
 ## Every bot message goes through `BotMessages`
 
@@ -256,7 +264,7 @@ bot never word them differently.
 
 ## Phone numbers are never stored
 
-A member is keyed on `phone_hash` (HMAC of the digits with the app key) plus
+A member is keyed on `phone_hash` (HMAC of the digits with `StableKey`, so a deploy never changes it) plus
 `phone_last4` and `phone_country`. The contact card is accepted only when
 `contact.user_id` equals the sender's id (`MemberRegistrar::verifyContact`);
 a typed number is never accepted. A second Telegram account presenting an
@@ -292,8 +300,11 @@ no browser tests yet.
 
 ## Deploy one app at a time
 
-Both apps go to AletCloud. A push auto-builds; pushing both at once leaves
-both stuck in BUILDING. Push one, confirm it is live, then the other.
+All three apps go to AletCloud, and one push to `main` can start a build of each.
+The plan allows two at once, so a third may fail or stall: after a push read
+`lastDeployedAt` and `status` for all three, and redeploy one that did not land,
+alone, only once the others are live. Do not redeploy an app that is still
+building from the push; that collision is how a build ends in FAILED.
 
 ## The member's home: the welcome card, the menu keyboard, My Habesha
 

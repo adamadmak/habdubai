@@ -152,7 +152,10 @@ const SettingsPage = () => {
               <div className="text-sm space-y-1">
                 <div className="flex justify-between"><span className="text-default-500">Webhook</span><span className="font-mono text-xs text-right break-all">{telegram.webhook?.url || "not registered"}</span></div>
                 {telegram.webhook?.pending_update_count !== undefined && <div className="flex justify-between"><span className="text-default-500">Pending updates</span><span>{telegram.webhook.pending_update_count}</span></div>}
-                {telegram.webhook?.last_error_message && <div className="text-destructive">Last error: {telegram.webhook.last_error_message} ({formatDateTime(telegram.webhook.last_error_date)})</div>}
+                {telegram.token_unreadable && <div className="text-destructive">A token was saved but can no longer be read, so Telegram is being refused. Paste it above and save it again.</div>}
+                {telegram.webhook?.last_error_message && (telegram.webhook.last_error_recovered
+                  ? <div className="text-default-500">Working: messages have arrived since the last failed delivery ({telegram.webhook.last_error_message}, {formatDateTime(telegram.webhook.last_error_date)}).</div>
+                  : <div className="text-destructive">Last error: {telegram.webhook.last_error_message} ({formatDateTime(telegram.webhook.last_error_date)})</div>)}
                 {telegram.webhook?.error && <div className="text-destructive">{telegram.webhook.error}</div>}
               </div>
 

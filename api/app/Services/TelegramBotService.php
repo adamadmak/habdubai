@@ -4,12 +4,12 @@ namespace App\Services;
 
 use App\Models\PlatformSetting;
 use App\Support\RuntimeEnv;
+use App\Support\SecretBox;
 use App\Support\TelegramText;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -72,7 +72,7 @@ class TelegramBotService
 
         $bot = $this->validated($response)->json('result', []);
 
-        PlatformSetting::put(self::STORED_TOKEN_KEY, Crypt::encryptString($token));
+        PlatformSetting::put(self::STORED_TOKEN_KEY, SecretBox::seal($token));
 
         if (filled($bot['username'] ?? null)) {
             PlatformSetting::put(self::STORED_USERNAME_KEY, ltrim((string) $bot['username'], '@'));
@@ -559,15 +559,13 @@ class TelegramBotService
     {
         $encrypted = trim((string) PlatformSetting::valueFor(self::STORED_TOKEN_KEY, ''));
 
-        if ($encrypted === '') {
-            return '';
-        }
+        return $encrypted === '' ? '' : trim((string) SecretBox::open($encrypted));
+    }
 
-        try {
-            return trim(Crypt::decryptString($encrypted));
-        } catch (\Throwable) {
-            return '';
-        }
+    /** A token was saved but can no longer be read, so the bot is deaf until it is saved again. */
+    public function tokenIsUnreadable(): bool
+    {
+        return $this->botToken() === '' && trim((string) PlatformSetting::valueFor(self::STORED_TOKEN_KEY, '')) !== '';
     }
 
     private function http(): PendingRequest

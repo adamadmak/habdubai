@@ -76,21 +76,22 @@ final class JobSettings
     public static function anthropicKey(): string
     {
         $stored = trim((string) PlatformSetting::valueFor(self::ANTHROPIC_KEY, ''));
+        $key = $stored !== '' ? trim((string) SecretBox::open($stored)) : '';
 
-        if ($stored !== '') {
-            try {
-                return trim(Crypt::decryptString($stored));
-            } catch (\Throwable) {
-                // A key encrypted with an older APP_KEY: fall through to the environment.
-            }
-        }
-
-        return RuntimeEnv::get('services.anthropic.key', null, 'ANTHROPIC_API_KEY');
+        return $key !== '' ? $key : RuntimeEnv::get('services.anthropic.key', null, 'ANTHROPIC_API_KEY');
     }
 
     public static function setAnthropicKey(string $key): void
     {
-        PlatformSetting::put(self::ANTHROPIC_KEY, Crypt::encryptString(trim($key)));
+        PlatformSetting::put(self::ANTHROPIC_KEY, SecretBox::seal(trim($key)));
+    }
+
+    /** A key was saved but can no longer be read. */
+    public static function anthropicKeyIsUnreadable(): bool
+    {
+        $stored = trim((string) PlatformSetting::valueFor(self::ANTHROPIC_KEY, ''));
+
+        return $stored !== '' && SecretBox::open($stored) === null;
     }
 
     public static function model(): string

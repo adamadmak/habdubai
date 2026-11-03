@@ -223,7 +223,7 @@ class OwnerLogin
 
     private function codeHash(string $ref, string $code): string
     {
-        return hash_hmac('sha256', $ref.':'.$code, (string) config('app.key'));
+        return hash_hmac('sha256', $ref.':'.$code, \App\Support\StableKey::for('owner-login'));
     }
 
     /** "Chrome on Windows": enough for the person to recognise their own screen. */

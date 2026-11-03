@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\FaqEntry;
 use App\Models\JobSource;
 use App\Models\KnowledgeArticle;
+use App\Models\TelegramUpdate;
 use App\Models\User;
 use App\Services\TelegramBotService;
 use Carbon\CarbonImmutable;
@@ -110,6 +111,10 @@ final class LaunchReadiness
     /** @return array{0: bool, 1: string, 2: string} */
     private function botToken(): array
     {
+        if ($this->telegram->tokenIsUnreadable()) {
+            return [false, 'A bot token was saved but can no longer be read, so every message from Telegram is refused.', 'Paste the token from @BotFather on Settings and save it again.'];
+        }
+
         if (! $this->telegram->configured()) {
             return [false, 'No bot token is saved, so the bot cannot send or receive anything.', 'Paste the token from @BotFather on Settings and save it.'];
         }
@@ -160,7 +165,9 @@ final class LaunchReadiness
 
         $pending = (int) ($info['pending_update_count'] ?? 0);
         $errorAt = isset($info['last_error_date']) ? CarbonImmutable::createFromTimestamp((int) $info['last_error_date']) : null;
-        if ($errorAt !== null && $errorAt->greaterThan(now()->subMinutes(self::WEBHOOK_ERROR_MINUTES))) {
+        // Telegram keeps showing its last error long after deliveries recovered.
+        $recovered = $errorAt !== null && ($received = TelegramUpdate::query()->max('received_at')) !== null && CarbonImmutable::parse($received)->greaterThan($errorAt);
+        if ($errorAt !== null && ! $recovered && $errorAt->greaterThan(now()->subMinutes(self::WEBHOOK_ERROR_MINUTES))) {
             $minutes = max(1, (int) $errorAt->diffInMinutes(now(), true));
 
             return [false, 'Telegram could not deliver an update '.$minutes.' minute(s) ago: '.str((string) ($info['last_error_message'] ?? 'no reason given'))->limit(160).'. '.$pending.' update(s) waiting.',
@@ -311,6 +318,9 @@ final class LaunchReadiness
     {
         $value = RuntimeEnv::get($config, $setting, $env);
 
+        if ($value === '' && RuntimeEnv::isUnreadable($setting)) {
+            return [false, $name.' was saved but can no longer be read.', 'Save it again on Settings, with the same value as '.$env.' on the website.'];
+        }
         if ($value === '') {
             return [false, $name.' is not set.', 'Generate a long random value, save it on Settings, and set the same value on the website ('.$env.'), then rebuild the website.'];
         }
@@ -412,6 +422,9 @@ final class LaunchReadiness
     /** @return array{0: bool, 1: string, 2: string} */
     private function anthropic(): array
     {
+        if (JobSettings::anthropicKeyIsUnreadable()) {
+            return [false, 'An Anthropic key was saved but can no longer be read: jobs fall back to simple rules, and the assistant only searches the FAQ.', 'Save the key again on Job settings.'];
+        }
         if (JobSettings::anthropicKey() === '') {
             return [false, 'No Anthropic key: jobs are sorted by simple rules, and the assistant only searches the FAQ.', 'Save an Anthropic API key on Job settings.'];
         }

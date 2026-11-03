@@ -243,8 +243,10 @@ export interface SettingsPayload {
   chats?: BotChatRow[];
   telegram: {
     configured: boolean;
+    /** A token was saved but can no longer be read. */
+    token_unreadable?: boolean;
     username: string;
-    webhook: null | { url?: string; pending_update_count?: number; last_error_message?: string | null; last_error_date?: string | null; error?: string };
+    webhook: null | { url?: string; pending_update_count?: number; last_error_message?: string | null; last_error_date?: string | null; last_error_recovered?: boolean; error?: string };
   };
 }
 

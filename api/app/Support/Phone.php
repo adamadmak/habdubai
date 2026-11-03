@@ -49,7 +49,9 @@ final class Phone
 
     public static function hash(string $digits): string
     {
-        return hash_hmac('sha256', $digits, (string) config('app.key'));
+        // Keyed so a copy of the table cannot be reversed by trying every number; StableKey so that
+        // the same number hashes the same after a deploy, or "one account per phone" would not hold.
+        return hash_hmac('sha256', $digits, StableKey::for('phone'));
     }
 
     public static function last4(string $digits): string

@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\PlatformSetting;
+use App\Models\TelegramUpdate;
 use App\Services\TelegramBotService;
 use App\Support\RuntimeEnv;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -156,16 +158,20 @@ class SettingController extends Controller
 
     private function telegramState(TelegramBotService $telegram): array
     {
-        $state = ['configured' => $telegram->configured(), 'username' => $telegram->botUsername(), 'webhook' => null];
+        $state = ['configured' => $telegram->configured(), 'token_unreadable' => $telegram->tokenIsUnreadable(), 'username' => $telegram->botUsername(), 'webhook' => null];
 
         if ($state['configured']) {
             try {
                 $info = $telegram->getWebhookInfo();
+                $lastError = isset($info['last_error_date']) ? (int) $info['last_error_date'] : null;
+                $received = TelegramUpdate::query()->max('received_at');
                 $state['webhook'] = [
                     'url' => preg_replace('#/webhook/[^/]+$#', '/webhook/…', (string) ($info['url'] ?? '')),
                     'pending_update_count' => $info['pending_update_count'] ?? 0,
                     'last_error_message' => $info['last_error_message'] ?? null,
-                    'last_error_date' => isset($info['last_error_date']) ? date('c', (int) $info['last_error_date']) : null,
+                    'last_error_date' => $lastError !== null ? date('c', $lastError) : null,
+                    // Telegram keeps its last error on show long after deliveries recovered.
+                    'last_error_recovered' => $lastError !== null && $received !== null && Carbon::parse($received)->timestamp > $lastError,
                 ];
             } catch (\Throwable $e) {
                 $state['webhook'] = ['error' => $e->getMessage()];
