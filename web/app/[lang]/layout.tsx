@@ -7,6 +7,11 @@ import TanstackProvider from "@/provider/providers.client";
 import AuthProvider from "@/provider/auth.provider";
 import "flatpickr/dist/themes/light.css";
 import DirectionProvider from "@/provider/direction.provider";
+import { apiUrl } from "@/lib/api-url";
+
+// Every page is rendered per request: the API address below must be the running
+// container's, not whatever the build machine had (it has nothing).
+export const dynamic = "force-dynamic";
 
 // Page titles only (`.font-display`); everything else is Inter, set on <body> in Providers.
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-display", display: "swap" });
@@ -25,6 +30,10 @@ export const viewport = { themeColor: "#0A1433" };
 export default function RootLayout({ children, params: { lang } }: { children: React.ReactNode; params: { lang: string } }) {
   return (
     <html lang={lang} className={fraunces.variable} suppressHydrationWarning>
+      <head>
+        {/* The browser's API calls go where the server's do; see lib/api-url.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: `window.__API_URL__=${JSON.stringify(apiUrl()).replace(/</g, "\\u003c")}` }} />
+      </head>
       <AuthProvider>
         <TanstackProvider>
           <Providers>

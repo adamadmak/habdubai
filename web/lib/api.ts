@@ -3,7 +3,21 @@ import { useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
 
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+declare global {
+  interface Window {
+    /** Set by the root layout from the server's environment at request time. */
+    __API_URL__?: string;
+  }
+}
+
+/**
+ * The API's address as the server knows it now (the root layout writes it into
+ * the page), else the build-time value for local development.
+ */
+export function apiUrl(): string {
+  if (typeof window !== "undefined" && window.__API_URL__) return window.__API_URL__;
+  return (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+}
 
 export class ApiError extends Error {
   status: number;
@@ -48,7 +62,7 @@ function readableError(status: number, data: unknown): string {
 export async function apiRequest<T>(path: string, token: string | undefined, method: Method = "GET", body?: unknown): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${API_URL}/api${path}`, {
+    response = await fetch(`${apiUrl()}/api${path}`, {
       method,
       headers: {
         Accept: "application/json",

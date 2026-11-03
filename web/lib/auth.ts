@@ -1,7 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+import { apiUrl } from "@/lib/api-url";
 
 /** How long an admin token lasts on the API, and so how long a dashboard session may. */
 export const ADMIN_SESSION_SECONDS = 60 * 60 * 24 * 14;
@@ -25,7 +24,7 @@ export const authOptions: NextAuthOptions = {
 
         let response: Response;
         try {
-          response = await fetch(`${API_URL}/api/admin/login`, {
+          response = await fetch(`${apiUrl()}/api/admin/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({ email, password }),
@@ -71,7 +70,7 @@ export const authOptions: NextAuthOptions = {
     async signOut({ token }) {
       if (!token?.accessToken) return;
       try {
-        await fetch(`${API_URL}/api/admin/logout`, {
+        await fetch(`${apiUrl()}/api/admin/logout`, {
           method: "POST",
           headers: { Accept: "application/json", Authorization: `Bearer ${token.accessToken}` },
           signal: AbortSignal.timeout(5000),
