@@ -97,6 +97,7 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
         <Link href={`/${lang}/business/new`} className="btn btn-gold rounded-full"><Plus className="size-4" aria-hidden="true" /> {b.add}</Link>
         <form action="/api/auth/logout" method="post">
           <input type="hidden" name="lang" value={lang} />
+          <input type="hidden" name="back" value={`/${lang}/business`} />
           <button type="submit" className="btn btn-glass rounded-full">{b.signOut}</button>
         </form>
       </div>

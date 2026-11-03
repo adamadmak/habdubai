@@ -102,7 +102,9 @@ test('a new member joins in Afaan Oromoo and the bot answers in Oromo', function
         ->and($member->language)->toBe('om')
         ->and($member->emirate)->toBe('sharjah')
         ->and($member->tradeKeys())->toBe(['driver'])
-        ->and(lastText())->toContain('Baga miseensa taatan, Caalaa Tolasaa');
+        ->and(implode("\n", textsTo(40)))->toContain('Baga miseensa taatan, Caalaa Tolasaa')
+        // The menu under the chat, in Afaan Oromoo.
+        ->and(lastMessage()['reply_markup']['keyboard'][0][0]['text'])->toBe('💼 Hojii');
 
     say(40, '/help');
     expect(lastText())->toContain('Ajajawwan')->toContain('/language — afaan jijjiiruu');

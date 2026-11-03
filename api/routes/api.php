@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Owner\AuthController as OwnerAuth;
 use App\Http\Controllers\Owner\BusinessController as OwnerBusinesses;
 use App\Http\Controllers\Owner\GoodsController as OwnerGoods;
+use App\Http\Controllers\Owner\HomeController as OwnerHome;
 use App\Http\Controllers\Public\AnnouncementController as PublicAnnouncements;
 use App\Http\Controllers\Public\DirectoryController as PublicDirectory;
 use App\Http\Controllers\Public\GoodsController as PublicGoods;
@@ -88,6 +89,8 @@ Route::prefix('owner')->name('owner.')->middleware('locale')->group(function ():
 
     Route::middleware(['auth:sanctum', 'abilities:owner', 'owner', 'throttle:120,1'])->group(function (): void {
         Route::get('me', [OwnerAuth::class, 'me'])->name('me');
+        // The member's own page on the website: who they are here and what they have going on.
+        Route::get('home', OwnerHome::class)->name('home');
         Route::post('logout', [OwnerAuth::class, 'logout'])->name('logout');
         Route::get('choices', [OwnerBusinesses::class, 'choices'])->name('choices');
         Route::get('businesses', [OwnerBusinesses::class, 'index'])->name('businesses.index');

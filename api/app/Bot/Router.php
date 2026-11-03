@@ -33,6 +33,7 @@ class Router
         private readonly GroupModerator $moderator,
         private readonly GoodsFlow $goods,
         private readonly \App\Directory\OwnerLogin $ownerLogin,
+        private readonly Home $home,
     ) {}
 
     public function handle(TelegramUpdate $update): void
@@ -230,14 +231,14 @@ class Router
                 return;
             case 'cancel':
                 $conversation->reset();
-                $this->reply($conversation, 'cancelled', [], $this->telegram->removeKeyboard());
+                $this->reply($conversation, 'cancelled', [], $this->menuOrNone($member, $language));
 
                 return;
         }
 
         if ($this->messages->pressed('btn_cancel', $in->text)) {
             $conversation->reset();
-            $this->reply($conversation, 'cancelled', [], $this->telegram->removeKeyboard());
+            $this->reply($conversation, 'cancelled', [], $this->menuOrNone($member, $language));
 
             return;
         }
@@ -302,6 +303,13 @@ class Router
             return;
         }
 
+        // A menu button under the chat stands for its command.
+        if ($member?->isActive() && $conversation->state === 'idle' && ($command = $this->home->commandFor($in->text)) !== null) {
+            $this->menu($command, $conversation, $member);
+
+            return;
+        }
+
         // Free text from a member, outside any flow, is a question for the assistant.
         if ($member?->isActive() && $conversation->state === 'idle' && $in->text !== null && trim($in->text) !== '') {
             $this->assistant->ask($member, $in->text);
@@ -324,10 +332,7 @@ class Router
     private function start(Conversation $conversation, ?Member $member, Incoming $in): void
     {
         if ($member?->isActive()) {
-            $this->reply($conversation, 'returning', [
-                'name' => e($member->display_name),
-                'since' => $member->verified_at->format('M Y'),
-            ], $this->telegram->removeKeyboard());
+            $this->home->welcomeBack($member, $conversation);
 
             return;
         }
@@ -381,14 +386,34 @@ class Router
         $conversation->forceFill(['language' => $language])->save();
         $member?->forceFill(['language' => $language])->save();
         $conversation->reset();
-        $this->reply($conversation, 'language_set', [], $this->telegram->removeKeyboard());
+        // The menu comes back in the new language.
+        $this->reply($conversation, 'language_set', [], $this->menuOrNone($member, $language));
+    }
+
+    /** One of the menu buttons: the same as typing its command. */
+    private function menu(string $command, Conversation $conversation, Member $member): void
+    {
+        match ($command) {
+            'jobs' => $this->jobs->menu($member),
+            'goods' => $this->goods->menu($member),
+            'ask' => $this->questions->begin($member, $conversation),
+            'directory' => $this->directory->cities($member),
+            'safe' => $this->safety->card($member),
+            'profile' => $this->profile($conversation, $member),
+        };
+    }
+
+    /** What a chat shows once a flow is over: the menu for a member, nothing for anyone else. */
+    private function menuOrNone(?Member $member, string $language): array
+    {
+        return $member?->isActive() ? $this->messages->menuKeyboard($language) : $this->telegram->removeKeyboard();
     }
 
     private function leave(Conversation $conversation, ?Member $member, Incoming $in): void
     {
         if (! $member || ! $this->messages->pressed('btn_confirm_leave', $in->text)) {
             $conversation->reset();
-            $this->reply($conversation, 'cancelled', [], $this->telegram->removeKeyboard());
+            $this->reply($conversation, 'cancelled', [], $this->menuOrNone($member, $conversation->language));
 
             return;
         }

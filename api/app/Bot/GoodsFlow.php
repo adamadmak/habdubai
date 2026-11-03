@@ -292,14 +292,14 @@ class GoodsFlow
         $refusal = $this->refusal($member, (string) $data['kind'], (string) ($data['date'] ?? ''));
         if ($refusal !== null) {
             $key = ['blocked' => 'goods_blocked', 'max_open' => 'goods_max_open', 'date' => 'goods_date_invalid'][$refusal];
-            $this->say($member, $key, $refusal === 'max_open' ? ['max' => GoodsPost::MAX_OPEN] : [], $this->telegram->removeKeyboard());
+            $this->say($member, $key, $refusal === 'max_open' ? ['max' => GoodsPost::MAX_OPEN] : [], $this->messages->menuKeyboard($member->language));
 
             return;
         }
 
         $pending = isset($data['interest']) ? GoodsPost::query()->with('member')->find((int) $data['interest']) : null;
         ['post' => $post, 'in_group' => $inGroup, 'others' => $others] = $this->create($member, $data, $pending?->id);
-        $this->say($member, 'goods_posted', ['group' => $inGroup ? $this->messages->text('goods_posted_group', $l) : ''], $this->telegram->removeKeyboard());
+        $this->say($member, 'goods_posted', ['group' => $inGroup ? $this->messages->text('goods_posted_group', $l) : ''], $this->messages->menuKeyboard($member->language));
 
         if ($pending !== null) {
             $this->sayStatus($member, $this->followUp($member, $post, $pending), $pending);

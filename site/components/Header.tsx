@@ -4,6 +4,7 @@ import { Send } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
 import { isGeez, type Locale } from "@/lib/locales";
 import type { Meta } from "@/lib/api";
+import { AccountChip } from "./AccountChip";
 import { Mark } from "./Logo";
 import { LangSwitch, LangSwitchPlain } from "./LangSwitch";
 import { NavLinks } from "./NavLinks";
@@ -32,6 +33,7 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
               <LangSwitch lang={lang} label={d.language} />
             </Suspense>
             <ThemeToggle labels={d.theme} />
+            <AccountChip lang={lang} labels={{ signIn: d.account.signIn, myPage: d.account.myPage }} />
             {join && (
               // On a tablet the links take the room, so the button keeps only its icon there (its words stay for screen readers).
               <a href={join} target="_blank" rel="noopener noreferrer" className="btn btn-gold hidden min-h-10 rounded-full px-4 text-sm sm:inline-flex md:max-lg:px-3">

@@ -217,6 +217,30 @@ export interface Owner {
   member: boolean;
 }
 
+export type MemberRank = "helper" | "trusted" | "elder";
+
+/** The member's own page (GET /owner/home): who they are here and what they have going on. Null parts mean "not a member". */
+export interface OwnerHome {
+  owner: Owner;
+  member: {
+    name: string;
+    emirate: string;
+    trades: string[];
+    language: Locale;
+    role: string;
+    verified_since: string | null;
+    helper_points: number;
+    rank: MemberRank | null;
+    rating: { avg: number; count: number } | null;
+    trips_completed: number;
+  } | null;
+  goods: { open_posts: number; live_deals: number; completed: number } | null;
+  questions: { total: number; open: number; latest: { id: number; title: string; status: string; replies: number; created_at: string | null }[] } | null;
+  jobs: { alerts_on: boolean; saved_count: number; saved: { id: number; title: string; company: string | null; emirate: string; open: boolean }[] } | null;
+  businesses: { approved: number; pending: number; claims_pending: number };
+  links: { bot: string | null; channel: string | null; questions_group: string | null; goods_group: string | null };
+}
+
 export type ListingStatus = "pending" | "approved" | "rejected" | "hidden";
 
 export interface OwnerBusiness {

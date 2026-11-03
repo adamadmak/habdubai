@@ -294,3 +294,27 @@ no browser tests yet.
 
 Both apps go to AletCloud. A push auto-builds; pushing both at once leaves
 both stuck in BUILDING. Push one, confirm it is live, then the other.
+
+## The member's home: the welcome card, the menu keyboard, My Habesha
+
+`App\Bot\Home` ends the join flow and answers /start for a member: a picture
+card (the website draws it at `GET /api/card/{lang}`, Latin words only, since
+the image renderer has no Ge'ez face), the channel, the groups and the website
+as inline buttons (only the ones set on Settings), then a short message that
+carries the **menu keyboard** — six reply buttons (`Home::MENU`) that stand
+for /jobs, /goods, /ask, /directory, /safe and /profile in any language.
+
+The keyboard is `BotMessages::menuKeyboard($language)`. A flow that ends and
+leaves the chat idle puts it back (`$this->messages->menuKeyboard(...)` where a
+flow used to send `removeKeyboard()`); the Router's `menuOrNone()` does the
+same after cancel and a language change, and sends nothing to someone who is
+not an active member. Keep that rule for a new flow, or the menu vanishes
+until the next /start.
+
+The website's "My Habesha" (`/{lang}/account`, `GET /api/owner/home`) is the
+member's own page: who they are (keys, which the page words through
+`/public/meta` labels), goods, questions, saved jobs, listings. It is read
+only; a deal, a question or an alert is handled where it was started. The
+header's `AccountChip` learns who is signed in after mount through
+`/api/auth/me`, so cached pages stay shared. Sign-in is the business owners'
+"Continue with Telegram"; the same account serves both.

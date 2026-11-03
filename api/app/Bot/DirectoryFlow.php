@@ -311,7 +311,7 @@ class DirectoryFlow
                 }
                 if ($this->isDuplicate((string) $conversation->recall('name'), (int) $conversation->recall('city_id'))) {
                     $conversation->reset();
-                    $this->say($member, 'biz_duplicate', [], $this->telegram->removeKeyboard());
+                    $this->say($member, 'biz_duplicate', [], $this->messages->menuKeyboard($member->language));
 
                     return;
                 }
@@ -390,7 +390,7 @@ class DirectoryFlow
                 $business->forceFill(['status' => 'pending', 'submitted_by' => $member->id])->save();
                 AuditLog::record(null, 'directory.suggested', 'business', $business->id, null, ['member_id' => $member->id, 'name' => $business->name]);
                 $conversation->reset();
-                $this->say($member, 'biz_submitted', [], $this->telegram->removeKeyboard());
+                $this->say($member, 'biz_submitted', [], $this->messages->menuKeyboard($member->language));
 
                 return;
         }

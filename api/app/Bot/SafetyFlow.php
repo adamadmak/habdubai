@@ -111,7 +111,7 @@ class SafetyFlow
                 ]);
                 AuditLog::record(null, 'safety.employer_reported', 'employer_report', $report->id);
                 $conversation->reset();
-                $this->say($member, 'safe_thanks', [], $this->telegram->removeKeyboard());
+                $this->say($member, 'safe_thanks', [], $this->messages->menuKeyboard($member->language));
 
                 return;
         }

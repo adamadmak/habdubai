@@ -23,6 +23,9 @@ function toDate(value: string | Date): Date {
  * drawn on the server reads the same once it is live in the browser.
  */
 const TI = {
+  // The Gregorian months as Tigrinya names them (CLDR): the server's ICU has no Tigrinya data and
+  // prints "M11", the browser prints the name, and the page would hydrate wrong between the two.
+  months: ["ጥሪ", "ለካቲት", "መጋቢት", "ሚያዝያ", "ግንቦት", "ሰነ", "ሓምለ", "ነሓሰ", "መስከረም", "ጥቅምቲ", "ሕዳር", "ታሕሳስ"],
   monthsShort: ["ጥሪ", "ለካ", "መጋ", "ሚያ", "ግን", "ሰነ", "ሓም", "ነሓ", "መስ", "ጥቅ", "ሕዳ", "ታሕ"],
   weekdaysShort: ["ሰን", "ሰኑ", "ሰሉ", "ረቡ", "ሓሙ", "ዓር", "ቀዳ"],
   weekdays: ["ሰንበት", "ሰኑይ", "ሰሉስ", "ረቡዕ", "ሓሙስ", "ዓርቢ", "ቀዳም"],
@@ -88,6 +91,11 @@ export function formatDate(value: string | Date | null | undefined, locale: Loca
     // CLDR spells the month out in both styles for Oromo; the short names are kept for tight spots.
     const p = dubaiParts(toDate(value));
     return `${OM.months[p.month - 1]} ${p.day}, ${p.year}`;
+  }
+  if (locale === "ti") {
+    // Day first, as Tigrinya has it: "3 ሕዳር 2026". From the table, on the server and in the browser alike.
+    const p = dubaiParts(toDate(value));
+    return `${p.day} ${(style === "long" ? TI.months : TI.monthsShort)[p.month - 1]} ${p.year}`;
   }
   return new Intl.DateTimeFormat(TAG[locale], { dateStyle: style, timeZone: TZ }).format(toDate(value));
 }

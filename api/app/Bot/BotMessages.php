@@ -36,6 +36,18 @@ class BotMessages
         return $this->text($key, $language, $vars);
     }
 
+    /**
+     * The menu under a member's private chat: the everyday commands as six
+     * buttons, three to a row, kept on screen until a flow shows a keyboard of
+     * its own; the flow puts this one back when it ends.
+     */
+    public function menuKeyboard(string $language): array
+    {
+        $labels = array_map(fn (string $key) => ['text' => $this->button($key, $language)], array_keys(Home::MENU));
+
+        return ['keyboard' => array_chunk($labels, 3), 'resize_keyboard' => true, 'is_persistent' => true];
+    }
+
     /** True when the pressed text is this button's label in any language. */
     public function pressed(string $key, ?string $text, array $vars = []): bool
     {

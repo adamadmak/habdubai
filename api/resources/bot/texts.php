@@ -1892,10 +1892,10 @@ return [
     // ---- website sign-in and business owners ------------------------------------
 
     'login_prompt' => [
-        'am' => "🔐 <b>ወደ ሐበሻ ዱባይ ድረ-ገጽ ይግቡ?</b>\n\nመሣሪያ፡ {device}\n\nአሁን እርስዎ ራስዎ በ{site} ላይ “በቴሌግራም ይቀጥሉ” ከተጫኑ ብቻ ያረጋግጡ። ካረጋገጡ በኋላ በድረ-ገጹ ላይ የሚጽፉት ኮድ እዚህ ይደርስዎታል። መግባት የንግድ ዝርዝሮችን ለመጨመርና ለማስተዳደር ያስችላል፤ የቴሌግራም ስምዎ ብቻ ይጋራል፣ ስልክ ቁጥርዎ አይጋራም።",
-        'ti' => "🔐 <b>ናብ መርበብ ሓበሻ ዱባይ ክትኣትዉ?</b>\n\nመሳርሒ፡ {device}\n\nሕጂ ባዕልኹም ኣብ {site} “ብቴሌግራም ቀጽሉ” እንተጠዊቕኩም ጥራይ ኣረጋግጹ። ድሕሪ ምርግጋጽኩም ኣብቲ መርበብ እትጽሕፍዎ ኮድ ኣብዚ ክበጽሓኩም እዩ። ምእታው ዝርዝራት ንግዲ ንምውሳኽን ንምምሕዳርን የኽእል፤ ስም ቴሌግራምኩም ጥራይ ይካፈል፣ ቁጽሪ ስልክኹም ኣይካፈልን።",
-        'en' => "🔐 <b>Sign in to the Habesha Dubai website?</b>\n\nDevice: {device}\n\nConfirm only if you just pressed “Continue with Telegram” on {site} yourself. You will then get a code here to type on the website. Signing in lets you add and manage business listings. It shares your Telegram name, never your phone number.",
-        'om' => "🔐 <b>Marsariitii Habesha Dubai seenuu?</b>\n\nMeeshaa: {device}\n\nMirkaneessaa kan amma mataa keessaniin {site} irratti “Continue with Telegram” yoo tuqattan qofa. Achiis koodii marsariitii irratti barreessitan asitti ni argattu. Seenuun galmee daldalaa dabaluu fi bulchuu isinii hayyama. Maqaa Telegram keessanii ni qooda, lakkoofsa bilbilaa keessanii gonkumaa hin qoodu.",
+        'am' => "🔐 <b>ወደ ሐበሻ ዱባይ ድረ-ገጽ ይግቡ?</b>\n\nመሣሪያ፡ {device}\n\nአሁን እርስዎ ራስዎ በ{site} ላይ “በቴሌግራም ይቀጥሉ” ከተጫኑ ብቻ ያረጋግጡ። ካረጋገጡ በኋላ በድረ-ገጹ ላይ የሚጽፉት ኮድ እዚህ ይደርስዎታል። መግባት የራስዎን ገጽ ይከፍታል፡ የዕቃ ልጥፎችዎና ስምምነቶችዎ፣ ጥያቄዎችዎ፣ ያስቀመጧቸው ሥራዎችና የንግድ ዝርዝሮችዎ። የቴሌግራም ስምዎ ብቻ ይጋራል፣ ስልክ ቁጥርዎ አይጋራም።",
+        'ti' => "🔐 <b>ናብ መርበብ ሓበሻ ዱባይ ክትኣትዉ?</b>\n\nመሳርሒ፡ {device}\n\nሕጂ ባዕልኹም ኣብ {site} “ብቴሌግራም ቀጽሉ” እንተጠዊቕኩም ጥራይ ኣረጋግጹ። ድሕሪ ምርግጋጽኩም ኣብቲ መርበብ እትጽሕፍዎ ኮድ ኣብዚ ክበጽሓኩም እዩ። ምእታው ናይ ባዕልኹም ገጽ ይኸፍት፡ ልጥፋት ኣቕሑን ስምምዓትን፣ ሕቶታትኩም፣ ዝዓቀብኩምዎም ስራሓትን ዝርዝራት ንግድን። ስም ቴሌግራምኩም ጥራይ ይካፈል፣ ቁጽሪ ስልክኹም ኣይካፈልን።",
+        'en' => "🔐 <b>Sign in to the Habesha Dubai website?</b>\n\nDevice: {device}\n\nConfirm only if you just pressed “Continue with Telegram” on {site} yourself. You will then get a code here to type on the website. Signing in opens your own page: your goods posts and deals, your questions, saved jobs and business listings. It shares your Telegram name, never your phone number.",
+        'om' => "🔐 <b>Marsariitii Habesha Dubai seenuu?</b>\n\nMeeshaa: {device}\n\nMirkaneessaa kan amma mataa keessaniin {site} irratti “Continue with Telegram” yoo tuqattan qofa. Achiis koodii marsariitii irratti barreessitan asitti ni argattu. Seenuun fuula mataa keessanii bana: maxxansaa fi waliigaltee meeshaalee keessan, gaaffilee keessan, hojiiwwan olkaa'attanii fi galmee daldalaa. Maqaa Telegram keessanii ni qooda, lakkoofsa bilbilaa keessanii gonkumaa hin qoodu.",
     ],
     'login_site_fallback' => [
         'am' => 'ድረ-ገጹ',
@@ -1992,5 +1992,85 @@ return [
         'ti' => 'ናይ <b>{name}</b> ወናንነት ሕቶኹም ኣይጸደቐን። ምኽንያት፡ {note}',
         'en' => 'Your claim to <b>{name}</b> was not approved. Reason: {note}',
         'om' => 'Gaaffiin abbummaa <b>{name}</b> keessanii hin mirkanoofne. Sababa: {note}',
+    ],
+
+    // ---- the member's home: the welcome card, the link buttons and the menu keyboard (App\Bot\Home) ----
+    'welcome_card' => [
+        'am' => "🎉 <b>ገብተዋል፣ {name}።</b>\n\nእዚህ የሚያገኙት፡\n💼 ከማጭበርበር የተጣሩ ሥራዎች፣ በቋንቋዎ\n📍 በመላው ኤምሬትስ የሐበሻ ቦታዎች\n❓ ልምድ ያላቸው አባላት የሚመልሱት ጥያቄዎች\n📦 በኤምሬትስና በኢትዮጵያ መካከል የዕቃ ሰሌዳ\n\nከታች ያሉት ቁልፎች ወደ ቻናሉ፣ ቡድኖቹና ድረ-ገጹ ይወስዱዎታል።",
+        'ti' => "🎉 <b>ኣቲኹም ኣለኹም፣ {name}።</b>\n\nኣብዚ እትረኽብዎ፡\n💼 ካብ ምትላል ዝተጻረዩ ስራሓት፣ ብቋንቋኹም\n📍 ኣብ መላእ ኢማራት ናይ ሓበሻ ቦታታት\n❓ ተመክሮ ዘለዎም ኣባላት ዝምልስዎ ሕቶታት\n📦 ኣብ መንጎ ኢማራትን ኢትዮጵያን ሰሌዳ ኣቕሑ\n\nእተን ኣብ ታሕቲ ዘለዋ መልጎማት ናብ ቻነል፣ ጉጅለታትን መርበብን ይወስዳኹም።",
+        'en' => "🎉 <b>You are in, {name}.</b>\n\nWhat lives here:\n💼 Jobs checked for scam signs, in your language\n📍 Habesha places across the Emirates\n❓ Questions answered by members who have been there\n📦 The goods board between the UAE and Ethiopia\n\nThe buttons below take you to the channel, the groups and the website.",
+        'om' => "🎉 <b>Baga miseensa taatan, {name}.</b>\n\nWanti asitti argattan:\n💼 Hojiiwwan gowwoomsaa irraa qulqullaa'an, afaan keessaniin\n📍 Bakkeewwan Habashaa Imaaraat guutuu keessatti\n❓ Gaaffilee miseensota muuxannoo qabaniin deebi'an\n📦 Gabatee meeshaalee Imaaraatii fi Itoophiyaa gidduu\n\nQabduuwwan armaan gadii gara chaanaalaa, gareewwanii fi marsariitii isin geessu.",
+    ],
+    'menu_hint' => [
+        'am' => "ከታች ያለው ምናሌ ሁልጊዜ እዚያ ነው። ሌላ ማንኛውንም ነገር ይጻፉ፤ ረዳቱ ይመልሳል።",
+        'ti' => "እቲ ኣብ ታሕቲ ዘሎ ዝርዝር ኩሉ ግዜ ኣብኡ እዩ። ካልእ ዝኾነ ነገር ጸሓፉ፤ እቲ ሓጋዚ ይምልስ።",
+        'en' => "The menu at the bottom is always there. Write anything else and the assistant answers.",
+        'om' => "Menyuun jala jiru yeroo hunda achi jira. Waan biraa kamiyyuu barreessaa; gargaaraan ni deebisa.",
+    ],
+    'btn_open_channel' => [
+        'am' => '📣 ቻናል',
+        'ti' => '📣 ቻነል',
+        'en' => '📣 Channel',
+        'om' => '📣 Chaanaala',
+    ],
+    'btn_open_questions' => [
+        'am' => '❓ የጥያቄ ቡድን',
+        'ti' => '❓ ጉጅለ ሕቶታት',
+        'en' => '❓ Questions group',
+        'om' => '❓ Garee gaaffilee',
+    ],
+    'btn_open_goods' => [
+        'am' => '📦 የዕቃ ቡድን',
+        'ti' => '📦 ጉጅለ ኣቕሑ',
+        'en' => '📦 Goods group',
+        'om' => '📦 Garee meeshaalee',
+    ],
+    'btn_open_site' => [
+        'am' => '🌐 ድረ-ገጽ',
+        'ti' => '🌐 መርበብ',
+        'en' => '🌐 Website',
+        'om' => '🌐 Marsariitii',
+    ],
+    'btn_my_page' => [
+        'am' => '👤 የእኔ ገጽ',
+        'ti' => '👤 ገጸይ',
+        'en' => '👤 My page',
+        'om' => '👤 Fuula koo',
+    ],
+    'btn_menu_jobs' => [
+        'am' => '💼 ሥራ',
+        'ti' => '💼 ስራሕ',
+        'en' => '💼 Jobs',
+        'om' => '💼 Hojii',
+    ],
+    'btn_menu_goods' => [
+        'am' => '📦 ዕቃ',
+        'ti' => '📦 ኣቕሑ',
+        'en' => '📦 Goods',
+        'om' => '📦 Meeshaa',
+    ],
+    'btn_menu_ask' => [
+        'am' => '❓ ጠይቅ',
+        'ti' => '❓ ሕተት',
+        'en' => '❓ Ask',
+        'om' => '❓ Gaafadhu',
+    ],
+    'btn_menu_places' => [
+        'am' => '📍 ቦታዎች',
+        'ti' => '📍 ቦታታት',
+        'en' => '📍 Places',
+        'om' => '📍 Bakkeewwan',
+    ],
+    'btn_menu_safe' => [
+        'am' => '🆘 ደህንነት',
+        'ti' => '🆘 ድሕነት',
+        'en' => '🆘 Safety',
+        'om' => '🆘 Nageenya',
+    ],
+    'btn_menu_profile' => [
+        'am' => '👤 እኔ',
+        'ti' => '👤 ኣነ',
+        'en' => '👤 Me',
+        'om' => '👤 Ana',
     ],
 ];

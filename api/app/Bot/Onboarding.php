@@ -27,6 +27,7 @@ class Onboarding
         private readonly TelegramBotService $telegram,
         private readonly BotMessages $messages,
         private readonly MemberRegistrar $registrar,
+        private readonly Home $home,
     ) {}
 
     public function begin(Conversation $conversation, Incoming $in): void
@@ -315,36 +316,11 @@ class Onboarding
         $member->forceFill(['agreed_rules_at' => now()])->save();
         $conversation->reset();
 
-        $this->telegram->sendText(
-            $conversation->chat_id,
-            $this->messages->text('done', $conversation->language, [
-                'name' => e($member->display_name),
-                'links' => $this->inviteLinks($conversation->language),
-            ]),
-            $this->telegram->removeKeyboard()
-        );
+        // The welcome card, the links as buttons and the menu: App\Bot\Home.
+        $this->home->welcome($member->refresh(), $conversation->chat_id);
     }
 
     // ---- helpers --------------------------------------------------------
-
-    public function inviteLinks(string $language): string
-    {
-        $lines = [];
-
-        foreach ([
-            'link_channel' => 'telegram_channel_link',
-            'link_questions' => 'telegram_questions_group_link',
-            'link_goods' => 'telegram_goods_group_link',
-        ] as $textKey => $settingKey) {
-            $url = RuntimeEnv::get(null, $settingKey, null);
-
-            if ($url !== '') {
-                $lines[] = $this->messages->text($textKey, $language, ['url' => e($url)]);
-            }
-        }
-
-        return $lines === [] ? $this->messages->text('links_pending', $language) : implode("\n", $lines);
-    }
 
     private function supportHandle(): string
     {

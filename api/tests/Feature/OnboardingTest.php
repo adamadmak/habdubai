@@ -52,8 +52,14 @@ test('a new member joins end to end and is active with their trades', function (
         ->and($member->display_name)->toBe('Abebe Kebede')
         ->and($member->emirate)->toBe('dubai')
         ->and($member->tradeKeys())->toBe(['driver', 'security'])
-        ->and(lastText())->toContain('Abebe Kebede')->toContain('https://t.me/habesha_dubai')->toContain('https://t.me/+questions')
         ->and(Conversation::query()->where('telegram_user_id', 7)->value('state'))->toBe('idle');
+
+    // The welcome names them and carries the links as buttons; the menu follows on its own message.
+    $sent = sentMessages();
+    $welcome = $sent[count($sent) - 2];
+    expect($welcome['text'])->toContain('Abebe Kebede')
+        ->and(buttonsOf($welcome))->toContain('https://t.me/habesha_dubai')->toContain('https://t.me/+questions')
+        ->and(lastMessage()['reply_markup']['keyboard'][0][0]['text'])->toBe('💼 ሥራ');
 });
 
 test('the Telegram name can be kept with one tap', function (): void {
@@ -124,5 +130,6 @@ test('/start in the middle of joining resumes the current step', function (): vo
 test('without invite links the done message says an admin will send them', function (): void {
     joinMember(12);
 
-    expect(lastText())->toContain('not set yet');
+    $texts = textsTo(12);
+    expect($texts[count($texts) - 2])->toContain('not set yet');
 });

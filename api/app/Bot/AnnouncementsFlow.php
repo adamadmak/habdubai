@@ -172,7 +172,7 @@ class AnnouncementsFlow
         // Checked again at the moment of posting: a moderator may have taken the leader's
         // right to this topic away, or switched the topic off, since the flow began.
         if (! AnnouncementTopic::postableBy($member)->contains('id', (int) ($data['topic_id'] ?? 0)) || trim((string) ($data['text'] ?? '')) === '') {
-            $this->say($member, 'ann_no_rights', [], $this->telegram->removeKeyboard());
+            $this->say($member, 'ann_no_rights', [], $this->messages->menuKeyboard($member->language));
 
             return;
         }
@@ -184,7 +184,7 @@ class AnnouncementsFlow
         AuditLog::record(null, 'announcements.submitted', 'announcement', $announcement->id, null, ['member_id' => $member->id]);
 
         if ($needsApproval) {
-            $this->say($member, 'ann_pending', [], $this->telegram->removeKeyboard());
+            $this->say($member, 'ann_pending', [], $this->messages->menuKeyboard($member->language));
 
             return;
         }

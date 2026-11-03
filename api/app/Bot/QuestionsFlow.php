@@ -133,7 +133,7 @@ class QuestionsFlow
             $message = $this->telegram->sendToGroup($group, $this->groupText($question), $topicId, $this->solveKeyboard($question));
         } catch (\Throwable $e) {
             $question->delete();
-            $this->say($member, 'ask_no_group', [], $this->telegram->removeKeyboard());
+            $this->say($member, 'ask_no_group', [], $this->messages->menuKeyboard($member->language));
 
             return;
         }
@@ -141,7 +141,7 @@ class QuestionsFlow
         $question->forceFill(['forum_topic_id' => $topicId, 'group_message_id' => $message['message_id'] ?? null])->save();
         AuditLog::record(null, 'questions.asked', 'question', $question->id, null, ['member_id' => $member->id, 'anonymous' => $anonymous]);
 
-        $this->say($member, 'ask_posted', [], $this->telegram->removeKeyboard());
+        $this->say($member, 'ask_posted', [], $this->messages->menuKeyboard($member->language));
     }
 
     // ---- answers in the group ----------------------------------------------
