@@ -1,44 +1,54 @@
 @import "tailwindcss";
 
 /*
- * Habesha Dubai, the public website.
+ * Habesha Dubai, the public website: "two homes, one thread".
  *
- * Palette (light):
- *   Ink    #111418  text
- *   Paper  #FFFFFF  page
- *   Mist   #F4F6F8  quiet surfaces
- *   Nile   #1B4DDB  the brand blue, shared with the bot's chrome and the admin
- *   Adey   #F2B705  Adey Abeba, the Meskel daisy: the tibeb band and small marks only
+ * Night   #0A1433  the hero, the bands under the chrome and the chrome itself:
+ *                  the sky over the Gulf after sunset
+ * Paper   #FBF8F2  the page, a warm ivory rather than screen white
+ * Nile    #1B4DDB  the brand blue, shared with the bot and the admin: actions
+ * Adey    #F2B705  Adey Abeba, the Meskel daisy: the thread, marks and highlights
+ * Ember   #E8743B  the dusk over the skyline, only in glows
  *
- * The one ornament is the tibeb, the woven border of a habesha kemis: a thin
- * band of diamonds and crosses that marks the edges of things. Everything
- * else is type, space and real content.
+ * The tibeb, the woven border of a habesha kemis, is the thread that runs
+ * from the highlands to the skyline at the foot of every night band. It has
+ * diamonds and no crosses: the community is of every faith.
+ *
+ * Headings are set in Fraunces (Latin) and Noto Serif Ethiopic (Ge'ez), so a
+ * heading reads like print in both scripts; everything else is the system
+ * font with Noto Sans Ethiopic.
  */
 
 @theme {
-  --color-bg: #ffffff;
-  --color-surface: #f4f6f8;
+  --color-bg: #fbf8f2;
+  --color-surface: #f3eee3;
   --color-elevated: #ffffff;
-  --color-fg: #111418;
-  --color-muted: #5b6472;
-  --color-faint: #8a93a1;
-  --color-line: #e3e7ed;
+  --color-fg: #10142b;
+  --color-muted: #586078;
+  --color-faint: #878ca2;
+  --color-line: #e6dece;
   --color-primary: #1b4ddb;
   --color-primary-strong: #143aa8;
   --color-primary-fg: #ffffff;
-  --color-primary-soft: #e9effd;
+  --color-primary-soft: #e8eefd;
   --color-accent: #f2b705;
-  --color-accent-soft: #fff5d1;
+  --color-accent-ink: #855f00;
+  --color-accent-soft: #fdf3d3;
+  --color-night: #0a1433;
+  --color-night-2: #15256a;
+  --color-ember: #e8743b;
   --color-success: #127a3a;
-  --color-success-soft: #e3f5ea;
-  --color-warning: #a35a00;
-  --color-warning-soft: #fff1dc;
+  --color-success-soft: #e1f4e8;
+  --color-warning: #9a5300;
+  --color-warning-soft: #fff0d9;
   --color-danger: #b42318;
   --color-danger-soft: #fdeceb;
 
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, var(--font-ethiopic), "Noto Sans Ethiopic", "Kefa", sans-serif;
+  --font-display: var(--font-fraunces), var(--font-ethiopic-serif), "Noto Serif Ethiopic", "Iowan Old Style", Georgia, serif;
 
-  --radius-card: 1.25rem;
+  --radius-card: 1.375rem;
+  --radius-tile: 1.75rem;
   --radius-control: 0.875rem;
 
   --ease-fluid: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -47,30 +57,35 @@
 @layer base {
   :root {
     color-scheme: light dark;
-    --header-h: 3.75rem;
-    --tabbar-h: 4.25rem;
-    --tibeb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Crect width='24' height='12' fill='%231b4ddb'/%3E%3Cpath d='M6 1.2 10.8 6 6 10.8 1.2 6z' fill='%23f2b705'/%3E%3Cpath d='M6 4.2 7.8 6 6 7.8 4.2 6z' fill='%231b4ddb'/%3E%3Cpath d='M18 4.2 19.8 6 18 7.8 16.2 6z' fill='%23fff'/%3E%3C/svg%3E");
+    --header-h: 3.5rem;
+    /* The header floats 0.75rem below the top; night bands reach up under it. */
+    --header-space: calc(var(--header-h) + 0.75rem);
+    --tabbar-h: 4rem;
+    /* The phone tab bar floats too: its height, the gap under it, the safe area. */
+    --tabbar-space: calc(var(--tabbar-h) + max(0.75rem, env(safe-area-inset-bottom)));
+    --tibeb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='14' viewBox='0 0 32 14'%3E%3Crect width='32' height='14' fill='%231b4ddb'/%3E%3Cpath d='M0 1h32v1H0zM0 12h32v1H0z' fill='%23f2b705'/%3E%3Cpath d='M8 3 12 7 8 11 4 7z' fill='%23f2b705'/%3E%3Cpath d='M8 5.2 9.8 7 8 8.8 6.2 7z' fill='%231b4ddb'/%3E%3Cpath d='M24 4.4 26.6 7 24 9.6 21.4 7z' fill='%23fff'/%3E%3Cpath d='M16 5.6 17.4 7 16 8.4 14.6 7zM0 5.6 1.4 7 0 8.4zM32 5.6 30.6 7 32 8.4z' fill='%23e8743b'/%3E%3C/svg%3E");
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --color-bg: #0c0e11;
-      --color-surface: #15181d;
-      --color-elevated: #1b1f25;
-      --color-fg: #eef0f3;
-      --color-muted: #a3abb7;
-      --color-faint: #7c8592;
-      --color-line: #2a2f37;
-      --color-primary: #7d9bff;
-      --color-primary-strong: #a5baff;
-      --color-primary-fg: #0c0e11;
-      --color-primary-soft: #1a2442;
+      --color-bg: #070c1f;
+      --color-surface: #0d1430;
+      --color-elevated: #111a3b;
+      --color-fg: #edf0fa;
+      --color-muted: #a6adc8;
+      --color-faint: #7c84a3;
+      --color-line: #1f2a52;
+      --color-primary: #8aa4ff;
+      --color-primary-strong: #b3c3ff;
+      --color-primary-fg: #070c1f;
+      --color-primary-soft: #16224d;
       --color-accent: #f5c542;
-      --color-accent-soft: #3a2f0d;
+      --color-accent-ink: #f5c542;
+      --color-accent-soft: #2e250b;
       --color-success: #5dd38c;
-      --color-success-soft: #12301f;
+      --color-success-soft: #10301f;
       --color-warning: #f2b45a;
-      --color-warning-soft: #3a2a10;
+      --color-warning-soft: #36270f;
       --color-danger: #ff8a80;
       --color-danger-soft: #3b1715;
     }
@@ -80,7 +95,7 @@
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
-    scroll-padding-top: calc(var(--header-h) + 1rem);
+    scroll-padding-top: calc(var(--header-space) + 1rem);
   }
 
   body {
@@ -103,6 +118,10 @@
     outline-offset: 2px;
     border-radius: 6px;
   }
+  .night :focus-visible,
+  .chrome :focus-visible {
+    outline-color: var(--color-accent);
+  }
 
   ::selection {
     background: var(--color-accent-soft);
@@ -110,21 +129,42 @@
 }
 
 @layer components {
-  /* Large text tightens; Ge'ez keeps its own spacing (above). */
+  /* Print-like headings. Large Latin tightens a little; Ge'ez keeps its own spacing. */
   .display {
-    font-weight: 750;
-    letter-spacing: -0.032em;
-    line-height: 1.06;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-variation-settings: "SOFT" 50;
+    letter-spacing: -0.028em;
+    line-height: 1.04;
+  }
+  .headline {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-variation-settings: "SOFT" 50;
+    letter-spacing: -0.018em;
+    line-height: 1.15;
   }
   :lang(am) .display,
-  :lang(ti) .display {
-    line-height: 1.28;
+  :lang(ti) .display,
+  :lang(am) .headline,
+  :lang(ti) .headline {
+    line-height: 1.3;
     font-weight: 700;
   }
+  /* The highlighted words of a heading: gold, and italic where the script has one. */
+  .gild {
+    color: var(--color-accent);
+    font-style: italic;
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+  }
+  :lang(am) .gild,
+  :lang(ti) .gild {
+    font-style: normal;
+  }
   .title {
-    font-weight: 680;
-    letter-spacing: -0.018em;
-    line-height: 1.2;
+    font-weight: 650;
+    letter-spacing: -0.012em;
+    line-height: 1.25;
   }
   .eyebrow {
     font-size: 0.8125rem;
@@ -134,21 +174,98 @@
 
   .tibeb {
     background-image: var(--tibeb);
-    background-size: 24px 12px;
+    background-size: 32px 14px;
     background-repeat: repeat-x;
-    height: 12px;
-    box-shadow: 0 -1.5px 0 var(--color-accent), 0 1.5px 0 var(--color-accent);
+    height: 14px;
   }
   .tibeb-thin {
     background-image: var(--tibeb);
-    background-size: 16px 8px;
+    background-size: 20px 8.75px;
     background-repeat: repeat-x;
-    height: 8px;
+    height: 8.75px;
   }
 
-  /* Floating chrome: translucent, content scrolls under it. */
+  /*
+   * Night: the sky over the Gulf after sunset. Dusk glows behind the skyline,
+   * a few fixed stars, and the horizon (components/Night.tsx) at its foot.
+   * Always dark, in both colour schemes; the page's chrome is the same night.
+   */
+  .night {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    color: #fff;
+    background:
+      radial-gradient(ellipse 60% 70% at 80% 108%, rgb(242 183 5 / 0.42), rgb(232 116 59 / 0.22) 38%, transparent 72%),
+      radial-gradient(ellipse 55% 45% at 0% 0%, rgb(27 77 219 / 0.5), transparent 70%),
+      linear-gradient(180deg, #050a1f 0%, #0a1433 48%, #182a74 100%);
+  }
+  .night::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.75;
+    background-image:
+      radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 27% 8%, #fff 50%, transparent 51%),
+      radial-gradient(1.4px 1.4px at 41% 26%, #ffe9a8 50%, transparent 51%),
+      radial-gradient(1px 1px at 56% 12%, #fff 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 68% 30%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 79% 6%, #fff 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 88% 22%, #ffe9a8 50%, transparent 51%),
+      radial-gradient(1px 1px at 95% 40%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 6% 44%, #fff 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 33% 46%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 50% 38%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 19% 34%, #fff 50%, transparent 51%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 72%);
+    mask-image: linear-gradient(180deg, #000 0%, transparent 72%);
+  }
+  /* A night band reaches up under the floating header. */
+  .under-header {
+    margin-top: calc(-1 * var(--header-space));
+    padding-top: var(--header-space);
+  }
+  .night .muted-on-night {
+    color: rgb(255 255 255 / 0.72);
+  }
+
+  /* A word in Ge'ez, drawn as an outline in the sky. Decoration only. */
+  .sky-word {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1.25px rgb(242 183 5 / 0.32);
+    letter-spacing: 0 !important;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Glass on night: the hero's live board. Never on top of another glass. */
+  .glass {
+    background: rgb(255 255 255 / 0.07);
+    border: 1px solid rgb(255 255 255 / 0.13);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+
+  /* The chrome (header and phone tab bar): a floating island of night. */
+  .chrome {
+    color: #fff;
+    background: color-mix(in oklab, #0a1433 76%, transparent);
+    -webkit-backdrop-filter: saturate(170%) blur(20px);
+    backdrop-filter: saturate(170%) blur(20px);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow: 0 14px 34px -14px rgb(6 12 36 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.09);
+  }
+
+  /* The old name for floating surfaces on the page itself (the job's apply bar). */
   .material {
-    background: color-mix(in oklab, var(--color-bg) 74%, transparent);
+    background: color-mix(in oklab, var(--color-bg) 78%, transparent);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
   }
@@ -159,11 +276,37 @@
     border-radius: var(--radius-card);
   }
 
+  /* A bento tile: big, rounded, one idea each. */
+  .tile {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: var(--radius-tile);
+  }
+
+  /* A Ge'ez numeral as a section mark: ፩ ፪ ፫. */
+  .geez-mark {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    border: 1.5px solid color-mix(in oklab, var(--color-accent) 70%, transparent);
+    background: var(--color-accent-soft);
+    color: var(--color-accent-ink);
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0 !important;
+  }
+
   /* One swipeable row on phones, a grid from tablets up. */
   .row-scroll {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: min(78%, 20rem);
+    grid-auto-columns: min(80%, 20rem);
     gap: 0.875rem;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -171,7 +314,7 @@
     scroll-padding-inline: 1rem;
     padding-inline: 1rem;
     margin-inline: -1rem;
-    padding-bottom: 0.25rem;
+    padding-bottom: 0.5rem;
     scrollbar-width: none;
   }
   .row-scroll::-webkit-scrollbar {
@@ -195,11 +338,22 @@
     color: var(--color-fg);
     transition: background-color 160ms var(--ease-fluid), border-color 160ms var(--ease-fluid), color 160ms var(--ease-fluid);
   }
+  .chip:hover {
+    border-color: color-mix(in oklab, var(--color-line) 50%, var(--color-fg) 25%);
+  }
   .chip[aria-current="true"],
   .chip[aria-pressed="true"] {
-    background: var(--color-fg);
-    border-color: var(--color-fg);
-    color: var(--color-bg);
+    background: var(--color-night);
+    border-color: var(--color-night);
+    color: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    .chip[aria-current="true"],
+    .chip[aria-pressed="true"] {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: #10142b;
+    }
   }
   .chip .count {
     font-variant-numeric: tabular-nums;
@@ -223,9 +377,19 @@
   .btn-primary {
     background: var(--color-primary);
     color: var(--color-primary-fg);
+    box-shadow: 0 8px 20px -10px color-mix(in oklab, var(--color-primary) 80%, transparent);
   }
   .btn-primary:hover {
     background: var(--color-primary-strong);
+  }
+  /* The one golden action on a night band. */
+  .btn-gold {
+    background: var(--color-accent);
+    color: #10142b;
+    box-shadow: 0 10px 26px -12px rgb(242 183 5 / 0.8);
+  }
+  .btn-gold:hover {
+    background: #ffc929;
   }
   .btn-quiet {
     background: var(--color-surface);
@@ -238,6 +402,14 @@
     border: 1px solid var(--color-line);
     background: var(--color-elevated);
     color: var(--color-fg);
+  }
+  .btn-glass {
+    color: #fff;
+    background: rgb(255 255 255 / 0.1);
+    border: 1px solid rgb(255 255 255 / 0.18);
+  }
+  .btn-glass:hover {
+    background: rgb(255 255 255 / 0.16);
   }
   .btn[aria-disabled="true"],
   .btn:disabled {
@@ -269,6 +441,24 @@
     resize: vertical;
   }
 
+  /* Search on a night band or on paper: one raised white bar. */
+  .searchbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--color-line);
+    background: var(--color-elevated);
+    padding: 0.375rem 0.375rem 0.375rem 1rem;
+    color: var(--color-fg);
+    box-shadow: 0 18px 40px -22px rgb(6 12 36 / 0.6);
+    transition: border-color 160ms var(--ease-fluid), box-shadow 160ms var(--ease-fluid);
+  }
+  .searchbar:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 22%, transparent), 0 18px 40px -22px rgb(6 12 36 / 0.6);
+  }
+
   .prose-plain {
     white-space: pre-line;
     overflow-wrap: anywhere;
@@ -280,11 +470,11 @@
     font-variant-numeric: tabular-nums;
   }
   .pb-tabbar {
-    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 1.5rem);
+    padding-bottom: calc(var(--tabbar-space) + 1.5rem);
   }
   @media (min-width: 768px) {
     .pb-tabbar {
-      padding-bottom: 4rem;
+      padding-bottom: 0;
     }
   }
   .line-clamp-2 {
@@ -302,31 +492,122 @@
 }
 
 /*
+ * Covers for places without a photo: the kind's two colours and a woven
+ * pattern, so no two kinds look alike and none looks empty.
+ */
+.cover {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, var(--cover-a), var(--cover-b));
+}
+.cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.2;
+  background-size: 28px 28px;
+}
+:root {
+  --weave-diamond: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M14 2 26 14 14 26 2 14z' fill='none' stroke='%23fff' stroke-width='1.4'/%3E%3Cpath d='M14 10 18 14 14 18 10 14z' fill='%23fff'/%3E%3C/svg%3E");
+}
+.cover-p0::before {
+  background-image: var(--weave-diamond);
+}
+/* The same weave as a layer on a tile, fading out from one corner. */
+.weave {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image: var(--weave-diamond);
+  background-size: 28px 28px;
+  -webkit-mask-image: linear-gradient(210deg, #000, transparent 60%);
+  mask-image: linear-gradient(210deg, #000, transparent 60%);
+}
+.cover-p1::before {
+  background-size: 28px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14' viewBox='0 0 28 14'%3E%3Cpath d='M0 10 7 3 14 10 21 3 28 10' fill='none' stroke='%23fff' stroke-width='1.6'/%3E%3C/svg%3E");
+}
+.cover-p2::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M14 4 24 14 14 24 4 14z' fill='none' stroke='%23fff' stroke-width='1.2'/%3E%3Cpath d='M14 8.5 19.5 14 14 19.5 8.5 14z' fill='none' stroke='%23fff' stroke-width='1.2'/%3E%3Ccircle cx='0' cy='0' r='1.6' fill='%23fff'/%3E%3Ccircle cx='28' cy='0' r='1.6' fill='%23fff'/%3E%3Ccircle cx='0' cy='28' r='1.6' fill='%23fff'/%3E%3Ccircle cx='28' cy='28' r='1.6' fill='%23fff'/%3E%3C/svg%3E");
+}
+.cover::after {
+  /* Light from the top left, so the monogram sits on depth rather than flat colour. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse 80% 70% at 15% 0%, rgb(255 255 255 / 0.28), transparent 60%), linear-gradient(180deg, transparent 50%, rgb(0 0 0 / 0.18));
+}
+.monogram {
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-variation-settings: "SOFT" 100;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: rgb(255 255 255 / 0.94);
+  text-shadow: 0 2px 18px rgb(0 0 0 / 0.18);
+}
+
+/*
+ * A soft light that follows the pointer across a tile. Pointer devices only;
+ * the tile's script (components/Spotlight.tsx) moves --mx and --my.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .spot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 300ms var(--ease-fluid);
+    background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.16), transparent 65%);
+  }
+  .spot:hover::after {
+    opacity: 1;
+  }
+  .lift {
+    transition: box-shadow 220ms var(--ease-fluid), border-color 220ms var(--ease-fluid);
+  }
+  .lift:hover {
+    box-shadow: 0 16px 36px -18px color-mix(in oklab, var(--color-night) 45%, transparent);
+    border-color: color-mix(in oklab, var(--color-line) 55%, var(--color-accent) 45%);
+  }
+  .tile-link:hover .tile-arrow {
+    translate: 3px 0;
+  }
+}
+.tile-arrow {
+  transition: translate 220ms var(--ease-fluid);
+}
+
+/*
  * Press feedback comes from scale on :active, never from moving a control,
  * so anything positioned with translate stays put. Add new tappable things here.
  */
-@media (hover: hover) and (pointer: fine) {
-  .lift {
-    transition: transform 220ms var(--ease-fluid), box-shadow 220ms var(--ease-fluid), border-color 220ms var(--ease-fluid);
-  }
-  .lift:hover {
-    box-shadow: 0 10px 30px -14px color-mix(in oklab, var(--color-fg) 35%, transparent);
-    border-color: color-mix(in oklab, var(--color-line) 60%, var(--color-primary) 40%);
-  }
-}
 .btn:active,
 .chip:active,
 .lift:active,
-.press:active {
+.press:active,
+.tile-link:active,
+.seg:active {
   scale: 0.97;
   transition: scale 90ms ease-out;
 }
+.tile-link:active {
+  scale: 0.985;
+}
 
-/* The one orchestrated moment: the front page's content settles in once. */
+/* The front page's hero settles in once. */
 @keyframes settle {
   from {
     opacity: 0;
-    translate: 0 10px;
+    translate: 0 12px;
   }
   to {
     opacity: 1;
@@ -334,13 +615,35 @@
   }
 }
 .settle {
-  animation: settle 600ms var(--ease-fluid) both;
+  animation: settle 700ms var(--ease-fluid) both;
 }
 .settle-2 {
-  animation-delay: 80ms;
+  animation-delay: 90ms;
 }
 .settle-3 {
-  animation-delay: 160ms;
+  animation-delay: 180ms;
+}
+
+/*
+ * Sections rise into place the first time they scroll into view
+ * (components/Motion.tsx). Hidden only once the script runs, and never
+ * anything that was already on screen.
+ */
+.reveal {
+  transition: opacity 800ms var(--ease-fluid), translate 800ms var(--ease-fluid);
+}
+html[data-reveal] .reveal:not([data-in]) {
+  opacity: 0;
+  translate: 0 28px;
+}
+.reveal-2 {
+  transition-delay: 80ms;
+}
+.reveal-3 {
+  transition-delay: 160ms;
+}
+.reveal-4 {
+  transition-delay: 240ms;
 }
 
 @keyframes pulse-soft {
@@ -355,19 +658,46 @@
 .waiting {
   animation: pulse-soft 1.6s ease-in-out infinite;
 }
+/* The live dot beside the clocks: it reports that they are live. */
+.live-dot {
+  box-shadow: 0 0 0 0 rgb(74 222 128 / 0.6);
+  animation: live 2.4s ease-out infinite;
+}
+@keyframes live {
+  0% {
+    box-shadow: 0 0 0 0 rgb(74 222 128 / 0.55);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px rgb(74 222 128 / 0);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .settle {
     animation: settle-fade 300ms ease both;
   }
-  .waiting {
+  html[data-reveal] .reveal:not([data-in]) {
+    translate: none;
+  }
+  .reveal {
+    transition: opacity 400ms ease;
+  }
+  .waiting,
+  .live-dot {
     animation: none;
   }
   .btn:active,
   .chip:active,
   .lift:active,
-  .press:active {
+  .press:active,
+  .tile-link:active,
+  .seg:active {
     scale: none;
+  }
+  .tile-arrow,
+  .seg-thumb {
+    transition: none !important;
   }
   html {
     scroll-behavior: auto;
@@ -388,6 +718,16 @@
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+  .chrome {
+    background: #0a1433;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass {
+    background: #16224f;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 @media (prefers-contrast: more) {
@@ -395,10 +735,27 @@
     --color-muted: var(--color-fg);
     --color-line: color-mix(in oklab, var(--color-fg) 55%, transparent);
   }
-  .material {
-    background: var(--color-bg);
+  .material,
+  .chrome {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+  }
+  .material {
+    background: var(--color-bg);
     border-bottom: 1px solid var(--color-fg);
+  }
+  .chrome {
+    background: #050a1f;
+    border-color: #fff;
+  }
+  .glass {
+    background: #0a1433;
+    border-color: rgb(255 255 255 / 0.7);
+  }
+  .night .muted-on-night {
+    color: #fff;
+  }
+  .sky-word {
+    display: none;
   }
 }

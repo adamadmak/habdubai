@@ -1,18 +1,33 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
+import { Night } from "./Night";
 
-/** A section: a title, an optional line under it, and a quiet link to the rest. */
-export function Section({ title, lead, more, children, id }: { title: string; lead?: string; more?: { href: string; label: string }; children: ReactNode; id?: string }) {
+/** Ge'ez numerals, for marking the sections of a page: ፩ ፪ ፫. */
+export const GEEZ = ["፩", "፪", "፫", "፬", "፭", "፮", "፯", "፰", "፱", "፲"];
+
+/** A section: a Ge'ez numeral, a title, an optional line under it, and a quiet link to the rest. */
+export function Section({ title, lead, more, children, id, mark, className = "" }: {
+  title: string;
+  lead?: string;
+  more?: { href: string; label: string };
+  children: ReactNode;
+  id?: string;
+  mark?: number;
+  className?: string;
+}) {
   return (
-    <section id={id} className="mx-auto mt-14 max-w-6xl px-4">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="title text-[1.375rem] md:text-2xl">{title}</h2>
-          {lead && <p className="mt-1 text-sm text-muted">{lead}</p>}
+    <section id={id} className={`reveal mx-auto mt-16 max-w-6xl px-4 md:mt-24 ${className}`}>
+      <div className="mb-5 flex items-end justify-between gap-4 md:mb-6">
+        <div className="flex min-w-0 items-start gap-3">
+          {mark !== undefined && <span className="geez-mark mt-0.5 hidden sm:inline-grid" aria-hidden="true">{GEEZ[mark - 1]}</span>}
+          <div className="min-w-0">
+            <h2 className="headline text-[1.625rem] md:text-[2.125rem]">{title}</h2>
+            {lead && <p className="mt-1.5 max-w-2xl text-sm text-muted md:text-[0.9375rem]">{lead}</p>}
+          </div>
         </div>
         {more && (
-          <Link href={more.href} className="press flex shrink-0 items-center gap-0.5 text-sm font-semibold text-primary">
+          <Link href={more.href} className="press flex shrink-0 items-center gap-0.5 rounded-full border border-line bg-elevated py-1.5 pl-3.5 pr-2.5 text-sm font-semibold hover:border-fg/30">
             {more.label}
             <ChevronRight className="size-4" aria-hidden="true" />
           </Link>
@@ -23,18 +38,26 @@ export function Section({ title, lead, more, children, id }: { title: string; le
   );
 }
 
-export function PageHead({ title, lead, children }: { title: string; lead?: string; children?: ReactNode }) {
+/** The head of a section page: a night band with the page's name, under the floating header. */
+export function PageHead({ title, lead, children, word }: { title: string; lead?: string; children?: ReactNode; word?: string }) {
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8 md:pt-12">
-      <h1 className="display text-[2rem] md:text-[2.75rem]">{title}</h1>
-      {lead && <p className="mt-3 max-w-2xl text-[1.0625rem] text-muted">{lead}</p>}
-      {children}
-    </div>
+    <Night low word={word}>
+      <div className="mx-auto max-w-6xl px-4 pb-8 pt-10 md:pb-10 md:pt-16">
+        <h1 className="display settle max-w-3xl text-[2.375rem] md:text-[3.5rem]">{title}</h1>
+        {lead && <p className="settle settle-2 mt-4 max-w-2xl text-[1.0625rem] muted-on-night md:text-lg">{lead}</p>}
+        {children && <div className="settle settle-3">{children}</div>}
+      </div>
+    </Night>
   );
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <div className="card p-8 text-center text-muted">{children}</div>;
+  return (
+    <div className="card relative overflow-hidden p-10 text-center text-muted">
+      <div className="tibeb-thin absolute inset-x-0 top-0" aria-hidden="true" />
+      {children}
+    </div>
+  );
 }
 
 /** Previous and next pages, as plain links that keep the filters. */

@@ -30,7 +30,7 @@ export default async function NewsIndex({ params, searchParams }: { params: Prom
 
   return (
     <>
-      <PageHead title={d.news.title} lead={d.news.lead} />
+      <PageHead title={d.news.title} lead={d.news.lead} word="ዜና" />
 
       <div className="mx-auto mt-6 flex max-w-6xl flex-col gap-3 px-4">
         <ChipRow label={d.news.title}>

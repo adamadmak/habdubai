@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowUpRight, BedDouble, Bell, ChevronLeft, Stamp } from "lucide-react";
 import { Notice } from "@/components/Bits";
 import { JobCard } from "@/components/Cards";
-import { TradeIcon } from "@/components/CategoryIcon";
+import { KindBadge } from "@/components/Cover";
 import { ShareButton } from "@/components/ShareButton";
 import { api, apiOrNull, type Job, type Meta } from "@/lib/api";
 import { formatDate, relative } from "@/lib/format";
@@ -51,11 +51,9 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
       </Link>
 
       <header className="mt-5 flex items-start gap-4">
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary">
-          <TradeIcon category={job.category} className="size-7" />
-        </span>
+        <KindBadge kind="trade" category={job.category} className="size-16 rounded-[1.25rem]" iconClass="size-7" />
         <div className="min-w-0">
-          <h1 className="display text-[1.75rem] md:text-[2.25rem]">{job.title}</h1>
+          <h1 className="display text-[2rem] md:text-[2.75rem]">{job.title}</h1>
           <p className="mt-2 text-muted">{[job.company, place].filter(Boolean).join(" · ")}</p>
         </div>
       </header>
@@ -67,9 +65,9 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
           [d.jobs.facts.salary, job.salary ?? d.jobs.salaryNone],
           [fill(d.jobs.posted, { when: "" }).trim(), job.published_at ? formatDate(job.published_at, lang, "medium") : "—"],
         ].map(([term, value]) => (
-          <div key={term} className="bg-elevated p-3.5">
+          <div key={term} className="bg-elevated p-4">
             <dt className="text-xs text-muted">{term}</dt>
-            <dd className="mt-0.5 font-semibold">{value}</dd>
+            <dd className={`mt-1 font-semibold ${term === d.jobs.facts.salary && job.salary ? "headline text-lg text-success" : ""}`}>{value}</dd>
           </div>
         ))}
       </dl>
@@ -95,7 +93,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
       <div className="mt-6"><Notice tone="warning" title={d.jobs.safetyTitle}>{d.jobs.safetyText}</Notice></div>
 
       {/* The decision point of the page: one clear action, and what it does. */}
-      <div className="sticky bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+0.75rem)] z-30 mt-8 md:static">
+      <div className="sticky bottom-[calc(var(--tabbar-space)+0.75rem)] z-30 mt-8 md:static">
         <div className="material flex items-center gap-3 rounded-2xl border border-line p-3 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
           {job.open && job.apply_url ? (
             <a href={job.apply_url} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-primary flex-1 md:flex-none">
@@ -109,20 +107,21 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
       </div>
 
       {meta.bot.link && (
-        <a href={`${meta.bot.link}?start=jobs`} target="_blank" rel="noopener noreferrer" className="card lift mt-10 flex items-center gap-4 p-5">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary text-primary-fg">
+        <a href={`${meta.bot.link}?start=jobs`} target="_blank" rel="noopener noreferrer" className="night tile tile-link spot mt-10 flex items-center gap-4 p-5 md:p-6">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent text-[#10142b]">
             <Bell className="size-6" aria-hidden="true" />
           </span>
-          <span>
-            <span className="title block text-lg">{d.jobs.alertsTitle}</span>
-            <span className="mt-0.5 block text-sm text-muted">{d.jobs.alertsText}</span>
+          <span className="min-w-0 flex-1">
+            <span className="headline block text-lg md:text-xl">{d.jobs.alertsTitle}</span>
+            <span className="mt-0.5 block text-sm muted-on-night">{d.jobs.alertsText}</span>
           </span>
+          <ArrowUpRight className="tile-arrow size-5 shrink-0 text-accent" aria-hidden="true" />
         </a>
       )}
 
       {similar.length > 0 && (
         <section className="mt-12">
-          <h2 className="title text-xl">{d.jobs.similar}</h2>
+          <h2 className="headline text-[1.75rem]">{d.jobs.similar}</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {similar.map((j) => <JobCard key={j.id} job={j} lang={lang} meta={meta} compact />)}
           </div>

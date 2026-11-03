@@ -71,6 +71,31 @@ export const ti: Dictionary = {
       { title: "ዴስክ ድሕነት", text: "ቁጽርታት ቆንስላን ጉዳይ ሰራሕተኛታትን፣ ከምኡውን ብሕታዊ መንገዲ ንምሕባር ኣስራሒ።" },
     ],
     joinCta: "ነቲ ቦት ክፈቱ",
+    heroTitle: "ኣብ ኢማራት ዘሎ ማሕበረሰብ ሓበሻ፣",
+    heroAccent: "ኣብ ሓደ ቦታ።",
+    live: "ሕጂ",
+    scanToJoin: "ነቲ ቦት ንምኽፋት ብስልኪ ስካን ግበሩ",
+    bento: {
+      jobsBadge: "ካብ ምትላል ተፈቲሹ",
+      jobsText: "ነፍሲ ወከፍ መወዓውዒ ቅድሚ ምርኣይኩም ካብ ምልክታት ምትላል ይፍተሽ፣ ብቋንቋኹም ድማ ይጠቓለል።",
+      placesTitle: "ቦታታትና",
+      placesText: "እንጀራ፣ ካርጎ፣ ሳሎናት፣ ቦታታት እምነትን ካልኦትን፣ ኣብ መላእ ኢማራት።",
+      eventsTitle: "ዝመጽእ ዘሎ",
+      eventsEmpty: "ካብ ቆንስላ፣ ማሕበራትን ማሕበረሰብን ዝወጹ መፍለጢታት፣ ብሰለስተ ቋንቋ።",
+      ownerText: "ብናጻ ኣመዝግብዎ፤ ኣብዚን ኣብ ቻነል ቴሌግራምን። ኣወሃሃዲ ኣብ ውሽጢ ሓደ መዓልቲ የረጋግጾ።",
+      ownerSample: "ንግድኹም",
+      ownerSampleKind: "ካፈን ቤት ምግብን",
+      ownerSamplePlace: "ኣል ካራማ፣ ዱባይ",
+    },
+  },
+
+  clock: {
+    dubai: "ዱባይ",
+    home: "ኣዲስ ኣበባ · ኣስመራ",
+    habesha: "ሰዓት ሓበሻ",
+    periods: ["ለይቲ", "ንግሆ", "ቀትሪ", "ምሸት"],
+    format: "{time} ናይ {period}",
+    today: "ሎሚ",
   },
 
   jobs: {

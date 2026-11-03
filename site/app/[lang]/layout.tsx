@@ -1,10 +1,11 @@
 import "../globals.css";
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_Ethiopic } from "next/font/google";
+import { Fraunces, Noto_Sans_Ethiopic, Noto_Serif_Ethiopic } from "next/font/google";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { Motion } from "@/components/Motion";
 import { TabBar } from "@/components/NavLinks";
 import { api, type Meta } from "@/lib/api";
 import { dict, isLocale, LOCALES } from "@/lib/i18n";
@@ -12,6 +13,9 @@ import { siteUrl } from "@/lib/site";
 
 /** Ge'ez script everywhere, whatever the device ships with. Latin text uses the system font. */
 const ethiopic = Noto_Sans_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic", display: "swap" });
+/** Headings: Fraunces for Latin, Noto Serif Ethiopic for Ge'ez, so a heading reads like print in both scripts. */
+const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap", axes: ["SOFT", "WONK", "opsz"] });
+const ethiopicSerif = Noto_Serif_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic-serif", display: "swap", weight: ["600", "700"] });
 
 /*
  * No generateStaticParams: nothing under /[lang] is pre-rendered at build time,
@@ -23,10 +27,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0e11" },
-  ],
+  // The night of the header and the hero, in both schemes.
+  themeColor: "#0a1433",
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -54,15 +56,16 @@ export default async function LangLayout({ children, params }: { children: React
   const meta = await api<Meta>("/public/meta", { revalidate: 300 }).catch(() => null);
 
   return (
-    <html lang={lang} className={ethiopic.variable}>
+    <html lang={lang} className={`${ethiopic.variable} ${fraunces.variable} ${ethiopicSerif.variable}`}>
       <body className="antialiased">
         <a href="#main" className="sr-only z-50 rounded-lg bg-primary px-4 py-2 text-primary-fg focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
           {d.skip}
         </a>
         <Header lang={lang} d={d} meta={meta} />
-        <main id="main" className="pb-tabbar">{children}</main>
+        <main id="main">{children}</main>
         <Footer lang={lang} d={d} meta={meta} />
         <TabBar lang={lang} labels={d.tabs} />
+        <Motion />
       </body>
     </html>
   );

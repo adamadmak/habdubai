@@ -10,7 +10,7 @@ export function LangSwitch({ lang, label }: { lang: Locale; label: string }) {
   const qs = params.toString();
 
   return (
-    <div role="group" aria-label={label} className="flex rounded-full bg-surface p-0.5">
+    <div role="group" aria-label={label} className="flex rounded-full bg-white/8 p-0.5 ring-1 ring-white/10">
       {LOCALES.map((locale) => (
         <Link
           key={locale}
@@ -21,7 +21,7 @@ export function LangSwitch({ lang, label }: { lang: Locale; label: string }) {
           aria-current={locale === lang ? "true" : undefined}
           scroll={false}
           className={`press rounded-full px-2.5 py-1.5 text-[0.8125rem] font-semibold leading-none transition-colors ${
-            locale === lang ? "bg-elevated text-fg shadow-sm" : "text-muted hover:text-fg"
+            locale === lang ? "bg-white text-night shadow-sm" : "text-white/65 hover:text-white"
           }`}
         >
           {LOCALE_SHORT[locale]}

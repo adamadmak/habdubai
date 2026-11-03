@@ -71,6 +71,31 @@ export const am: Dictionary = {
       { title: "የደህንነት ዴስክ", text: "የቆንስላና የሠራተኛ ጉዳይ ስልኮች፣ እና አሠሪን በግል የሚያሳውቁበት መንገድ።" },
     ],
     joinCta: "ቦቱን ይክፈቱ",
+    heroTitle: "በኢማራት ያለው የሐበሻ ማህበረሰብ፣",
+    heroAccent: "በአንድ ቦታ።",
+    live: "አሁን",
+    scanToJoin: "ቦቱን ለመክፈት በስልክዎ ይቃኙ",
+    bento: {
+      jobsBadge: "ከማጭበርበር ተፈትሿል",
+      jobsText: "እያንዳንዱ ማስታወቂያ ከማየትዎ በፊት ከማጭበርበር ምልክቶች ይፈተሻል፤ በቋንቋዎም ይጠቃለላል።",
+      placesTitle: "የእኛ ቦታዎች",
+      placesText: "እንጀራ፣ ካርጎ፣ የውበት ሳሎኖች፣ የእምነት ቦታዎችና ሌሎችም፣ በመላው ኢማራት።",
+      eventsTitle: "የሚመጡ ዝግጅቶች",
+      eventsEmpty: "ከቆንስላው፣ ከማህበራትና ከማህበረሰቡ የሚወጡ ማስታወቂያዎች፣ በሦስት ቋንቋ።",
+      ownerText: "በነጻ ያስመዝግቡት፤ እዚህም በቴሌግራም ቻናሉም። አወያዩ በአንድ ቀን ውስጥ ያረጋግጠዋል።",
+      ownerSample: "የእርስዎ ንግድ",
+      ownerSampleKind: "ካፌና ምግብ ቤት",
+      ownerSamplePlace: "አል ካራማ፣ ዱባይ",
+    },
+  },
+
+  clock: {
+    dubai: "ዱባይ",
+    home: "አዲስ አበባ · አስመራ",
+    habesha: "የኢትዮጵያ ሰዓት",
+    periods: ["ከሌሊቱ", "ከጠዋቱ", "ከቀኑ", "ከምሽቱ"],
+    format: "{period} {time}",
+    today: "ዛሬ",
   },
 
   jobs: {

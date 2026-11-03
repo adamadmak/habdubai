@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BadgeCheck, ChevronLeft, Clock, Globe, Languages, MapPin, MessageCircle, Navigation, Phone, Send, UserCheck } from "lucide-react";
 import { BusinessCard } from "@/components/Cards";
-import { BusinessIcon } from "@/components/CategoryIcon";
+import { Cover } from "@/components/Cover";
 import { ShareButton } from "@/components/ShareButton";
 import { ViewPing } from "@/components/ViewPing";
 import { api, apiOrNull, type Business, type Meta } from "@/lib/api";
@@ -80,21 +80,19 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
       </div>
 
       <div className="mx-auto mt-4 max-w-4xl px-4">
-        <div className="overflow-hidden rounded-[1.5rem] border border-line bg-primary-soft">
+        <div className="overflow-hidden rounded-[1.75rem] shadow-[0_24px_60px_-30px_rgb(6_12_36/0.5)]">
           {b.photo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={b.photo} alt={b.name} className="aspect-[16/9] w-full object-cover md:aspect-[21/9]" />
           ) : (
-            <div className="flex aspect-[3/1] flex-col md:aspect-[4/1]">
-              <div className="grid flex-1 place-items-center text-primary"><BusinessIcon category={b.category} className="size-14" /></div>
-              <div className="tibeb" aria-hidden="true" />
-            </div>
+            <Cover category={b.category} name={b.name} seed={b.id} big className="aspect-[16/9] md:aspect-[21/8]" />
           )}
+          <div className="tibeb" aria-hidden="true" />
         </div>
 
         <header className="mt-6">
-          <p className="eyebrow">{kind}</p>
-          <h1 className="display mt-1.5 flex flex-wrap items-center gap-2 text-[2rem] md:text-[2.5rem]">
+          <p className="text-sm font-semibold text-accent-ink">{kind}</p>
+          <h1 className="display mt-1.5 flex flex-wrap items-center gap-2 text-[2.25rem] md:text-[3rem]">
             {b.name}
             {b.verified && <BadgeCheck className="size-7 text-primary" aria-label={d.common.verified} />}
           </h1>
@@ -128,7 +126,7 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
           <div>
             {(b.description || b.about) && (
               <section>
-                <h2 className="title text-xl">{d.directory.about}</h2>
+                <h2 className="headline text-2xl">{d.directory.about}</h2>
                 {b.description && <p className="mt-3 text-[1.0625rem] font-medium">{b.description}</p>}
                 {b.about && <p className="prose-plain mt-3 leading-relaxed text-muted">{b.about}</p>}
               </section>
@@ -158,19 +156,19 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
         </div>
 
         {!b.owner_managed && (
-          <section className="card mt-10 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <section className="night tile mt-10 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between md:p-7">
             <div>
-              <h2 className="title text-lg">{d.directory.claimTitle}</h2>
-              <p className="mt-1 text-sm text-muted">{d.directory.claimText}</p>
+              <h2 className="headline text-xl md:text-2xl">{d.directory.claimTitle}</h2>
+              <p className="mt-1.5 text-sm muted-on-night">{d.directory.claimText}</p>
             </div>
-            <Link href={`/${lang}/business/claim/${b.slug}`} className="btn btn-line shrink-0">{d.directory.claimCta}</Link>
+            <Link href={`/${lang}/business/claim/${b.slug}`} className="btn btn-gold shrink-0 rounded-full">{d.directory.claimCta}</Link>
           </section>
         )}
       </div>
 
       {nearby.length > 0 && (
         <section className="mx-auto mt-12 max-w-6xl px-4">
-          <h2 className="title text-xl">{d.directory.nearby}</h2>
+          <h2 className="headline text-[1.75rem]">{d.directory.nearby}</h2>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {nearby.map((n) => <BusinessCard key={n.id} business={n} lang={lang} meta={meta} />)}
           </div>

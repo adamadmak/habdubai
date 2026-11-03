@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Eye, Hourglass, Pencil, Plus, Send } from "lucide-react";
-import { BusinessIcon } from "@/components/CategoryIcon";
+import { GEEZ, PageHead } from "@/components/Bits";
+import { ListingMock } from "@/components/Cards";
+import { Cover } from "@/components/Cover";
+import { Night } from "@/components/Night";
 import { ConfirmSubmit } from "@/components/owner/ConfirmSubmit";
 import { StatusPill } from "@/components/owner/StatusPill";
-import { Tibeb } from "@/components/Logo";
 import { removeListing } from "@/lib/actions";
 import type { Owner, OwnerBusiness, OwnerClaim } from "@/lib/api";
 import { number } from "@/lib/format";
@@ -32,37 +34,54 @@ export default async function BusinessHome({ params }: { params: Promise<{ lang:
 
 function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-10 md:pt-16">
-      <div className="max-w-2xl settle">
-        <h1 className="display text-[2.25rem] md:text-[3.25rem]">{d.business.landingTitle}</h1>
-        <p className="mt-4 text-[1.125rem] text-muted">{d.business.landingLead}</p>
-        <div className="mt-7 flex flex-wrap items-center gap-3">
-          <Link href={`/${lang}/business/login`} className="btn btn-primary min-h-12 px-5 text-base">
-            <Send className="size-4.5" aria-hidden="true" /> {d.business.cta}
-          </Link>
-          <span className="text-sm text-muted">{d.business.free}</span>
+    <>
+      <Night>
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-12 pt-10 md:grid-cols-[1.15fr_0.85fr] md:items-center md:pb-16 md:pt-16">
+          <div className="settle">
+            <p className="glass inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
+              <span className="tibeb-thin inline-block w-7 rounded-full" aria-hidden="true" /> {d.nav.business}
+            </p>
+            <h1 className="display mt-5 text-[2.5rem] md:text-[3.5rem]">{d.business.landingTitle}</h1>
+            <p className="mt-5 max-w-xl text-[1.0625rem] muted-on-night md:text-lg">{d.business.landingLead}</p>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Link href={`/${lang}/business/login`} className="btn btn-gold min-h-12 rounded-full px-6 text-base">
+                <Send className="size-4.5" aria-hidden="true" /> {d.business.cta}
+              </Link>
+              <span className="text-sm muted-on-night">{d.business.free}</span>
+            </div>
+          </div>
+          {/* What the owner gets: a page of their own, and a post in the channel. */}
+          <div className="settle settle-2 relative mx-auto h-[22rem] w-full max-w-sm" aria-hidden="true">
+            <div className="glass absolute left-0 top-6 w-60 -rotate-6 rounded-[1.375rem] p-3">
+              <Cover category="restaurant" name="Selam" seed={0} className="aspect-[16/10] rounded-2xl" />
+              <div className="mt-2.5 h-2.5 w-3/4 rounded-full bg-white/30" />
+              <div className="mt-1.5 h-2 w-1/2 rounded-full bg-white/18" />
+              <div className="mt-3 flex gap-1.5"><span className="h-6 flex-1 rounded-lg bg-accent/70" /><span className="h-6 w-10 rounded-lg bg-white/15" /></div>
+            </div>
+            <ListingMock lang={lang} className="absolute bottom-0 right-0 rotate-3" />
+          </div>
         </div>
-      </div>
+      </Night>
 
-      <Tibeb className="mt-14" />
+      <div className="mx-auto max-w-6xl px-4">
+        <ol className="reveal mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {d.business.steps.map((step, i) => (
+            <li key={step.title} className="card relative overflow-hidden p-5 md:p-6">
+              <span className="geez-mark" aria-hidden="true">{GEEZ[i]}</span>
+              <h2 className="headline mt-4 text-[1.25rem]">{step.title}</h2>
+              <p className="mt-1.5 text-sm text-muted">{step.text}</p>
+            </li>
+          ))}
+        </ol>
 
-      <ol className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {d.business.steps.map((step, i) => (
-          <li key={step.title} className="card p-5">
-            <span className="grid size-8 place-items-center rounded-full bg-primary text-sm font-bold text-primary-fg tabular">{i + 1}</span>
-            <h2 className="title mt-4 text-[1.0625rem]">{step.title}</h2>
-            <p className="mt-1.5 text-sm text-muted">{step.text}</p>
-          </li>
-        ))}
-      </ol>
-
-      <p className="mt-8 text-sm text-muted">
+        <p className="mt-8 text-sm text-muted">
         {d.business.alreadyListed}{" "}
         <Link href={`/${lang}/directory`} className="inline-flex items-center gap-1 font-semibold text-primary">
           {d.nav.directory} <ArrowRight className="size-3.5" aria-hidden="true" />
         </Link>
-      </p>
-    </div>
+        </p>
+      </div>
+    </>
   );
 }
 
@@ -71,20 +90,17 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
   const b = d.business;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-8 md:pt-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">{fill(b.hello, { name: owner.name })}</p>
-          <h1 className="display mt-1 text-[2rem] md:text-[2.5rem]">{b.yourListings}</h1>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/${lang}/business/new`} className="btn btn-primary"><Plus className="size-4" aria-hidden="true" /> {b.add}</Link>
-          <form action="/api/auth/logout" method="post">
-            <input type="hidden" name="lang" value={lang} />
-            <button type="submit" className="btn btn-quiet">{b.signOut}</button>
-          </form>
-        </div>
+    <>
+    <PageHead title={b.yourListings} lead={fill(b.hello, { name: owner.name })}>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link href={`/${lang}/business/new`} className="btn btn-gold rounded-full"><Plus className="size-4" aria-hidden="true" /> {b.add}</Link>
+        <form action="/api/auth/logout" method="post">
+          <input type="hidden" name="lang" value={lang} />
+          <button type="submit" className="btn btn-glass rounded-full">{b.signOut}</button>
+        </form>
       </div>
+    </PageHead>
+    <div className="mx-auto max-w-4xl px-4">
 
       {data.businesses.length === 0 ? (
         <div className="card mt-8 p-8 text-center">
@@ -96,12 +112,12 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
           {data.businesses.map((x) => (
             <li key={x.id} className="card overflow-hidden">
               <div className="flex gap-4 p-4">
-                <div className="size-20 shrink-0 overflow-hidden rounded-xl bg-primary-soft">
+                <div className="size-20 shrink-0 overflow-hidden rounded-2xl">
                   {x.photo || x.pending_photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={(x.photo ?? x.pending_photo) as string} alt="" className="size-full object-cover" />
                   ) : (
-                    <div className="grid size-full place-items-center text-primary"><BusinessIcon category={x.category} className="size-7" /></div>
+                    <Cover category={x.category} name={x.name} seed={x.id} className="size-full [&_.monogram]:text-[2rem] [&>span:first-child]:hidden" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -150,5 +166,6 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
         </section>
       )}
     </div>
+    </>
   );
 }

@@ -52,12 +52,12 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
       </Link>
 
       <p className="eyebrow mt-6">{a.topic?.emoji} {label(a.topic?.name, lang)}</p>
-      <h1 className="display mt-2 text-[1.75rem] md:text-[2.25rem]" lang={reading}>{firstLine(text, 140)}</h1>
+      <h1 className="display mt-2 text-[2rem] md:text-[2.75rem]" lang={reading}>{firstLine(text, 140)}</h1>
       <p className="mt-2 text-sm text-muted">{a.published_at && fill(d.news.posted, { date: formatDate(a.published_at, lang) })}</p>
 
       {a.event_date && (
         <div className="card mt-6 flex flex-wrap items-center gap-4 p-4">
-          <DateLeaf date={a.event_date} lang={lang} />
+          <DateLeaf date={a.event_date} lang={lang} size="lg" />
           <div className="min-w-0 flex-1">
             <p className="font-semibold">
               {soon === 0 ? d.news.days.today : soon === 1 ? d.news.days.tomorrow : weekday(a.event_date, lang)}, {formatDate(a.event_date, lang)}
@@ -99,7 +99,7 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
 
       {more.length > 0 && (
         <section className="mt-12">
-          <h2 className="title text-xl">{fill(d.news.more, { topic: label(a.topic?.name, lang) })}</h2>
+          <h2 className="headline text-[1.75rem]">{fill(d.news.more, { topic: label(a.topic?.name, lang) })}</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             {more.map((m) => <NewsCard key={m.id} item={m} lang={lang} />)}
           </div>

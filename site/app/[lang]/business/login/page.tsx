@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { LoginPanel } from "@/components/owner/LoginPanel";
+import { PageHead } from "@/components/Bits";
 import { dict, isLocale } from "@/lib/i18n";
 import { currentOwner } from "@/lib/owner";
 
@@ -25,8 +26,9 @@ export default async function Login({ params, searchParams }: { params: Promise<
   const b = dict(lang).business;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-10 md:pt-16">
-      <h1 className="display text-[2rem] md:text-[2.5rem]">{b.loginTitle}</h1>
+    <>
+    <PageHead title={b.loginTitle} />
+    <div className="mx-auto max-w-2xl px-4">
       <div className="mt-8">
         <LoginPanel
           next={next}
@@ -51,5 +53,6 @@ export default async function Login({ params, searchParams }: { params: Promise<
         />
       </div>
     </div>
+    </>
   );
 }

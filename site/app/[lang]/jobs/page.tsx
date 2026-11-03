@@ -36,7 +36,7 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
 
   return (
     <>
-      <PageHead title={d.jobs.title} lead={d.jobs.lead} />
+      <PageHead title={d.jobs.title} lead={d.jobs.lead} word="ሥራ" />
 
       <div className="mx-auto mt-6 flex max-w-6xl flex-col gap-3 px-4">
         <SearchBox action={base} q={current.q} placeholder={d.jobs.searchPlaceholder} keep={{ category: current.category, emirate: current.emirate }} labels={{ search: d.common.search, clear: d.common.clear }} />

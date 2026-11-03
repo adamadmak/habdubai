@@ -38,8 +38,8 @@ export default async function DirectoryIndex({ params, searchParams }: { params:
 
   return (
     <>
-      <PageHead title={d.directory.title} lead={d.directory.lead}>
-        <Link href={`/${lang}/business`} className="btn btn-line mt-5">
+      <PageHead title={d.directory.title} lead={d.directory.lead} word="ማውጫ">
+        <Link href={`/${lang}/business`} className="btn btn-gold mt-6 rounded-full">
           <Plus className="size-4" aria-hidden="true" /> {d.directory.addCta}
         </Link>
       </PageHead>

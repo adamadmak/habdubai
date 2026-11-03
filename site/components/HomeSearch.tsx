@@ -5,39 +5,49 @@ import { Search } from "lucide-react";
 import type { Locale } from "@/lib/locales";
 
 type Scope = "jobs" | "directory" | "news";
+const SCOPES: Scope[] = ["jobs", "directory", "news"];
 
-/** One search box for the three things people look for; the scope decides where it goes. */
+/**
+ * One search box for the three things people look for. The scope is a
+ * segmented control whose lit thumb slides to the choice, so the box always
+ * says where the search will go.
+ */
 export function HomeSearch({ lang, placeholder, scopes, searchLabel }: { lang: Locale; placeholder: string; scopes: Record<Scope, string>; searchLabel: string }) {
   const router = useRouter();
   const [scope, setScope] = useState<Scope>("jobs");
   const [q, setQ] = useState("");
+  const index = SCOPES.indexOf(scope);
 
   return (
     <form
       role="search"
-      className="mt-7"
+      className="mt-8 max-w-xl"
       onSubmit={(e) => {
         e.preventDefault();
         const term = q.trim();
         router.push(`/${lang}/${scope}${term && scope !== "news" ? `?q=${encodeURIComponent(term)}` : ""}`);
       }}
     >
-      <div className="mb-2.5 flex gap-1.5" role="radiogroup" aria-label={searchLabel}>
-        {(Object.keys(scopes) as Scope[]).map((key) => (
+      <div className="glass relative mb-3 grid w-full max-w-sm grid-cols-3 rounded-full p-1" role="radiogroup" aria-label={searchLabel}>
+        <span
+          aria-hidden="true"
+          className="seg-thumb absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/3)] rounded-full bg-white shadow-[0_4px_14px_-6px_rgb(0_0_0/0.5)] transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+          style={{ transform: `translateX(${index * 100}%)` }}
+        />
+        {SCOPES.map((key) => (
           <button
             key={key}
             type="button"
             role="radio"
             aria-checked={scope === key}
-            aria-pressed={scope === key}
             onClick={() => setScope(key)}
-            className="chip"
+            className={`seg relative z-10 rounded-full px-3 py-2 text-sm font-semibold transition-colors ${scope === key ? "text-night" : "text-white/75 hover:text-white"}`}
           >
             {scopes[key]}
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-2 rounded-[1.125rem] border border-line bg-elevated p-1.5 pl-4 shadow-[0_8px_30px_-18px_rgb(0_0_0/0.35)] focus-within:border-primary">
+      <div className="searchbar">
         <Search className="size-5 shrink-0 text-muted" aria-hidden="true" />
         <input
           type="search"
@@ -46,9 +56,9 @@ export function HomeSearch({ lang, placeholder, scopes, searchLabel }: { lang: L
           placeholder={placeholder}
           aria-label={placeholder}
           enterKeyHint="search"
-          className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-faint"
+          className="min-w-0 flex-1 bg-transparent py-2.5 text-base outline-none placeholder:text-faint"
         />
-        <button type="submit" className="btn btn-primary min-h-10 px-4">{searchLabel}</button>
+        <button type="submit" className="btn btn-primary min-h-11 rounded-[0.95rem] px-5">{searchLabel}</button>
       </div>
     </form>
   );

@@ -20,12 +20,12 @@ function isActive(pathname: string, href: string, lang: Locale): boolean {
   return href === `/${lang}` ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** The header's links on wide screens. */
+/** The header's links on wide screens; the current one sits on a lit pill with a gold thread under it. */
 export function NavLinks({ lang, labels }: { lang: Locale; labels: Record<"home" | "jobs" | "directory" | "news" | "business", string> }) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Main" className="hidden md:flex items-center gap-1">
+    <nav aria-label="Main" className="hidden items-center gap-0.5 md:flex">
       {items(lang, labels).slice(1).map((item) => {
         const active = isActive(pathname, item.href, lang);
         return (
@@ -33,9 +33,10 @@ export function NavLinks({ lang, labels }: { lang: Locale; labels: Record<"home"
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`press rounded-full px-3.5 py-2 text-[0.9375rem] font-medium transition-colors ${active ? "bg-surface text-fg" : "text-muted hover:text-fg"}`}
+            className={`press relative rounded-full px-3.5 py-2 text-[0.9375rem] font-medium transition-colors ${active ? "bg-white/12 text-white" : "text-white/70 hover:text-white"}`}
           >
             {item.label}
+            {active && <span aria-hidden="true" className="absolute inset-x-4 -bottom-px h-0.5 rounded-full bg-accent" />}
           </Link>
         );
       })}
@@ -43,28 +44,24 @@ export function NavLinks({ lang, labels }: { lang: Locale; labels: Record<"home"
   );
 }
 
-/** The bottom tab bar on phones: thumb's reach, always there. */
+/** The phone's tab bar: a floating island of night within the thumb's reach. */
 export function TabBar({ lang, labels }: { lang: Locale; labels: Record<"home" | "jobs" | "directory" | "news" | "business", string> }) {
   const pathname = usePathname();
 
   return (
-    <nav
-      aria-label="Main"
-      className="material fixed inset-x-0 bottom-0 z-40 border-t border-line md:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-    >
-      <ul className="mx-auto grid h-[var(--tabbar-h)] max-w-lg grid-cols-5">
+    <nav aria-label="Main" className="chrome fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 rounded-[1.75rem] md:hidden">
+      <ul className="mx-auto grid h-[var(--tabbar-h)] max-w-lg grid-cols-5 px-1.5">
         {items(lang, labels).map((item) => {
           const active = isActive(pathname, item.href, lang);
           const Icon = item.icon;
           return (
-            <li key={item.href}>
+            <li key={item.href} className="grid place-items-stretch py-1.5">
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`press flex h-full flex-col items-center justify-center gap-1 text-[0.6875rem] font-semibold ${active ? "text-primary" : "text-muted"}`}
+                className={`press flex flex-col items-center justify-center gap-1 rounded-[1.25rem] text-[0.6875rem] font-semibold transition-colors ${active ? "bg-white/12 text-white" : "text-white/65"}`}
               >
-                <Icon className="size-[1.375rem]" strokeWidth={active ? 2.3 : 1.8} aria-hidden="true" />
+                <Icon className={`size-[1.375rem] ${active ? "text-accent" : ""}`} strokeWidth={active ? 2.3 : 1.8} aria-hidden="true" />
                 <span className="leading-none">{item.label}</span>
               </Link>
             </li>

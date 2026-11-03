@@ -142,14 +142,23 @@ three. The fixed lists (kinds of work, emirates, business kinds, languages)
 come from the API's `/public/meta`, i.e. from `Choices`, so the site and the
 bot never word them differently.
 
-- **Design.** It follows the apple-design skill (in the Addis game repo,
-  `.claude/skills/apple-design/`) and Anthropic's frontend-design skill:
-  system font for Latin, Noto Sans Ethiopic for Ge'ez, semantic colour tokens
-  in `site/app/globals.css` with a dark set, press feedback by `scale` on
-  `:active`, one entrance animation (the front page), and fallbacks for
-  reduced motion, reduced transparency and more contrast. The only ornament
-  is the tibeb band (diamonds, no crosses: it is for everyone). Event dates
-  also show the Ethiopian calendar (`lib/format.ts`).
+- **Design: "two homes, one thread".** It follows the apple-design skill (in
+  the Addis game repo, `.claude/skills/apple-design/`). Every page opens on a
+  night band (`components/Night.tsx`: the Gulf sky at dusk, a horizon that
+  runs from the highlands into the skyline, the tibeb thread under it); the
+  header and the phone tab bar are floating islands of the same night
+  (`.chrome`). The page itself is warm ivory. Headings are Fraunces and Noto
+  Serif Ethiopic (`.display`, `.headline`); body text is the system font with
+  Noto Sans Ethiopic. Places without a photo get a cover in their kind's
+  colours with their initials (`components/Cover.tsx`); kinds of work and of
+  place have fixed colour pairs there. Ge'ez numerals mark sections
+  (`GEEZ` in `Bits.tsx`). The front page shows Dubai and Addis Ababa time,
+  the Ethiopian clock and calendar (`Clocks.tsx`). Motion: the hero settles
+  once, sections marked `.reveal` rise in once (`Motion.tsx`, never hiding
+  what is already on screen), tiles marked `.spot` carry a light under the
+  pointer, press feedback is `scale` on `:active`. Every effect has its
+  reduced-motion, reduced-transparency and more-contrast fallback in
+  `globals.css`. The tibeb has diamonds and no crosses: it is for everyone.
 - **Owners sign in with Telegram** (`App\Directory\OwnerLogin`): the site
   shows a QR code / button; the bot asks the person who opened
   `/start login_<ref>` to confirm, then sends them a six-digit code that they
@@ -165,11 +174,17 @@ bot never word them differently.
   both apps) with the visitor's address and browser (`App\Support\ClientIp`).
   Without the key the API cannot tell visitors apart and falls back to
   generous per-address limits.
-- **Environment variables on this host** are visible while the API builds and
-  empty at runtime. Anything the API reads from the environment must go
-  through a config file (`config/services.php` → `host`), which is cached at
-  build; `getenv()` at runtime returns nothing. A changed variable takes
-  effect only after a rebuild.
+- **Environment variables on this host never reach the API.** The host
+  writes its own `.env` with only `APP_KEY` and the database; anything else set
+  on the app (SETUP_TOKEN, TICK_TOKEN, SITE_API_KEY) is invisible at runtime
+  (`GET /api/system/status` shows yes/no for each). So the tick token and
+  the website key are write-only fields on admin Settings, and setup accepts
+  the database password from the AletCloud dashboard as `X-Setup-Token`. The
+  Next.js website does receive its variables, but reads them at build time:
+  change one, rebuild the site.
+- **One repository, three apps.** The API, the admin and the website all
+  build from `main`, so one push starts three builds on a plan that allows
+  two at a time. Watch each to LIVE after a push.
 - **Listings.** An owner's new listing waits for review. An edit to a live
   listing waits in `businesses.pending_changes` while the live version stays
   up; photos (base64 in `business_photos`, re-encoded by `PhotoStore`) are

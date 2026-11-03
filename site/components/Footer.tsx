@@ -1,36 +1,51 @@
 import Link from "next/link";
+import { Send } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
 import type { Locale } from "@/lib/locales";
 import type { Meta } from "@/lib/api";
 import { Mark, Tibeb } from "./Logo";
 
+/** The page ends where it began: at night, under the thread. */
 export function Footer({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: Meta | null }) {
+  const link = "text-white/70 transition-colors hover:text-white";
+
   return (
-    <footer className="mt-16 border-t border-line bg-surface">
-      <Tibeb thin />
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-[1.4fr_1fr_1fr]">
+    <footer className="night mt-20 md:mt-28">
+      <Tibeb />
+      <span aria-hidden="true" className="sky-word absolute -bottom-10 -right-4 text-[9rem] md:-bottom-16 md:text-[16rem]">ሐበሻ</span>
+      <div className="relative mx-auto grid max-w-6xl gap-10 px-4 pb-12 pt-14 md:grid-cols-[1.5fr_1fr_1fr]">
         <div className="max-w-sm">
           <div className="flex items-center gap-2.5">
-            <Mark className="size-7" />
-            <span className="font-bold">{d.brand}</span>
+            <Mark className="size-9" />
+            <span className="flex flex-col leading-none">
+              <span className="font-bold">{d.brand}</span>
+              <span className="mt-1 text-xs text-white/55">{d.brandNative}</span>
+            </span>
           </div>
-          <p className="mt-4 text-sm text-muted">{d.footer.tagline}</p>
-          <p className="mt-3 text-xs text-faint">{d.footer.caution}</p>
+          <p className="mt-5 text-sm text-white/75">{d.footer.tagline}</p>
+          <p className="mt-3 text-xs text-white/50">{d.footer.caution}</p>
+          {meta?.bot.link && (
+            <a href={meta.bot.link} target="_blank" rel="noopener noreferrer" className="btn btn-gold mt-6 rounded-full">
+              <Send className="size-4" aria-hidden="true" /> {d.join}
+            </a>
+          )}
         </div>
-        <nav aria-label={d.brand} className="flex flex-col gap-2.5 text-sm">
-          <Link className="hover:text-primary" href={`/${lang}/jobs`}>{d.nav.jobs}</Link>
-          <Link className="hover:text-primary" href={`/${lang}/directory`}>{d.nav.directory}</Link>
-          <Link className="hover:text-primary" href={`/${lang}/news`}>{d.nav.news}</Link>
-          <Link className="hover:text-primary" href={`/${lang}/about`}>{d.nav.about}</Link>
+        <nav aria-label={d.brand} className="flex flex-col gap-3 text-sm">
+          <Link className={link} href={`/${lang}/jobs`}>{d.nav.jobs}</Link>
+          <Link className={link} href={`/${lang}/directory`}>{d.nav.directory}</Link>
+          <Link className={link} href={`/${lang}/news`}>{d.nav.news}</Link>
+          <Link className={link} href={`/${lang}/about`}>{d.nav.about}</Link>
         </nav>
-        <div className="flex flex-col gap-2.5 text-sm">
-          <Link className="hover:text-primary" href={`/${lang}/business`}>{d.footer.owners}</Link>
-          <Link className="hover:text-primary" href={`/${lang}/about#rules`}>{d.footer.rules}</Link>
-          {meta?.bot.link && <a className="hover:text-primary" href={meta.bot.link} target="_blank" rel="noopener noreferrer">{d.footer.bot}</a>}
-          {meta?.channel && <a className="hover:text-primary" href={meta.channel} target="_blank" rel="noopener noreferrer">{d.footer.channel}</a>}
+        <div className="flex flex-col gap-3 text-sm">
+          <Link className={link} href={`/${lang}/business`}>{d.footer.owners}</Link>
+          <Link className={link} href={`/${lang}/about#rules`}>{d.footer.rules}</Link>
+          {meta?.bot.link && <a className={link} href={meta.bot.link} target="_blank" rel="noopener noreferrer">{d.footer.bot}</a>}
+          {meta?.channel && <a className={link} href={meta.channel} target="_blank" rel="noopener noreferrer">{d.footer.channel}</a>}
         </div>
       </div>
-      <div className="mx-auto max-w-6xl px-4 pb-10 text-xs text-faint">© {new Date().getFullYear()} {d.brand}</div>
+      <div className="relative mx-auto max-w-6xl border-t border-white/10 px-4 pb-[calc(var(--tabbar-space)+1.5rem)] pt-6 text-xs text-white/50 md:pb-10">
+        © {new Date().getFullYear()} {d.brand}
+      </div>
     </footer>
   );
 }

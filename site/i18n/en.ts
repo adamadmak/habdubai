@@ -69,6 +69,34 @@ export const en = {
       { title: "Safety desk", text: "Consulate and labour numbers, and a private way to report an employer." },
     ],
     joinCta: "Open the bot",
+    // The front page's heading, with its last words picked out in gold.
+    heroTitle: "The Habesha community in the Emirates,",
+    heroAccent: "in one place.",
+    live: "Right now",
+    scanToJoin: "Scan with your phone to open the bot",
+    bento: {
+      jobsBadge: "Checked for scam signs",
+      jobsText: "Every listing passes our scam checks before you see it, and is summarised in your language.",
+      placesTitle: "Our places",
+      placesText: "Injera, cargo, salons, places of worship and more, across the Emirates.",
+      eventsTitle: "Coming up",
+      eventsEmpty: "Announcements from the consulate, associations and the community, in three languages.",
+      ownerText: "List it free, on this website and in the Telegram channel. A moderator checks it within a day.",
+      ownerSample: "Your business",
+      ownerSampleKind: "Café and restaurant",
+      ownerSamplePlace: "Al Karama, Dubai",
+    },
+  },
+
+  // The two clocks on the front page: Dubai, and home on the Ethiopian clock.
+  clock: {
+    dubai: "Dubai",
+    home: "Addis Ababa · Asmara",
+    habesha: "Ethiopian clock",
+    // The Ethiopian day starts at 6 in the morning: night, morning, day, evening.
+    periods: ["at night", "in the morning", "in the afternoon", "in the evening"],
+    format: "{time} {period}",
+    today: "Today",
   },
 
   jobs: {
