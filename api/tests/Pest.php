@@ -11,7 +11,9 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->beforeEach(function (): void {
-        // Nothing reaches Telegram: every Bot API call answers ok.
+        // Nothing reaches the network: every Bot API call answers ok, and any
+        // other host must be faked by the test that calls it.
+        Http::preventStrayRequests();
         Http::fake(['api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1, 'username' => 'HabeshaDubaiBot']])]);
         \App\Bot\BotMessages::flush();
         \App\Models\PlatformSetting::flushValueCache();
@@ -119,4 +121,118 @@ function admin(): User
 function phoneHash(string $phone): string
 {
     return Phone::hash(Phone::normalize($phone));
+}
+
+/*
+|--------------------------------------------------------------------------
+| Jobs helpers
+|--------------------------------------------------------------------------
+*/
+
+/** Every Bot API call of one method, as [payload, ...]. */
+function telegramCalls(string $method): array
+{
+    $calls = [];
+
+    Http::recorded(function ($request) use (&$calls, $method): void {
+        if (str_ends_with($request->url(), '/'.$method)) {
+            $calls[] = $request->data();
+        }
+    });
+
+    return $calls;
+}
+
+function jobsChannel(string $channel = '@habesha_jobs'): string
+{
+    \App\Models\PlatformSetting::put('job_channel_id', $channel);
+
+    return $channel;
+}
+
+/** Bind a classifier that answers with these fields (merged over a plain driver job in Dubai). */
+function fakeClassifier(array $fields = [], ?\Throwable $throw = null): void
+{
+    app()->instance(\App\Jobs\Pipeline\JobClassifier::class, new class($fields, $throw) implements \App\Jobs\Pipeline\JobClassifier
+    {
+        public int $calls = 0;
+
+        public function __construct(private array $fields, private ?\Throwable $throw) {}
+
+        public function classify(\App\Models\JobRaw $raw): \App\Jobs\Pipeline\Classification
+        {
+            $this->calls++;
+
+            if ($this->throw) {
+                throw $this->throw;
+            }
+
+            return \App\Jobs\Pipeline\Classification::fromArray($this->fields + [
+                'is_job' => true, 'category' => 'driver', 'emirate' => 'dubai', 'title' => $raw->title ?? 'Driver',
+                'company' => $raw->company ?? '', 'sub_area' => '', 'salary_min' => 2500, 'salary_max' => 3000, 'salary_currency' => 'AED',
+                'accommodation' => 'yes', 'visa' => 'yes', 'languages' => ['English'],
+                'summary_am' => 'ሹፌር በዱባይ', 'summary_ti' => 'ሹፌር ኣብ ዱባይ', 'summary_en' => 'A driver job in Dubai.',
+                'scam_risk' => 0, 'scam_signals' => [],
+            ], 'claude');
+        }
+    });
+}
+
+function jobSource(array $attributes = []): \App\Models\JobSource
+{
+    static $n = 0;
+    $n++;
+
+    return \App\Models\JobSource::query()->create($attributes + [
+        'key' => 'source-'.$n, 'name' => 'Source '.$n, 'kind' => 'rss',
+        'config' => ['url' => 'https://feeds.example.com/jobs-'.$n.'.xml'], 'interval_minutes' => 60, 'active' => true,
+    ]);
+}
+
+/** Store a raw listing and run it through the pipeline (the queue is sync). */
+function ingest(array $listing = [], ?\App\Models\JobSource $source = null): ?\App\Models\Job
+{
+    static $n = 0;
+    $n++;
+
+    $raw = app(\App\Jobs\Pipeline\JobIngest::class)->storeOne($source ?? jobSource(), new \App\Jobs\Sources\RawListing(
+        externalKey: $listing['key'] ?? 'listing-'.$n,
+        text: $listing['text'] ?? 'Light vehicle driver needed in Deira for a logistics company. Salary AED 2500 to 3000, accommodation provided, apply with CV. Listing '.$n.' details about shifts and routes.',
+        url: array_key_exists('url', $listing) ? $listing['url'] : 'https://jobs.example.com/view/'.$n,
+        title: $listing['title'] ?? 'Light Vehicle Driver '.$n,
+        company: $listing['company'] ?? 'Fast Logistics',
+        location: $listing['location'] ?? 'Dubai',
+    ));
+
+    return $raw ? \App\Models\Job::query()->where('raw_id', $raw->id)->first() : null;
+}
+
+/** A canned Messages API response body. */
+function claudeResponse(array $json, string $stopReason = 'end_turn', ?array $stopDetails = null): string
+{
+    return json_encode([
+        'id' => 'msg_test', 'type' => 'message', 'role' => 'assistant', 'model' => 'claude-opus-5-5',
+        'content' => [['type' => 'thinking', 'thinking' => '', 'signature' => 'sig'], ['type' => 'text', 'text' => json_encode($json)]],
+        'stop_reason' => $stopReason, 'stop_sequence' => null, 'stop_details' => $stopDetails,
+        'usage' => ['input_tokens' => 900, 'output_tokens' => 400, 'cache_creation_input_tokens' => 0, 'cache_read_input_tokens' => 0],
+    ]);
+}
+
+/** A PSR-18 client that answers every request with the given responses in turn and keeps what it was sent. */
+function fakeTransport(array $responses): object
+{
+    return new class($responses) implements \Psr\Http\Client\ClientInterface
+    {
+        public array $requests = [];
+
+        public function __construct(private array $responses) {}
+
+        public function sendRequest(\Psr\Http\Message\RequestInterface $request): \Psr\Http\Message\ResponseInterface
+        {
+            $this->requests[] = $request;
+            [$status, $body] = array_shift($this->responses) ?? [500, '{}'];
+
+            return new \GuzzleHttp\Psr7\Response($status, ['Content-Type' => 'application/json', 'request-id' => 'req_test'], $body);
+        }
+    };
 }

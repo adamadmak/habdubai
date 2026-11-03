@@ -43,6 +43,20 @@ final class Choices
 
     public const MAX_TRADES = 3;
 
+    /** Where a job is. Wider than EMIRATES: a listing can be elsewhere in the UAE, abroad, or unstated. */
+    public const JOB_EMIRATES = [
+        'dubai' => ['am' => 'ዱባይ', 'ti' => 'ዱባይ', 'en' => 'Dubai'],
+        'sharjah' => ['am' => 'ሻርጃ', 'ti' => 'ሻርጃ', 'en' => 'Sharjah'],
+        'abu_dhabi' => ['am' => 'አቡ ዳቢ', 'ti' => 'ኣቡ ዳቢ', 'en' => 'Abu Dhabi'],
+        'ajman' => ['am' => 'አጅማን', 'ti' => 'ዓጅማን', 'en' => 'Ajman'],
+        'other_uae' => ['am' => 'ሌላ ኢማራት', 'ti' => 'ካልእ ኢማራት', 'en' => 'Other emirate'],
+        'outside_uae' => ['am' => 'ከኢማራት ውጭ', 'ti' => 'ካብ ኢማራት ወጻኢ', 'en' => 'Outside the UAE'],
+        'unknown' => ['am' => 'ቦታ አልተገለጸም', 'ti' => 'ቦታ ኣይተገልጸን', 'en' => 'Location not stated'],
+    ];
+
+    /** Minimum monthly salary choices for job alerts, in AED; 0 = any. */
+    public const SALARY_STEPS = [0, 1500, 2500, 4000, 6000];
+
     public static function languageFromLabel(string $text): ?string
     {
         $text = trim($text);

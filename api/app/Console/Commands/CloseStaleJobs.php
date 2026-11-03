@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Console\Commands;
+
+use App\Jobs\Pipeline\JobPublisher;
+use App\Models\Job;
+use App\Models\JobAlert;
+use App\Models\JobRaw;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
+
+/**
+ * Closes jobs that are old or whose listing page is gone, and prunes what we
+ * promised not to keep: raw listings after thirty days, sent alerts after
+ * thirty days.
+ */
+class CloseStaleJobs extends Command
+{
+    protected $signature = 'jobs:close-stale {--check-links=40 : how many open listings to check for a removed page}';
+
+    protected $description = 'Close jobs older than fourteen days or whose listing is gone, and prune old raw rows';
+
+    public function handle(JobPublisher $publisher): int
+    {
+        $old = Job::query()->where('status', 'published')->where('published_at', '<', now()->subDays(Job::OPEN_DAYS))->get();
+        foreach ($old as $job) {
+            $publisher->close($job);
+        }
+
+        $gone = 0;
+        $toCheck = Job::query()->where('status', 'published')->whereNotNull('url')
+            ->where('url', 'not like', 'https://t.me/%')
+            ->where('published_at', '<', now()->subDays(2))
+            ->orderBy('updated_at')->limit((int) $this->option('check-links'))->get();
+
+        foreach ($toCheck as $job) {
+            try {
+                $status = Http::timeout(8)->withHeaders(['User-Agent' => 'HabeshaDubaiBot/1.0'])->head($job->url)->status();
+            } catch (\Throwable) {
+                $job->touch();
+
+                continue;
+            }
+
+            if (in_array($status, [404, 410], true)) {
+                $publisher->close($job);
+                $gone++;
+            } else {
+                $job->touch();
+            }
+        }
+
+        $pruned = JobRaw::query()->where('fetched_at', '<', now()->subDays(30))
+            ->whereNotIn('id', Job::query()->whereIn('status', ['published', 'review'])->whereNotNull('raw_id')->select('raw_id'))
+            ->delete();
+        JobAlert::query()->whereNotNull('sent_at')->where('sent_at', '<', now()->subDays(30))->delete();
+
+        $this->info("Closed {$old->count()} old and {$gone} removed listing(s); pruned {$pruned} raw row(s).");
+
+        return self::SUCCESS;
+    }
+}

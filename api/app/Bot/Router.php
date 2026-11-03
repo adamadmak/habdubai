@@ -2,8 +2,11 @@
 
 namespace App\Bot;
 
+use App\Jobs\Pipeline\JobIngest;
+use App\Jobs\Sources\TelegramSource;
 use App\Models\AuditLog;
 use App\Models\Conversation;
+use App\Models\JobSource;
 use App\Models\Member;
 use App\Models\TelegramUpdate;
 use App\Services\TelegramBotService;
@@ -19,11 +22,32 @@ class Router
         private readonly TelegramBotService $telegram,
         private readonly BotMessages $messages,
         private readonly Onboarding $onboarding,
+        private readonly JobsFlow $jobs,
+        private readonly JobIngest $ingest,
     ) {}
 
     public function handle(TelegramUpdate $update): void
     {
-        $in = Incoming::fromUpdate($update->payload);
+        $payload = $update->payload;
+
+        if (isset($payload['callback_query'])) {
+            $this->callback(Callback::fromUpdate($payload));
+
+            return;
+        }
+
+        // A post in a channel or group registered as a job source.
+        $post = $payload['channel_post'] ?? null;
+        if ($post === null && isset($payload['message']['chat']['type']) && $payload['message']['chat']['type'] !== 'private') {
+            $post = $payload['message'];
+        }
+        if (is_array($post)) {
+            $this->sourcePost($post);
+
+            return;
+        }
+
+        $in = Incoming::fromUpdate($payload);
 
         if ($in === null || ! $in->isPrivate()) {
             return;
@@ -48,9 +72,29 @@ class Router
             $conversation->forceFill(['language' => $language])->save();
         }
 
+        // A moderator forwarding a job post from another channel adds it to the pipeline.
+        if ($in->isForward() && $member?->isActive() && $member->hasRole('moderator', 'admin')) {
+            $this->forwarded($conversation, $in);
+
+            return;
+        }
+
         switch ($in->command()) {
             case 'start':
+                if ($in->commandArgument() === 'jobs' && $member?->isActive()) {
+                    $this->jobs->menu($member);
+
+                    return;
+                }
                 $this->start($conversation, $member, $in);
+
+                return;
+            case 'jobs':
+                $member?->isActive() ? $this->jobs->menu($member) : $this->reply($conversation, 'not_member');
+
+                return;
+            case 'saved':
+                $member?->isActive() ? $this->jobs->saved($member) : $this->reply($conversation, 'not_member');
 
                 return;
             case 'help':
@@ -103,6 +147,12 @@ class Router
 
         if (in_array($conversation->state, Onboarding::STATES, true)) {
             $this->onboarding->handle($conversation, $in);
+
+            return;
+        }
+
+        if ($conversation->state === 'jobs_keyword' && $member?->isActive() && $in->text !== null) {
+            $this->jobs->keywordEntered($member, $conversation, $in->text);
 
             return;
         }
@@ -204,6 +254,68 @@ class Router
         }
 
         $this->reply($conversation, 'left', [], $this->telegram->removeKeyboard());
+    }
+
+    private function callback(?Callback $cb): void
+    {
+        if ($cb === null) {
+            return;
+        }
+
+        $member = Member::findByTelegramUser($cb->userId);
+        $parts = $cb->parts();
+
+        if ($member?->isBanned()) {
+            $this->telegram->answerCallback($cb->id);
+
+            return;
+        }
+
+        if ($parts[0] === 'job' && in_array($parts[1] ?? '', ['save', 'report'], true) && ctype_digit($parts[2] ?? '')) {
+            $this->jobs->cardButton($member, $cb, $parts[1], (int) $parts[2]);
+
+            return;
+        }
+
+        if ($parts[0] === 'jf' && $member?->isActive() && $cb->inPrivateChat()) {
+            $conversation = Conversation::forUser($cb->userId, (int) $cb->chatId, $cb->languageCode);
+            $this->jobs->filterButton($member, $conversation, $cb);
+
+            return;
+        }
+
+        $this->telegram->answerCallback($cb->id);
+    }
+
+    private function sourcePost(array $post): void
+    {
+        $chatId = $post['chat']['id'] ?? null;
+        $source = $chatId !== null ? JobSource::forTelegramChat($chatId) : null;
+
+        if ($source === null) {
+            return;
+        }
+
+        $listing = TelegramSource::listing($post, 'tg'.$chatId);
+
+        if ($listing !== null) {
+            $this->ingest->storeOne($source, $listing);
+            $source->forceFill(['last_run_at' => now(), 'last_success_at' => now(), 'last_found' => 1])->save();
+        }
+    }
+
+    private function forwarded(Conversation $conversation, Incoming $in): void
+    {
+        $listing = TelegramSource::listing($in->message, 'fwd');
+
+        if ($listing === null) {
+            $this->reply($conversation, 'job_forward_too_short');
+
+            return;
+        }
+
+        $stored = $this->ingest->storeOne(JobSource::forwarded(), $listing);
+        $this->reply($conversation, $stored ? 'job_forward_added' : 'job_forward_known');
     }
 
     private function supportHandle(): string

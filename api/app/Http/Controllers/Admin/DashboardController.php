@@ -3,7 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\SystemTickController;
+use App\Models\Job;
+use App\Models\JobAlert;
+use App\Models\JobSource;
 use App\Models\Member;
+use App\Support\JobSettings;
+use Illuminate\Support\Facades\Cache;
 use App\Models\TelegramUpdate;
 use App\Services\TelegramBotService;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +40,21 @@ class DashboardController extends Controller
                 'configured' => $telegram->configured(),
                 'username' => $telegram->botUsername(),
             ],
+            'jobs' => [
+                'published_today' => Job::query()->where('published_at', '>=', $today)->count(),
+                'open' => Job::query()->where('status', 'published')->count(),
+                'review' => Job::query()->where('status', 'review')->count(),
+                'duplicates_today' => Job::query()->where('status', 'duplicate')->where('created_at', '>=', $today)->count(),
+                'alerts_queued' => JobAlert::query()->whereNull('sent_at')->count(),
+                'classifier' => JobSettings::anthropicKey() !== '' ? 'claude' : 'rules',
+                'channel' => JobSettings::channel() !== '',
+            ],
+            'sources' => [
+                'active' => JobSource::query()->where('active', true)->whereNull('paused_at')->count(),
+                'paused' => JobSource::query()->whereNotNull('paused_at')->count(),
+                'failing' => JobSource::query()->where('active', true)->whereNull('paused_at')->where('failures_in_row', '>', 0)->count(),
+            ],
+            'tick' => Cache::get(SystemTickController::LAST_TICK_KEY),
         ]);
     }
 }

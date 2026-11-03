@@ -165,9 +165,9 @@ return [
         'en' => 'You are not a member yet. Send /start to join.',
     ],
     'help' => [
-        'am' => "ትዕዛዞች፡\n/start — መቀላቀል\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ\n\nሥራዎች፣ ጥያቄዎችና የዕቃ ሰሌዳ በቅርቡ ይመጣሉ።",
-        'ti' => "ትእዛዛት፡\n/start — ምጽንባር\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ\n\nስራሕ፣ ሕቶታትን ሰሌዳ ኣቕሑን ኣብ ቀረባ ክመጹ እዮም።",
-        'en' => "Commands:\n/start — join, or welcome back\n/profile — your profile\n/language — change language\n/leave — leave the community\n\nJobs, questions and the goods board are coming soon.",
+        'am' => "ትዕዛዞች፡\n/start — መቀላቀል\n/jobs — የሥራ ማንቂያዎችና የቅርብ ሥራዎች\n/saved — ያስቀመጧቸው ሥራዎች\n/profile — መገለጫ\n/language — ቋንቋ መቀየር\n/leave — ማህበረሰቡን መልቀቅ\n\nጥያቄዎችና የዕቃ ሰሌዳ በቅርቡ ይመጣሉ።",
+        'ti' => "ትእዛዛት፡\n/start — ምጽንባር\n/jobs — መጠንቀቕታ ስራሕን ናይ ቀረባ ስራሓትን\n/saved — ዝዓቀብኩምዎም ስራሓት\n/profile — መግለጺ\n/language — ቋንቋ ምቕያር\n/leave — ማሕበረሰብ ምግዳፍ\n\nሕቶታትን ሰሌዳ ኣቕሑን ኣብ ቀረባ ክመጹ እዮም።",
+        'en' => "Commands:\n/start — join, or welcome back\n/jobs — job alerts and the latest jobs\n/saved — jobs you saved\n/profile — your profile\n/language — change language\n/leave — leave the community\n\nQuestions and the goods board are coming soon.",
     ],
     'unknown' => [
         'am' => 'አልገባኝም። /help ይላኩ።',
@@ -203,5 +203,246 @@ return [
         'am' => 'ይህ መለያ ከማህበረሰቡ ታግዷል። ይግባኝ፡ {support}',
         'ti' => 'እዚ ኣካውንት ካብ ማሕበረሰብ ተኣጊዱ እዩ። ይግባይ፡ {support}',
         'en' => 'This account is banned from the community. Appeals: {support}',
+    ],
+
+    // ---- jobs: channel card ---------------------------------------------
+    'job_salary_none' => [
+        'am' => 'ደሞዝ አልተገለጸም',
+        'ti' => 'ደሞዝ ኣይተገልጸን',
+        'en' => 'Salary not stated',
+    ],
+    'job_accommodation_yes' => [
+        'am' => '🏠 መኖሪያ ይሰጣል',
+        'ti' => '🏠 መንበሪ ይወሃብ',
+        'en' => '🏠 Accommodation provided',
+    ],
+    'job_visa_yes' => [
+        'am' => '🛂 ቪዛ ይሰጣል',
+        'ti' => '🛂 ቪዛ ይወሃብ',
+        'en' => '🛂 Visa provided',
+    ],
+    'job_warning' => [
+        'am' => '⚠️ ይጠንቀቁ፡ {reason}። ሥራ ለማግኘት ገንዘብ አይክፈሉ።',
+        'ti' => '⚠️ ተጠንቀቑ፡ {reason}። ስራሕ ንምርካብ ገንዘብ ኣይትኽፈሉ።',
+        'en' => '⚠️ Be careful: {reason}. Never pay to get a job.',
+    ],
+    'job_source' => [
+        'am' => 'ምንጭ፡ {source}',
+        'ti' => 'ምንጪ፡ {source}',
+        'en' => 'Source: {source}',
+    ],
+    'job_closed_tag' => [
+        'am' => '🔴 ተዘግቷል',
+        'ti' => '🔴 ተዓጽዩ',
+        'en' => '🔴 Closed',
+    ],
+    'btn_job_open' => [
+        'am' => '🔗 ማስታወቂያውን ክፈት',
+        'ti' => '🔗 መወዓውዒ ክፈት',
+        'en' => '🔗 Open the listing',
+    ],
+    'btn_job_save' => [
+        'am' => '💾 አስቀምጥ',
+        'ti' => '💾 ዓቅብ',
+        'en' => '💾 Save',
+    ],
+    'btn_job_report' => [
+        'am' => '🚩 ሐሰት ነው',
+        'ti' => '🚩 ሓሶት እዩ',
+        'en' => '🚩 Report fake',
+    ],
+
+    // ---- jobs: buttons pressed ------------------------------------------
+    'job_saved' => [
+        'am' => 'ተቀምጧል። በ /saved ያገኙታል።',
+        'ti' => 'ተዓቂቡ። ብ /saved ክትረኽብዎ ኢኹም።',
+        'en' => 'Saved. Find it with /saved.',
+    ],
+    'job_unsaved' => [
+        'am' => 'ከተቀመጡት ተወግዷል።',
+        'ti' => 'ካብ ዝተዓቀቡ ተኣልዩ።',
+        'en' => 'Removed from your saved jobs.',
+    ],
+    'job_reported' => [
+        'am' => 'አመሰግናለሁ፤ ሪፖርትዎ ደርሷል። አወያዮች ያዩታል።',
+        'ti' => 'የቐንየለይ፤ ሪፖርትኹም በጺሑ። ኣወያየቲ ክርእይዎ እዮም።',
+        'en' => 'Thank you, your report is in. Moderators will look at it.',
+    ],
+    'job_already_reported' => [
+        'am' => 'ይህን ሥራ ቀድመው ሪፖርት አድርገዋል።',
+        'ti' => 'ነዚ ስራሕ ቀደም ሪፖርት ገይርኩሞ ኢኹም።',
+        'en' => 'You already reported this job.',
+    ],
+    'job_gone' => [
+        'am' => 'ይህ ሥራ ከእንግዲህ የለም።',
+        'ti' => 'እዚ ስራሕ ደጊም የለን።',
+        'en' => 'This job is no longer available.',
+    ],
+    'job_join_first' => [
+        'am' => 'ለማስቀመጥ ወይም ሪፖርት ለማድረግ መጀመሪያ ቦቱን ይቀላቀሉ።',
+        'ti' => 'ንምዕቃብ ወይ ሪፖርት ንምግባር ቅድሚ ኩሉ ነቲ ቦት ተጸንበሩ።',
+        'en' => 'Join through the bot first to save or report jobs.',
+    ],
+    'job_forward_added' => [
+        'am' => 'ወደ ሥራ ዝርዝሩ ተጨምሯል።',
+        'ti' => 'ናብ ዝርዝር ስራሕ ተወሲኹ።',
+        'en' => 'Added to the job queue.',
+    ],
+    'job_forward_known' => [
+        'am' => 'ይህ ማስታወቂያ ቀድሞ አለ።',
+        'ti' => 'እዚ መወዓውዒ ድሮ ኣሎ።',
+        'en' => 'We already have this listing.',
+    ],
+    'job_forward_too_short' => [
+        'am' => 'ይህ እንደ ሥራ ማስታወቂያ በጣም አጭር ነው።',
+        'ti' => 'እዚ ከም መወዓውዒ ስራሕ ኣዝዩ ሓጺር እዩ።',
+        'en' => 'That is too short to be a job listing.',
+    ],
+
+    // ---- jobs: /jobs filters --------------------------------------------
+    'jobs_menu' => [
+        'am' => "💼 <b>የሥራ ማንቂያዎች</b>\n\nዘርፍ፡ {categories}\nቦታ፡ {emirates}\nዝቅተኛ ደሞዝ፡ {salary}\nቁልፍ ቃል፡ {keyword}\nማንቂያዎች፡ {alerts}\n\nየሚስማማ አዲስ ሥራ ሲመጣ መልዕክት እልክልዎታለሁ፤ በ15 ደቂቃ ከአንድ መልዕክት አይበልጥም።",
+        'ti' => "💼 <b>መጠንቀቕታ ስራሕ</b>\n\nዓውዲ፡ {categories}\nቦታ፡ {emirates}\nዝተሓተ ደሞዝ፡ {salary}\nመፍትሕ ቃል፡ {keyword}\nመጠንቀቕታ፡ {alerts}\n\nዝሰማማዕ ሓድሽ ስራሕ ምስ መጸ መልእኽቲ ክሰደልኩም እየ፤ ኣብ 15 ደቒቕ ካብ ሓደ መልእኽቲ ኣይበዝሕን።",
+        'en' => "💼 <b>Job alerts</b>\n\nWork: {categories}\nWhere: {emirates}\nMinimum salary: {salary}\nKeyword: {keyword}\nAlerts: {alerts}\n\nI message you when a new job matches, at most one message every 15 minutes.",
+    ],
+    'jobs_all' => [
+        'am' => 'ሁሉም',
+        'ti' => 'ኩሉ',
+        'en' => 'All',
+    ],
+    'jobs_any' => [
+        'am' => 'ማንኛውም',
+        'ti' => 'ዝኾነ',
+        'en' => 'Any',
+    ],
+    'jobs_none' => [
+        'am' => 'የለም',
+        'ti' => 'የለን',
+        'en' => 'None',
+    ],
+    'jobs_on' => [
+        'am' => 'በርቷል',
+        'ti' => 'ይሰርሕ',
+        'en' => 'On',
+    ],
+    'jobs_off' => [
+        'am' => 'ጠፍቷል',
+        'ti' => 'ጠፊኡ',
+        'en' => 'Off',
+    ],
+    'btn_jobs_categories' => [
+        'am' => '🛠 ዘርፍ',
+        'ti' => '🛠 ዓውዲ',
+        'en' => '🛠 Work',
+    ],
+    'btn_jobs_emirates' => [
+        'am' => '📍 ቦታ',
+        'ti' => '📍 ቦታ',
+        'en' => '📍 Where',
+    ],
+    'btn_jobs_salary' => [
+        'am' => '💰 ደሞዝ',
+        'ti' => '💰 ደሞዝ',
+        'en' => '💰 Salary',
+    ],
+    'btn_jobs_keyword' => [
+        'am' => '🔎 ቁልፍ ቃል',
+        'ti' => '🔎 መፍትሕ ቃል',
+        'en' => '🔎 Keyword',
+    ],
+    'btn_jobs_alerts_on' => [
+        'am' => '🔔 ማንቂያ አብራ',
+        'ti' => '🔔 መጠንቀቕታ ኣብርህ',
+        'en' => '🔔 Turn alerts on',
+    ],
+    'btn_jobs_alerts_off' => [
+        'am' => '🔕 ማንቂያ አጥፋ',
+        'ti' => '🔕 መጠንቀቕታ ኣጥፍእ',
+        'en' => '🔕 Turn alerts off',
+    ],
+    'btn_jobs_latest' => [
+        'am' => '📋 የቅርብ ሥራዎች',
+        'ti' => '📋 ናይ ቀረባ ስራሓት',
+        'en' => '📋 Latest jobs',
+    ],
+    'btn_jobs_saved' => [
+        'am' => '💾 የተቀመጡ',
+        'ti' => '💾 ዝተዓቀቡ',
+        'en' => '💾 Saved',
+    ],
+    'btn_jobs_back' => [
+        'am' => '⬅️ ተመለስ',
+        'ti' => '⬅️ ተመለስ',
+        'en' => '⬅️ Back',
+    ],
+    'btn_jobs_clear_keyword' => [
+        'am' => '✖️ ቁልፍ ቃሉን አጥፋ',
+        'ti' => '✖️ መፍትሕ ቃል ኣጥፍእ',
+        'en' => '✖️ Clear keyword',
+    ],
+    'jobs_pick_categories' => [
+        'am' => 'የሚፈልጉትን ዘርፍ ይምረጡ። ምንም ካልመረጡ ሁሉም ይላካል።',
+        'ti' => 'ዝደለኹምዎ ዓውዲ ምረጹ። ዋላ ሓደ እንተዘይመሪጽኩም ኩሉ ይለኣኽ።',
+        'en' => 'Pick the work you want. With none picked, you get all of it.',
+    ],
+    'jobs_pick_emirates' => [
+        'am' => 'ቦታ ይምረጡ። ምንም ካልመረጡ ሁሉም ቦታ ይላካል።',
+        'ti' => 'ቦታ ምረጹ። ዋላ ሓደ እንተዘይመሪጽኩም ኩሉ ቦታ ይለኣኽ።',
+        'en' => 'Pick where. With none picked, you get every place.',
+    ],
+    'jobs_pick_salary' => [
+        'am' => 'ዝቅተኛ ወርሃዊ ደሞዝ ይምረጡ። ደሞዝ ያልገለጹ ሥራዎችም ይላካሉ።',
+        'ti' => 'ዝተሓተ ወርሓዊ ደሞዝ ምረጹ። ደሞዝ ዘይገለጹ ስራሓት እውን ይለኣኹ።',
+        'en' => 'Pick a minimum monthly salary. Jobs that do not state a salary still come through.',
+    ],
+    'jobs_ask_keyword' => [
+        'am' => 'በሥራው ርዕስ ወይም መግለጫ ውስጥ መኖር ያለበትን አንድ ቃል ይላኩ፣ ለምሳሌ «Deira» ወይም «forklift»።',
+        'ti' => 'ኣብ ኣርእስቲ ወይ መግለጺ ስራሕ ክህሉ ዘለዎ ሓደ ቃል ስደዱ፣ ንኣብነት «Deira» ወይ «forklift»።',
+        'en' => 'Send one word that must appear in the job title or description, for example "Deira" or "forklift".',
+    ],
+    'jobs_keyword_invalid' => [
+        'am' => 'ቁልፍ ቃል ከ2 እስከ 40 ፊደላት ነው።',
+        'ti' => 'መፍትሕ ቃል ካብ 2 ክሳብ 40 ፊደላት እዩ።',
+        'en' => 'A keyword is 2 to 40 letters.',
+    ],
+    'jobs_none_found' => [
+        'am' => 'አሁን የሚስማማ ክፍት ሥራ የለም። አዲስ ሲመጣ እነግርዎታለሁ።',
+        'ti' => 'ሕጂ ዝሰማማዕ ክፉት ስራሕ የለን። ሓድሽ ምስ መጸ ክሕብረኩም እየ።',
+        'en' => 'No open job matches right now. I will tell you when one comes in.',
+    ],
+    'jobs_saved_none' => [
+        'am' => 'እስካሁን ያስቀመጡት ሥራ የለም። በቻናሉ ካርድ ላይ «አስቀምጥ» ይጫኑ።',
+        'ti' => 'ክሳብ ሕጂ ዝዓቀብኩምዎ ስራሕ የለን። ኣብ ካርድ ቻነል «ዓቅብ» ጠውቑ።',
+        'en' => 'You have not saved any jobs yet. Tap Save on a card in the channel.',
+    ],
+    'jobs_list_header' => [
+        'am' => '💼 <b>{title}</b>',
+        'ti' => '💼 <b>{title}</b>',
+        'en' => '💼 <b>{title}</b>',
+    ],
+    'jobs_latest_title' => [
+        'am' => 'የሚስማሙ የቅርብ ሥራዎች',
+        'ti' => 'ዝሰማምዑ ናይ ቀረባ ስራሓት',
+        'en' => 'Latest matching jobs',
+    ],
+    'jobs_saved_title' => [
+        'am' => 'ያስቀመጧቸው ሥራዎች',
+        'ti' => 'ዝዓቀብኩምዎም ስራሓት',
+        'en' => 'Your saved jobs',
+    ],
+    'jobs_alert_title' => [
+        'am' => 'አዲስ ሥራ ለእርስዎ',
+        'ti' => 'ሓድሽ ስራሕ ንዓኹም',
+        'en' => 'New jobs for you',
+    ],
+    'jobs_alert_footer' => [
+        'am' => 'ማንቂያዎችን ለመቀየር /jobs ይላኩ።',
+        'ti' => 'መጠንቀቕታ ንምቕያር /jobs ስደዱ።',
+        'en' => 'Send /jobs to change your alerts.',
+    ],
+    'jobs_closed' => [
+        'am' => '(ተዘግቷል)',
+        'ti' => '(ተዓጽዩ)',
+        'en' => '(closed)',
     ],
 ];

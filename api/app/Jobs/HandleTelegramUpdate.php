@@ -6,12 +6,15 @@ use App\Bot\Router;
 use App\Models\TelegramUpdate;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Runs one stored update through the router. Updates from one chat do not
- * overlap, so a flow's steps are handled in the order they were sent.
+ * Runs one stored update through the router. One person's updates run one
+ * at a time, waiting up to ten seconds for the previous one, so the steps of
+ * a flow are handled in the order they were sent. (A blocking lock, not
+ * WithoutOverlapping: this runs after the response in the web process, where
+ * a released job would simply be lost.)
  */
 class HandleTelegramUpdate implements ShouldQueue
 {
@@ -23,12 +26,19 @@ class HandleTelegramUpdate implements ShouldQueue
 
     public function __construct(public readonly int $updateId, public readonly int $chatId) {}
 
-    public function middleware(): array
+    public function handle(Router $router): void
     {
-        return [(new WithoutOverlapping('telegram-chat:'.$this->chatId))->releaseAfter(2)->expireAfter(60)];
+        $lock = Cache::lock('telegram-chat:'.$this->chatId, 30);
+
+        try {
+            $lock->block(10, fn () => $this->run($router));
+        } catch (\Illuminate\Contracts\Cache\LockTimeoutException) {
+            // The previous update is still running; handle this one anyway rather than drop it.
+            $this->run($router);
+        }
     }
 
-    public function handle(Router $router): void
+    private function run(Router $router): void
     {
         $update = TelegramUpdate::query()->find($this->updateId);
 

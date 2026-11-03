@@ -94,7 +94,7 @@ class TelegramBotService
         return $this->post('setWebhook', [
             'url' => $url,
             'secret_token' => $this->webhookSecret(),
-            'allowed_updates' => ['message', 'callback_query', 'my_chat_member', 'chat_member'],
+            'allowed_updates' => ['message', 'edited_message', 'channel_post', 'callback_query', 'my_chat_member', 'chat_member'],
         ], retry: false)->json();
     }
 
@@ -148,6 +148,48 @@ class TelegramBotService
             'text' => $text,
             'parse_mode' => 'HTML',
         ], retry: false, timeout: 5);
+    }
+
+    /** Replace a message's text and inline keyboard. False when Telegram refuses (too old, unchanged, deleted). */
+    public function editText(int|string $chatId, int $messageId, string $text, ?array $replyMarkup = null): bool
+    {
+        try {
+            $this->post('editMessageText', array_filter([
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+                'text' => $text,
+                'parse_mode' => 'HTML',
+                'link_preview_options' => ['is_disabled' => true],
+                'reply_markup' => $replyMarkup,
+            ], fn ($value) => $value !== null), retry: false);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
+    /** Stop the button's spinner; a short text shows as a toast, `url` opens a t.me link. */
+    public function answerCallback(string $callbackId, ?string $text = null, bool $alert = false, ?string $url = null): void
+    {
+        try {
+            $this->post('answerCallbackQuery', array_filter([
+                'callback_query_id' => $callbackId,
+                'text' => $text !== null ? mb_substr($text, 0, 190) : null,
+                'show_alert' => $alert ?: null,
+                'url' => $url,
+            ], fn ($value) => $value !== null), retry: false, timeout: 5);
+        } catch (RuntimeException) {
+            // An expired callback cannot be answered; the action itself already ran.
+        }
+    }
+
+    /** t.me link that opens the bot with a /start payload. */
+    public function startLink(string $payload = ''): ?string
+    {
+        $username = $this->botUsername();
+
+        return $username === '' ? null : 'https://t.me/'.$username.($payload !== '' ? '?start='.rawurlencode($payload) : '');
     }
 
     public function deleteMessage(int|string $chatId, int $messageId): bool

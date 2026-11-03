@@ -19,7 +19,14 @@ final class Incoming
         public readonly ?string $text,
         public readonly ?array $contact,
         public readonly int $messageId,
+        public readonly array $message = [],
     ) {}
+
+    /** A message forwarded from somewhere else (a channel post, another chat). */
+    public function isForward(): bool
+    {
+        return isset($this->message['forward_origin']) || isset($this->message['forward_from_chat']) || isset($this->message['forward_from']);
+    }
 
     public static function fromUpdate(array $update): ?self
     {
@@ -43,6 +50,7 @@ final class Incoming
             text: isset($message['text']) ? trim((string) $message['text']) : null,
             contact: isset($message['contact']) && is_array($message['contact']) ? $message['contact'] : null,
             messageId: (int) ($message['message_id'] ?? 0),
+            message: $message,
         );
     }
 
