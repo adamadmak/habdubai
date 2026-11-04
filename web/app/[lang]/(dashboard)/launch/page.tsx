@@ -71,9 +71,9 @@ const LaunchPage = () => {
         <div className="glass relative rounded-2xl p-6 md:p-8">
           {readiness.isLoading ? (
             <div className="flex items-center gap-8" role="status" aria-label="Loading the checklist">
-              <Skeleton className="h-40 w-40 rounded-full bg-default-100" />
-              <div className="flex-1 space-y-3">
-                <Skeleton className="h-9 w-72 bg-default-100" />
+              <Skeleton className="h-40 w-40 shrink-0 rounded-full bg-default-100" />
+              <div className="min-w-0 flex-1 space-y-3">
+                <Skeleton className="h-9 w-72 max-w-full bg-default-100" />
                 <Skeleton className="h-4 w-96 max-w-full bg-default-100" />
                 <Skeleton className="h-4 w-80 max-w-full bg-default-100" />
               </div>

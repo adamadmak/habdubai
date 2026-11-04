@@ -97,7 +97,7 @@ const MemberPage = () => {
                     act(patch.mutateAsync({ role: role as Member["role"] }), `Role set to ${role}.`);
                   }}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Role"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {["member", "leader", "moderator", "admin"].map((r) => <SelectItem key={r} value={r} className="capitalize">{r}</SelectItem>)}
                   </SelectContent>
@@ -110,7 +110,7 @@ const MemberPage = () => {
                   <Label>Needs review</Label>
                   <p className="text-xs text-default-500">Set when the phone is outside the UAE and Ethiopia.</p>
                 </div>
-                <Switch checked={m.needs_review} onCheckedChange={(v) => act(patch.mutateAsync({ needs_review: v }), v ? "Marked for review." : "Review cleared.")} />
+                <Switch aria-label="Needs review" checked={m.needs_review} onCheckedChange={(v) => act(patch.mutateAsync({ needs_review: v }), v ? "Marked for review." : "Review cleared.")} />
               </div>
 
               {m.status === "banned" ? (

@@ -22,6 +22,8 @@ import {
   useApi, useApiQuery, useApiMutation, formatDateTime, ApiError, errorText,
   type Business, type BusinessClaimRow, type BusinessesPage, type BusinessStatus,
 } from "@/lib/api";
+import { confirmDiscard, useLeaveGuard } from "@/lib/unsaved";
+import { shrinkPhoto } from "@/lib/photos";
 
 type Tab = BusinessStatus | "all" | "changes" | "claims";
 
@@ -192,6 +194,9 @@ const ClaimsList = () => {
   );
 };
 
+/** A form as text, to tell whether anything changed: a picked photo counts by its name and size. */
+const snapshot = (form: Form | null): string => JSON.stringify(form, (_, value) => (value instanceof File ? `${value.name}:${value.size}` : value));
+
 const DirectoryInner = () => {
   const router = useRouter();
   const params = useSearchParams();
@@ -203,6 +208,7 @@ const DirectoryInner = () => {
   const [searchInput, setSearchInput] = useState(search);
   useEffect(() => setSearchInput(search), [search]);
   const [form, setForm] = useState<Form | null>(null);
+  const [formBefore, setFormBefore] = useState("");
   const [current, setCurrent] = useState<Business | null>(null);
   // The picked photo as the browser shows it before upload; the object URL is released when it changes.
   const photoPreview = useMemo(() => (form?.photo ? URL.createObjectURL(form.photo) : null), [form?.photo]);
@@ -233,13 +239,15 @@ const DirectoryInner = () => {
       // The listing exists from here on: if the photo fails, a retry uploads again, it never creates a second listing.
       const saved: Business = result.business;
       setCurrent(saved);
-      setForm((draft) => (draft ? { ...draft, id: saved.id } : draft));
+      // What the server now holds (a Maps link may have filled the pin); only the photo may still be on its way.
+      setFormBefore(snapshot(toForm(saved)));
+      setForm((draft) => (draft ? { ...toForm(saved), photo: draft.photo, removePhoto: draft.removePhoto } : draft));
     }
     const id = result?.business.id ?? f.id;
     if (id && f.removePhoto && !f.photo) result = await req(`/admin/businesses/${id}/photo`, "DELETE");
     if (id && f.photo) {
       const body = new FormData();
-      body.append("photo", f.photo);
+      body.append("photo", await shrinkPhoto(f.photo));
       result = await upload(`/admin/businesses/${id}/photo`, body);
     }
     return result ?? { business: current as Business };
@@ -260,7 +268,9 @@ const DirectoryInner = () => {
     setErrors({});
     setNote("");
     setCurrent(b ?? null);
-    setForm(b ? toForm(b) : { ...EMPTY, city_id: String(data?.choices.cities[0]?.id ?? "") });
+    const next: Form = b ? toForm(b) : { ...EMPTY, city_id: String(data?.choices.cities[0]?.id ?? "") };
+    setFormBefore(snapshot(next));
+    setForm(next);
   };
 
   const submit = () => {
@@ -286,6 +296,10 @@ const DirectoryInner = () => {
     if (!current) return Promise.resolve();
     return toastResult(act.mutateAsync({ id: current.id, action, note: note || undefined }), done).then(() => setForm(null));
   };
+
+  // What a stray click outside the dialog would throw away.
+  const formDirty = form !== null && (snapshot(form) !== formBefore || note !== "");
+  useLeaveGuard(formDirty);
 
   const err = (k: string) => errors[k] && <p className="text-xs text-destructive mt-1">{errors[k][0]}</p>;
   const counts = data?.counts ?? {};
@@ -371,7 +385,7 @@ const DirectoryInner = () => {
                   </TableMessage>
                 )}
                 {data?.data.map((b) => (
-                  <TableRow key={b.id} className="cursor-pointer" tabIndex={0} onClick={() => open(b)} onKeyDown={(e) => e.key === "Enter" && open(b)} aria-label={`Open ${b.name}`}>
+                  <TableRow key={b.id} className="cursor-pointer" onClick={() => open(b)}>
                     <TableCell>
                       {b.pending_photo || b.photo ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -379,7 +393,11 @@ const DirectoryInner = () => {
                       ) : <div className="h-10 w-14 rounded bg-default-100" />}
                     </TableCell>
                     <TableCell className="min-w-[13rem] max-w-[18rem]">
-                      <div className="font-medium text-default-900">{b.name} {b.verified && <span title="Verified">✅</span>}</div>
+                      {/* The row's one stop for the keyboard and for a screen reader: a real button with the listing's name. */}
+                      <div className="font-medium text-default-900">
+                        <button type="button" className="text-left hover:underline focus-visible:underline" onClick={(e) => { e.stopPropagation(); open(b); }}>{b.name}</button>
+                        {b.verified && <span title="Verified"> ✅</span>}
+                      </div>
                       {b.description && <div className="text-xs text-default-500 truncate">{b.description}</div>}
                       {b.review_note && b.status !== "approved" && <div className="text-xs text-warning mt-1">{b.review_note}</div>}
                     </TableCell>
@@ -414,7 +432,7 @@ const DirectoryInner = () => {
         </Card>
       )}
 
-      <Dialog open={form !== null} onOpenChange={(o) => !o && setForm(null)}>
+      <Dialog open={form !== null} onOpenChange={(o) => { if (!o && confirmDiscard(formDirty)) setForm(null); }}>
         <DialogContent size="3xl" className="max-h-[90vh] overflow-y-auto">
           {form && (
             <>
@@ -478,64 +496,64 @@ const DirectoryInner = () => {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <Label className="mb-1.5 block">Business name *</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  <Label htmlFor="directory-business-name" className="mb-1.5 block">Business name *</Label>
+                  <Input id="directory-business-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                   {err("name")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">City *</Label>
+                  <Label htmlFor="directory-city" className="mb-1.5 block">City *</Label>
                   <Select value={form.city_id} onValueChange={(v) => setForm({ ...form, city_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Pick a city" /></SelectTrigger>
+                    <SelectTrigger id="directory-city"><SelectValue placeholder="Pick a city" /></SelectTrigger>
                     <SelectContent>{data?.choices.cities.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name_en}{!c.active && " (off)"}</SelectItem>)}</SelectContent>
                   </Select>
                   {err("city_id")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Kind *</Label>
+                  <Label htmlFor="directory-kind" className="mb-1.5 block">Kind *</Label>
                   <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="directory-kind"><SelectValue /></SelectTrigger>
                     <SelectContent>{Object.entries(data?.choices.categories ?? {}).map(([k, label]) => <SelectItem key={k} value={k}>{label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="md:col-span-2">
-                  <Label className="mb-1.5 block">Location: area or street *</Label>
-                  <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Deira, near Al Rigga metro" />
+                  <Label htmlFor="directory-location-area-or-street" className="mb-1.5 block">Location: area or street *</Label>
+                  <Input id="directory-location-area-or-street" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Deira, near Al Rigga metro" />
                   {err("area")}
                 </div>
                 <div className="md:col-span-2">
-                  <Label className="mb-1.5 block">Google Maps link</Label>
-                  <Input value={form.maps_url} onChange={(e) => setForm({ ...form, maps_url: e.target.value })} placeholder="https://maps.app.goo.gl/…" />
+                  <Label htmlFor="directory-google-maps-link" className="mb-1.5 block">Google Maps link</Label>
+                  <Input id="directory-google-maps-link" value={form.maps_url} onChange={(e) => setForm({ ...form, maps_url: e.target.value })} placeholder="https://maps.app.goo.gl/…" />
                   <p className="text-xs text-default-500 mt-1">A link with coordinates in it fills the pin below on save.</p>
                   {err("maps_url")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Latitude</Label>
-                  <Input value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="25.2697" />
+                  <Label htmlFor="directory-latitude" className="mb-1.5 block">Latitude</Label>
+                  <Input id="directory-latitude" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="25.2697" />
                   {err("latitude")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Longitude</Label>
-                  <Input value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="55.3095" />
+                  <Label htmlFor="directory-longitude" className="mb-1.5 block">Longitude</Label>
+                  <Input id="directory-longitude" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="55.3095" />
                   {err("longitude")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Phone</Label>
-                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="04 123 4567" />
+                  <Label htmlFor="directory-phone" className="mb-1.5 block">Phone</Label>
+                  <Input id="directory-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="04 123 4567" />
                   {err("phone")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">WhatsApp</Label>
-                  <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="050 123 4567" />
+                  <Label htmlFor="directory-whatsapp" className="mb-1.5 block">WhatsApp</Label>
+                  <Input id="directory-whatsapp" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="050 123 4567" />
                   {err("whatsapp")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Telegram</Label>
-                  <Input value={form.telegram} onChange={(e) => setForm({ ...form, telegram: e.target.value })} placeholder="@username" />
+                  <Label htmlFor="directory-telegram" className="mb-1.5 block">Telegram</Label>
+                  <Input id="directory-telegram" value={form.telegram} onChange={(e) => setForm({ ...form, telegram: e.target.value })} placeholder="@username" />
                   {err("telegram")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Website</Label>
-                  <Input value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} placeholder="https://…" />
+                  <Label htmlFor="directory-website" className="mb-1.5 block">Website</Label>
+                  <Input id="directory-website" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} placeholder="https://…" />
                   {err("website")}
                 </div>
                 <div className="md:col-span-2">
@@ -564,18 +582,18 @@ const DirectoryInner = () => {
                   {err("photo")}
                 </div>
                 <div className="md:col-span-2">
-                  <Label className="mb-1.5 block">One line about it</Label>
-                  <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                  <Label htmlFor="directory-one-line-about-it" className="mb-1.5 block">One line about it</Label>
+                  <Textarea id="directory-one-line-about-it" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
                   {err("description")}
                 </div>
                 <div className="md:col-span-2">
-                  <Label className="mb-1.5 block">About (shown on its page)</Label>
-                  <Textarea rows={4} value={form.about} onChange={(e) => setForm({ ...form, about: e.target.value })} />
+                  <Label htmlFor="directory-about-shown-on-its-page" className="mb-1.5 block">About (shown on its page)</Label>
+                  <Textarea id="directory-about-shown-on-its-page" rows={4} value={form.about} onChange={(e) => setForm({ ...form, about: e.target.value })} />
                   {err("about")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Opening hours</Label>
-                  <Input value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} placeholder="Every day 10:00–23:00" />
+                  <Label htmlFor="directory-opening-hours" className="mb-1.5 block">Opening hours</Label>
+                  <Input id="directory-opening-hours" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} placeholder="Every day 10:00–23:00" />
                   {err("hours")}
                 </div>
                 <div>
@@ -608,8 +626,8 @@ const DirectoryInner = () => {
 
               {current && current.status !== "approved" && !current.changes_submitted_at && (
                 <div>
-                  <Label className="mb-1.5 block">Reason (sent to the owner with a rejection)</Label>
-                  <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Closed down, or could not confirm" />
+                  <Label htmlFor="directory-reason-sent-to-the-owner-with-a-rejection" className="mb-1.5 block">Reason (sent to the owner with a rejection)</Label>
+                  <Input id="directory-reason-sent-to-the-owner-with-a-rejection" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Closed down, or could not confirm" />
                 </div>
               )}
 

@@ -26,7 +26,7 @@ const FIELDS: { key: string; label: string; hint: string; placeholder?: string; 
   { key: "assistant_per_day", label: "Assistant answers per member per day", hint: "Each answer is one Claude call. Default 20; 0 turns the assistant off.", placeholder: "20" },
   { key: "safety_consulate_phone", label: "Ethiopian consulate phone, for /safe", hint: "Shown on the safety card when set. Check the number before saving.", placeholder: "+971 …" },
   { key: "safety_mohre_phone", label: "MoHRE phone, for /safe", hint: "Shown on the safety card when set. Check the number before saving.", placeholder: "…" },
-  { key: "tick_token", label: "Scheduler token (TICK_TOKEN)", hint: "The same value as TICK_TOKEN on the public website, which calls the scheduler every minute. At least 32 characters. Write-only.", secret: true },
+  { key: "tick_token", label: "Scheduler token (TICK_TOKEN)", hint: "Optional: leave it empty and the website starts the scheduler by itself, once a minute. If you save one (at least 32 characters), put the same value as TICK_TOKEN on the website. Write-only.", secret: true },
   { key: "site_api_key", label: "Website key (SITE_API_KEY)", hint: "The same value as SITE_API_KEY on the public website, so rate limits count each visitor. At least 32 characters. Write-only.", secret: true },
 ];
 

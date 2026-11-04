@@ -15,7 +15,8 @@ import { JobStatusBadge, ScamScore } from "@/components/job-badges";
 import ConfirmButton from "@/components/confirm-button";
 import { ErrorState, PageLoading } from "@/components/states";
 import { runAction, toastResult } from "@/lib/toast";
-import { useApiQuery, useApiMutation, formatDateTime, type JobDetail, type AuditEntry, CATEGORY_NAMES, JOB_EMIRATE_NAMES } from "@/lib/api";
+import { useLeaveGuard } from "@/lib/unsaved";
+import { useApiQuery, useApiMutation, formatDateTime, ApiError, type JobDetail, type AuditEntry, CATEGORY_NAMES, JOB_EMIRATE_NAMES } from "@/lib/api";
 
 type Payload = { job: JobDetail; audit: AuditEntry[]; choices: { categories: string[]; emirates: string[] } };
 
@@ -36,6 +37,9 @@ const JobPage = () => {
   const [dirty, setDirty] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [blockCompany, setBlockCompany] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  // While a correction is unsaved, closing the tab asks first.
+  useLeaveGuard(Boolean(dirty && data && draft && JSON.stringify(draft) !== JSON.stringify(draftOf(data.job))));
 
   // The form follows the server until the moderator types; after that only a save resets it.
   useEffect(() => {
@@ -60,14 +64,20 @@ const JobPage = () => {
 
   const job = data.job;
   // A successful save hands the form back to the server's copy.
-  const act = (promise: Promise<unknown>, done: string) => runAction(promise.then(() => setDirty(false)), done);
+  const act = (promise: Promise<unknown>, done: string) => runAction(promise.then(() => { setErrors({}); setDirty(false); }).catch(showFieldErrors), done);
+  // What the server refused goes beside its field; the toast still says it failed.
+  const showFieldErrors = (e: unknown): never => {
+    if (e instanceof ApiError) setErrors(e.errors ?? {});
+    throw e;
+  };
+  const err = (k: string) => errors[k] && <p className="text-xs text-destructive mt-1">{errors[k][0]}</p>;
   // The PATCH answers with the summary only (no summaries or salary numbers); the draft itself is what was
   // saved, so keep it and let the next refetch confirm it rather than snapping to the cached pre-save job.
   // The PATCH answers with the summary only, and the cache still holds the pre-save job until the refetch
   // lands: keep the draft (it is what was saved) and hand it back to the server copy only once that is fresh.
   const saveDraft = (body: Draft) =>
     runAction(
-      save.mutateAsync(body).then(() => refetch()).then(() => setDirty(false)),
+      save.mutateAsync(body).then(() => refetch()).then(() => { setErrors({}); setDirty(false); }).catch(showFieldErrors),
       job.status === "published" ? "Saved; the channel card is updated." : "Saved."
     );
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => {
@@ -89,44 +99,49 @@ const JobPage = () => {
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <Label className="mb-1.5 block">Title</Label>
-                  <Input value={draft.title} onChange={(e) => set("title", e.target.value)} />
+                  <Label htmlFor="jobs-detail-title" className="mb-1.5 block">Title</Label>
+                  <Input id="jobs-detail-title" value={draft.title} onChange={(e) => set("title", e.target.value)} />
+                  {err("title")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Company</Label>
-                  <Input value={draft.company ?? ""} onChange={(e) => set("company", e.target.value || null)} />
+                  <Label htmlFor="jobs-detail-company" className="mb-1.5 block">Company</Label>
+                  <Input id="jobs-detail-company" value={draft.company ?? ""} onChange={(e) => set("company", e.target.value || null)} />
+                  {err("company")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Area</Label>
-                  <Input value={draft.sub_area ?? ""} onChange={(e) => set("sub_area", e.target.value || null)} placeholder="Deira, Al Quoz…" />
+                  <Label htmlFor="jobs-detail-area" className="mb-1.5 block">Area</Label>
+                  <Input id="jobs-detail-area" value={draft.sub_area ?? ""} onChange={(e) => set("sub_area", e.target.value || null)} placeholder="Deira, Al Quoz…" />
+                  {err("sub_area")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Work</Label>
+                  <Label htmlFor="jobs-detail-work" className="mb-1.5 block">Work</Label>
                   <Select value={draft.category} onValueChange={(v) => set("category", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="jobs-detail-work"><SelectValue /></SelectTrigger>
                     <SelectContent>{data.choices.categories.map((c) => <SelectItem key={c} value={c}>{CATEGORY_NAMES[c] ?? c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Where</Label>
+                  <Label htmlFor="jobs-detail-where" className="mb-1.5 block">Where</Label>
                   <Select value={draft.emirate} onValueChange={(v) => set("emirate", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="jobs-detail-where"><SelectValue /></SelectTrigger>
                     <SelectContent>{data.choices.emirates.map((e) => <SelectItem key={e} value={e}>{JOB_EMIRATE_NAMES[e] ?? e}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Salary from (monthly)</Label>
-                  <Input type="number" min={0} value={draft.salary_min ?? ""} onChange={(e) => set("salary_min", e.target.value ? Number(e.target.value) : null)} />
+                  <Label htmlFor="jobs-detail-salary-from-monthly" className="mb-1.5 block">Salary from (monthly)</Label>
+                  <Input id="jobs-detail-salary-from-monthly" type="number" min={0} value={draft.salary_min ?? ""} onChange={(e) => set("salary_min", e.target.value ? Number(e.target.value) : null)} />
+                  {err("salary_min")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Salary to</Label>
-                  <Input type="number" min={0} value={draft.salary_max ?? ""} onChange={(e) => set("salary_max", e.target.value ? Number(e.target.value) : null)} />
+                  <Label htmlFor="jobs-detail-salary-to" className="mb-1.5 block">Salary to</Label>
+                  <Input id="jobs-detail-salary-to" type="number" min={0} value={draft.salary_max ?? ""} onChange={(e) => set("salary_max", e.target.value ? Number(e.target.value) : null)} />
+                  {err("salary_max")}
                 </div>
                 {(["accommodation", "visa"] as const).map((field) => (
                   <div key={field}>
-                    <Label className="mb-1.5 block capitalize">{field}</Label>
+                    <Label htmlFor={`job-${field}`} className="mb-1.5 block capitalize">{field}</Label>
                     <Select value={draft[field]} onValueChange={(v) => set(field, v as Draft[typeof field])}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id={`job-${field}`}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="yes">Provided</SelectItem>
                         <SelectItem value="no">Not provided</SelectItem>
@@ -139,8 +154,9 @@ const JobPage = () => {
 
               {([["summary_am", "Amharic summary"], ["summary_ti", "Tigrinya summary"], ["summary_en", "English summary"], ["summary_om", "Afaan Oromoo summary"]] as const).map(([field, label]) => (
                 <div key={field}>
-                  <Label className="mb-1.5 block">{label}</Label>
-                  <Textarea rows={3} value={draft[field] ?? ""} onChange={(e) => set(field, e.target.value || null)} className="text-base leading-7" />
+                  <Label htmlFor={`job-${field}`} className="mb-1.5 block">{label}</Label>
+                  <Textarea id={`job-${field}`} rows={3} value={draft[field] ?? ""} onChange={(e) => set(field, e.target.value || null)} className="text-base leading-7" />
+                  {err(field)}
                 </div>
               ))}
 

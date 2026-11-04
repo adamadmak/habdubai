@@ -117,33 +117,33 @@ const CitiesPage = () => {
               </DialogHeader>
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <Label className="mb-1.5 block">English *</Label>
-                  <Input value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} placeholder="Riyadh" />
+                  <Label htmlFor="directory-cities-english" className="mb-1.5 block">English *</Label>
+                  <Input id="directory-cities-english" value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} placeholder="Riyadh" />
                   {err("name_en")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Amharic *</Label>
-                  <Input value={form.name_am} onChange={(e) => setForm({ ...form, name_am: e.target.value })} placeholder="ሪያድ" />
+                  <Label htmlFor="directory-cities-amharic" className="mb-1.5 block">Amharic *</Label>
+                  <Input id="directory-cities-amharic" value={form.name_am} onChange={(e) => setForm({ ...form, name_am: e.target.value })} placeholder="ሪያድ" />
                   {err("name_am")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Tigrinya *</Label>
-                  <Input value={form.name_ti} onChange={(e) => setForm({ ...form, name_ti: e.target.value })} placeholder="ሪያድ" />
+                  <Label htmlFor="directory-cities-tigrinya" className="mb-1.5 block">Tigrinya *</Label>
+                  <Input id="directory-cities-tigrinya" value={form.name_ti} onChange={(e) => setForm({ ...form, name_ti: e.target.value })} placeholder="ሪያድ" />
                   {err("name_ti")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Afaan Oromoo</Label>
-                  <Input value={form.name_om} onChange={(e) => setForm({ ...form, name_om: e.target.value })} placeholder="Riyaad (English when empty)" />
+                  <Label htmlFor="directory-cities-afaan-oromoo" className="mb-1.5 block">Afaan Oromoo</Label>
+                  <Input id="directory-cities-afaan-oromoo" value={form.name_om} onChange={(e) => setForm({ ...form, name_om: e.target.value })} placeholder="Riyaad (English when empty)" />
                   {err("name_om")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Country code</Label>
-                  <Input value={form.country} maxLength={2} onChange={(e) => setForm({ ...form, country: e.target.value })} />
+                  <Label htmlFor="directory-cities-country-code" className="mb-1.5 block">Country code</Label>
+                  <Input id="directory-cities-country-code" value={form.country} maxLength={2} onChange={(e) => setForm({ ...form, country: e.target.value })} />
                   {err("country")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Order</Label>
-                  <Input type="number" value={form.sort} onChange={(e) => setForm({ ...form, sort: Number(e.target.value) })} />
+                  <Label htmlFor="directory-cities-order" className="mb-1.5 block">Order</Label>
+                  <Input id="directory-cities-order" type="number" value={form.sort} onChange={(e) => setForm({ ...form, sort: Number(e.target.value) })} />
                 </div>
                 <label className="flex items-end gap-2 pb-2 text-sm">
                   <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />

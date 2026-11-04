@@ -57,14 +57,14 @@ const MembersPageInner = () => {
       <Card>
         <CardContent className="p-4 flex flex-wrap gap-3 items-center">
           <form
-            className="flex gap-2"
+            className="flex w-full gap-2 sm:w-auto"
             role="search"
             onSubmit={(e) => {
               e.preventDefault();
               update({ search: searchInput.trim() });
             }}
           >
-            <Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Name, @username, last 4 digits, Telegram id" className="w-72 max-w-full" aria-label="Search members" />
+            <Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Name, @username, last 4 digits, Telegram id" className="min-w-0 flex-1 sm:w-72 sm:flex-none" aria-label="Search members" />
             <Button type="submit" variant="outline">Search</Button>
           </form>
           <Select value={status || "all"} onValueChange={(v) => update({ status: v === "all" ? "" : v })}>

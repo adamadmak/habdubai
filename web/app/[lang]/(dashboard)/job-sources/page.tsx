@@ -184,14 +184,14 @@ const SourcesPage = () => {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label className="mb-1.5 block">Name</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Bayt — Dubai drivers" />
+                  <Label htmlFor="job-sources-name" className="mb-1.5 block">Name</Label>
+                  <Input id="job-sources-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Bayt — Dubai drivers" />
                   {errors.name && <p className="text-xs text-destructive mt-1">{errors.name[0]}</p>}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Kind</Label>
+                  <Label htmlFor="job-sources-kind" className="mb-1.5 block">Kind</Label>
                   <Select value={form.kind} onValueChange={(v) => { setTest(null); setForm({ ...form, kind: v as SourceKind, config: {} }); }} disabled={Boolean(form.id)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="job-sources-kind"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="rss">RSS or Atom feed</SelectItem>
                       <SelectItem value="html">Web page (CSS selectors)</SelectItem>
@@ -201,8 +201,8 @@ const SourcesPage = () => {
                 </div>
                 {form.kind !== "telegram" && (
                   <div>
-                    <Label className="mb-1.5 block">Fetch every (minutes)</Label>
-                    <Input type="number" min={15} max={1440} value={form.interval_minutes} onChange={(e) => setForm({ ...form, interval_minutes: Number(e.target.value) })} />
+                    <Label htmlFor="job-sources-fetch-every-minutes" className="mb-1.5 block">Fetch every (minutes)</Label>
+                    <Input id="job-sources-fetch-every-minutes" type="number" min={15} max={1440} value={form.interval_minutes} onChange={(e) => setForm({ ...form, interval_minutes: Number(e.target.value) })} />
                   </div>
                 )}
                 <div className="flex items-end gap-2 pb-2">
@@ -212,8 +212,8 @@ const SourcesPage = () => {
 
                 {FIELDS[form.kind].map((f) => (
                   <div key={f.key} className={f.key === "url" ? "md:col-span-2" : ""}>
-                    <Label className="mb-1.5 block">{f.label}{f.required && " *"}</Label>
-                    <Input value={form.config[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => setForm({ ...form, config: { ...form.config, [f.key]: e.target.value } })} />
+                    <Label htmlFor={`source-config-${f.key}`} className="mb-1.5 block">{f.label}{f.required && " *"}</Label>
+                    <Input id={`source-config-${f.key}`} value={form.config[f.key] ?? ""} placeholder={f.placeholder} onChange={(e) => setForm({ ...form, config: { ...form.config, [f.key]: e.target.value } })} />
                     <p className="text-xs text-default-500 mt-1">{f.hint}</p>
                     {errors[`config.${f.key}`] && <p className="text-xs text-destructive mt-1">{errors[`config.${f.key}`][0]}</p>}
                   </div>

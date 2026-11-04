@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import toast from "react-hot-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,18 +18,25 @@ import { runAction, toastResult } from "@/lib/toast";
 import { Megaphone, Tags } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApiQuery, useApiMutation, formatDateTime, ApiError, errorText, type AnnouncementRow, type AnnouncementTopicRow } from "@/lib/api";
+import { confirmDiscard, useLeaveGuard } from "@/lib/unsaved";
+import { useUrlState } from "@/lib/use-url-state";
 
 type Payload = { data: AnnouncementRow[]; counts: Record<string, number>; topics: AnnouncementTopicRow[] };
 type TopicForm = Omit<AnnouncementTopicRow, "id" | "key"> & { id?: number };
 
 const STATUS_COLOR = { pending: "warning", published: "success", rejected: "destructive", deleted: "secondary" } as const;
+const LANGS = ["am", "ti", "en", "om"] as const;
 
-const AnnouncementsPage = () => {
-  const [status, setStatus] = useState("pending");
+const AnnouncementsInner = () => {
+  const [url, setUrl] = useUrlState({ tab: "list", status: "pending" });
+  const { status } = url;
   const { data, isLoading, error, refetch } = useApiQuery<Payload>(["announcements", status], `/admin/announcements?status=${status}`, { refetchInterval: 30_000, placeholderData: (previous) => previous });
   const [compose, setCompose] = useState<{ topic_id: string; text: string; event_date: string; event_place: string } | null>(null);
   const [edit, setEdit] = useState<AnnouncementRow | null>(null);
+  const [editBefore, setEditBefore] = useState("");
   const [topic, setTopic] = useState<TopicForm | null>(null);
+  const [topicBefore, setTopicBefore] = useState("");
+  const openTopic = (next: TopicForm) => { setErrors({}); setTopicBefore(JSON.stringify(next)); setTopic(next); };
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
@@ -45,6 +52,13 @@ const AnnouncementsPage = () => {
   );
   const saveTopic = useApiMutation<unknown, TopicForm>((req, t) => (t.id ? req(`/admin/announcement-topics/${t.id}`, "PUT", t) : req("/admin/announcement-topics", "POST", t)), inv);
 
+  // What a stray click outside a dialog would throw away.
+  const composeDirty = compose !== null && Boolean(compose.text.trim() || compose.event_date || compose.event_place);
+  const wording = (a: AnnouncementRow) => JSON.stringify(LANGS.map((l) => a[`text_${l}`] ?? ""));
+  const editDirty = edit !== null && wording(edit) !== editBefore;
+  const topicDirty = topic !== null && JSON.stringify(topic) !== topicBefore;
+  useLeaveGuard(composeDirty || editDirty || topicDirty);
+
   const fail = (e: ApiError) => { setErrors(e.errors ?? {}); toast.error(errorText(e)); };
   const err = (k: string) => errors[k] && <p className="text-xs text-destructive mt-1">{errors[k][0]}</p>;
 
@@ -54,7 +68,7 @@ const AnnouncementsPage = () => {
         <Button onClick={() => { setErrors({}); setCompose({ topic_id: String(data?.topics.find((t) => t.active)?.id ?? ""), text: "", event_date: "", event_place: "" }); }}>New announcement</Button>
       </PageTitle>
 
-      <Tabs defaultValue="list">
+      <Tabs value={url.tab === "topics" ? "topics" : "list"} onValueChange={(tab) => setUrl({ tab })}>
         <TabsList>
           <TabsTrigger value="list">Announcements</TabsTrigger>
           <TabsTrigger value="topics">Topics</TabsTrigger>
@@ -63,7 +77,7 @@ const AnnouncementsPage = () => {
         <TabsContent value="list" className="mt-4">
           <div className="flex flex-wrap gap-2 mb-4">
             {(["pending", "published", "rejected", "deleted", "all"] as const).map((s) => (
-              <button key={s} type="button" aria-pressed={status === s} onClick={() => setStatus(s)}
+              <button key={s} type="button" aria-pressed={status === s} onClick={() => setUrl({ status: s })}
                 className={cn("px-3 py-1.5 rounded-md text-sm font-medium border", status === s ? "bg-primary text-primary-foreground border-primary" : "bg-card text-default-700 border-default-200 hover:border-primary")}>
                 {({ pending: "Waiting for approval", published: "Published", rejected: "Rejected", deleted: "Deleted", all: "All" } as const)[s]}{data && s !== "all" && <span className="ml-1.5 opacity-75">{data.counts[s] ?? 0}</span>}
               </button>
@@ -121,7 +135,7 @@ const AnnouncementsPage = () => {
                     )}
                     {a.status === "published" && (
                       <>
-                        <Button size="sm" variant="outline" color="secondary" onClick={() => { setErrors({}); setEdit({ ...a }); }}>Edit wording</Button>
+                        <Button size="sm" variant="outline" color="secondary" onClick={() => { setErrors({}); setEditBefore(wording(a)); setEdit({ ...a }); }}>Edit wording</Button>
                         <ConfirmButton size="sm" variant="outline" color="destructive" disabled={act.isPending} label="Delete"
                           title="Delete this announcement?"
                           description="It is removed from the channel and the website. Messages already sent to members stay in their chats."
@@ -137,13 +151,13 @@ const AnnouncementsPage = () => {
 
         <TabsContent value="topics" className="mt-4 space-y-3">
           <div className="flex justify-end">
-            <Button variant="outline" onClick={() => { setErrors({}); setTopic({ name_en: "", name_am: "", name_ti: "", name_om: "", emoji: "📣", needs_approval: false, default_on: false, pin: false, sort: 100, active: true }); }}>Add topic</Button>
+            <Button variant="outline" onClick={() => { openTopic({ name_en: "", name_am: "", name_ti: "", name_om: "", emoji: "📣", needs_approval: false, default_on: false, pin: false, sort: 100, active: true }); }}>Add topic</Button>
           </div>
           {data && data.topics.length === 0 && (
             <Card><EmptyState icon={Tags} title="No topics yet">Members follow topics with /topics and get each announcement in their language. Add the first one above.</EmptyState></Card>
           )}
           {data?.topics.map((t) => (
-            <Card key={t.id} role="button" tabIndex={0} aria-label={`Edit topic ${t.name_en}`} onKeyDown={(e) => { if (e.key === "Enter") { setErrors({}); setTopic({ ...t }); } }} className="cursor-pointer transition-colors hover:border-primary/50" onClick={() => { setErrors({}); setTopic({ ...t }); }}>
+            <Card key={t.id} role="button" tabIndex={0} aria-label={`Edit topic ${t.name_en}`} onKeyDown={(e) => { if (e.key === "Enter") { openTopic({ ...t }); } }} className="cursor-pointer transition-colors hover:border-primary/50" onClick={() => { openTopic({ ...t }); }}>
               <CardContent className="p-4 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="font-medium text-default-900">{t.emoji} {t.name_en} {!t.active && <Badge color="secondary" variant="soft">off</Badge>}</div>
@@ -160,7 +174,7 @@ const AnnouncementsPage = () => {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={compose !== null} onOpenChange={(o) => !o && setCompose(null)}>
+      <Dialog open={compose !== null} onOpenChange={(o) => { if (!o && confirmDiscard(composeDirty)) setCompose(null); }}>
         <DialogContent size="2xl">
           {compose && (
             <>
@@ -170,27 +184,27 @@ const AnnouncementsPage = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label className="mb-1.5 block">Topic</Label>
+                  <Label htmlFor="announcements-topic" className="mb-1.5 block">Topic</Label>
                   <Select value={compose.topic_id} onValueChange={(v) => setCompose({ ...compose, topic_id: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="announcements-topic"><SelectValue /></SelectTrigger>
                     <SelectContent>{data?.topics.filter((t) => t.active).map((t) => <SelectItem key={t.id} value={String(t.id)}>{t.emoji} {t.name_en}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Text</Label>
-                  <Textarea rows={6} maxLength={2000} value={compose.text} onChange={(e) => setCompose({ ...compose, text: e.target.value })} className="text-base" />
+                  <Label htmlFor="announcements-text" className="mb-1.5 block">Text</Label>
+                  <Textarea id="announcements-text" rows={6} maxLength={2000} value={compose.text} onChange={(e) => setCompose({ ...compose, text: e.target.value })} className="text-base" />
                   <p className="mt-1 text-xs text-default-500">{compose.text.trim().length} of 2000 characters{compose.text.trim().length < 10 ? "; at least 10" : ""}.</p>
                   {err("text")}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label className="mb-1.5 block">Event date (optional)</Label>
-                    <Input type="date" value={compose.event_date} onChange={(e) => setCompose({ ...compose, event_date: e.target.value })} />
+                    <Label htmlFor="announcements-event-date-optional" className="mb-1.5 block">Event date (optional)</Label>
+                    <Input id="announcements-event-date-optional" type="date" value={compose.event_date} onChange={(e) => setCompose({ ...compose, event_date: e.target.value })} />
                     {err("event_date")}
                   </div>
                   <div>
-                    <Label className="mb-1.5 block">Place (optional)</Label>
-                    <Input value={compose.event_place} onChange={(e) => setCompose({ ...compose, event_place: e.target.value })} />
+                    <Label htmlFor="announcements-place-optional" className="mb-1.5 block">Place (optional)</Label>
+                    <Input id="announcements-place-optional" value={compose.event_place} onChange={(e) => setCompose({ ...compose, event_place: e.target.value })} />
                   </div>
                 </div>
               </div>
@@ -204,7 +218,7 @@ const AnnouncementsPage = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
+      <Dialog open={edit !== null} onOpenChange={(o) => { if (!o && confirmDiscard(editDirty)) setEdit(null); }}>
         <DialogContent size="3xl">
           {edit && (
             <>
@@ -215,8 +229,8 @@ const AnnouncementsPage = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 {(["am", "ti", "en", "om"] as const).map((l) => (
                   <div key={l}>
-                    <Label className="mb-1.5 block">{l === "am" ? "Amharic" : l === "ti" ? "Tigrinya" : l === "om" ? "Afaan Oromoo" : "English"}</Label>
-                    <Textarea rows={8} value={edit[`text_${l}`] ?? ""} onChange={(e) => setEdit({ ...edit, [`text_${l}`]: e.target.value })} className="text-base" />
+                    <Label htmlFor={`announcement-text-${l}`} className="mb-1.5 block">{l === "am" ? "Amharic" : l === "ti" ? "Tigrinya" : l === "om" ? "Afaan Oromoo" : "English"}</Label>
+                    <Textarea id={`announcement-text-${l}`} rows={8} value={edit[`text_${l}`] ?? ""} onChange={(e) => setEdit({ ...edit, [`text_${l}`]: e.target.value })} className="text-base" />
                     {err(`text_${l}`)}
                   </div>
                 ))}
@@ -229,7 +243,7 @@ const AnnouncementsPage = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={topic !== null} onOpenChange={(o) => !o && setTopic(null)}>
+      <Dialog open={topic !== null} onOpenChange={(o) => { if (!o && confirmDiscard(topicDirty)) setTopic(null); }}>
         <DialogContent size="lg">
           {topic && (
             <>
@@ -240,28 +254,28 @@ const AnnouncementsPage = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2 grid grid-cols-[5rem_1fr] gap-2">
                   <div>
-                    <Label className="mb-1.5 block">Icon</Label>
-                    <Input value={topic.emoji} onChange={(e) => setTopic({ ...topic, emoji: e.target.value })} />
+                    <Label htmlFor="announcements-icon" className="mb-1.5 block">Icon</Label>
+                    <Input id="announcements-icon" value={topic.emoji} onChange={(e) => setTopic({ ...topic, emoji: e.target.value })} />
                   </div>
                   <div>
-                    <Label className="mb-1.5 block">English name *</Label>
-                    <Input value={topic.name_en} onChange={(e) => setTopic({ ...topic, name_en: e.target.value })} />
+                    <Label htmlFor="announcements-english-name" className="mb-1.5 block">English name *</Label>
+                    <Input id="announcements-english-name" value={topic.name_en} onChange={(e) => setTopic({ ...topic, name_en: e.target.value })} />
                     {err("name_en")}
                   </div>
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Amharic *</Label>
-                  <Input value={topic.name_am} onChange={(e) => setTopic({ ...topic, name_am: e.target.value })} />
+                  <Label htmlFor="announcements-amharic" className="mb-1.5 block">Amharic *</Label>
+                  <Input id="announcements-amharic" value={topic.name_am} onChange={(e) => setTopic({ ...topic, name_am: e.target.value })} />
                   {err("name_am")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Tigrinya *</Label>
-                  <Input value={topic.name_ti} onChange={(e) => setTopic({ ...topic, name_ti: e.target.value })} />
+                  <Label htmlFor="announcements-tigrinya" className="mb-1.5 block">Tigrinya *</Label>
+                  <Input id="announcements-tigrinya" value={topic.name_ti} onChange={(e) => setTopic({ ...topic, name_ti: e.target.value })} />
                   {err("name_ti")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Afaan Oromoo</Label>
-                  <Input value={topic.name_om ?? ""} onChange={(e) => setTopic({ ...topic, name_om: e.target.value })} placeholder="English when empty" />
+                  <Label htmlFor="announcements-afaan-oromoo" className="mb-1.5 block">Afaan Oromoo</Label>
+                  <Input id="announcements-afaan-oromoo" value={topic.name_om ?? ""} onChange={(e) => setTopic({ ...topic, name_om: e.target.value })} placeholder="English when empty" />
                   {err("name_om")}
                 </div>
                 <label className="flex items-center gap-2 text-sm"><Switch checked={topic.needs_approval} onCheckedChange={(v) => setTopic({ ...topic, needs_approval: v })} /> A moderator approves posts</label>
@@ -279,5 +293,11 @@ const AnnouncementsPage = () => {
     </div>
   );
 };
+
+const AnnouncementsPage = () => (
+  <Suspense>
+    <AnnouncementsInner />
+  </Suspense>
+);
 
 export default AnnouncementsPage;

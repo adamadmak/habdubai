@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,6 +9,7 @@ import { ScrollText } from "lucide-react";
 import AuditChange from "@/components/audit-change";
 import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
 import { useApiQuery, formatDateTime, type AuditEntry } from "@/lib/api";
+import { pageNumber, useLastPageAtMost, useUrlState } from "@/lib/use-url-state";
 
 /** Where a logged subject lives in the admin, when it has a page. */
 const SUBJECT_PAGE: Record<string, (id: number) => string> = {
@@ -16,9 +17,12 @@ const SUBJECT_PAGE: Record<string, (id: number) => string> = {
   job: (id) => `/jobs/${id}`,
 };
 
-const AuditPage = () => {
-  const [page, setPage] = useState(1);
+const AuditInner = () => {
+  const [url, setUrl] = useUrlState({ page: "1" });
+  const page = pageNumber(url.page);
+  const setPage = (next: number) => setUrl({ page: String(next) });
   const { data, isLoading, error, refetch } = useApiQuery<{ data: AuditEntry[]; meta: { total: number; page: number; last_page: number } }>(["audit", page], `/admin/audit?page=${page}`, { placeholderData: (previous) => previous });
+  useLastPageAtMost(data?.meta.last_page, page, setPage);
 
   return (
     <div>
@@ -76,5 +80,11 @@ const AuditPage = () => {
     </div>
   );
 };
+
+const AuditPage = () => (
+  <Suspense>
+    <AuditInner />
+  </Suspense>
+);
 
 export default AuditPage;

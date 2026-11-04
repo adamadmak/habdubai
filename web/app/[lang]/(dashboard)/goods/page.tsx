@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { Link2, Package, Scale } from "lucide-react";
@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import PageTitle from "@/components/page-title";
 import { cn } from "@/lib/utils";
 import { useApiQuery, useApiMutation, formatDate, formatDateTime, errorText, type GoodsMatchRow, type GoodsMember, type GoodsPostRow } from "@/lib/api";
+import { pageNumber, useLastPageAtMost, useUrlState } from "@/lib/use-url-state";
 
 /** "AED 15 per kg", "Free", "To agree": what a post says about the carry fee, paid member to member. */
 function fee(p: GoodsPostRow): string | null {
@@ -113,13 +114,18 @@ function Pager({ meta, page, setPage }: { meta?: { page: number; last_page: numb
   );
 }
 
-const GoodsPage = () => {
-  const [matchStatus, setMatchStatus] = useState("live");
-  const [matchPage, setMatchPage] = useState(1);
-  const [postStatus, setPostStatus] = useState("open");
-  const [postPage, setPostPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [query, setQuery] = useState("");
+const GoodsInner = () => {
+  const [url, setUrl] = useUrlState({ tab: "disputes", matches: "live", matches_page: "1", posts: "open", posts_page: "1", search: "" });
+  const matchStatus = url.matches;
+  const matchPage = pageNumber(url.matches_page);
+  const setMatchPage = (next: number) => setUrl({ matches_page: String(next) });
+  const postStatus = url.posts;
+  const postPage = pageNumber(url.posts_page);
+  const setPostPage = (next: number) => setUrl({ posts_page: String(next) });
+  const query = url.search;
+  const [search, setSearch] = useState(query);
+  // Back and forward change the address; the box follows it.
+  useEffect(() => setSearch(query), [query]);
   const [decision, setDecision] = useState<Decision | null>(null);
   const [note, setNote] = useState("");
   const [hiding, setHiding] = useState<GoodsPostRow | null>(null);
@@ -129,10 +135,12 @@ const GoodsPage = () => {
 
   const mqs = new URLSearchParams({ status: matchStatus, page: String(matchPage) });
   const matches = useApiQuery<Paged<GoodsMatchRow>>(["goods-matches", mqs.toString()], `/admin/goods/matches?${mqs.toString()}`, { placeholderData: (previous) => previous });
+  useLastPageAtMost(matches.data?.meta.last_page, matchPage, setMatchPage);
 
   const pqs = new URLSearchParams({ status: postStatus, page: String(postPage) });
   if (query) pqs.set("search", query);
   const posts = useApiQuery<Paged<GoodsPostRow>>(["goods-posts", pqs.toString()], `/admin/goods/posts?${pqs.toString()}`, { placeholderData: (previous) => previous });
+  useLastPageAtMost(posts.data?.meta.last_page, postPage, setPostPage);
 
   const resolve = useApiMutation<unknown, Decision & { note: string }>(
     (req, d) => req(`/admin/goods/matches/${d.match.id}/resolve`, "POST", { outcome: d.outcome, failed_member_id: d.failed_member_id, note: d.note || null }),
@@ -179,7 +187,7 @@ const GoodsPage = () => {
         description="Travellers with spare kilos and members who need something carried. No money goes through the platform; members agree between themselves. A “no” at the check-in after the flight opens a dispute here."
       />
 
-      <Tabs defaultValue="disputes">
+      <Tabs value={["disputes", "matches", "posts"].includes(url.tab) ? url.tab : "disputes"} onValueChange={(tab) => setUrl({ tab })}>
         <TabsList>
           <TabsTrigger value="disputes">
             Disputes{disputes.data && disputes.data.meta.total > 0 && <Badge color="destructive" className="ml-2">{disputes.data.meta.total}</Badge>}
@@ -231,7 +239,7 @@ const GoodsPage = () => {
         </TabsContent>
 
         <TabsContent value="matches" className="mt-4 space-y-4">
-          <Chips tabs={MATCH_TABS} value={matchStatus} counts={matches.data?.counts} onChange={(v) => { setMatchStatus(v); setMatchPage(1); }} />
+          <Chips tabs={MATCH_TABS} value={matchStatus} counts={matches.data?.counts} onChange={(v) => setUrl({ matches: v, matches_page: "1" })} />
           <Card>
             <CardContent className="p-0">
               {matches.error && <ErrorState className="m-4" error={matches.error} onRetry={() => matches.refetch()} title="Matches could not be loaded" />}
@@ -290,8 +298,8 @@ const GoodsPage = () => {
 
         <TabsContent value="posts" className="mt-4 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <Chips tabs={POST_TABS} value={postStatus} counts={posts.data?.counts} onChange={(v) => { setPostStatus(v); setPostPage(1); }} />
-            <form className="flex gap-2 ml-auto" role="search" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPostPage(1); }}>
+            <Chips tabs={POST_TABS} value={postStatus} counts={posts.data?.counts} onChange={(v) => setUrl({ posts: v, posts_page: "1" })} />
+            <form className="flex gap-2 ml-auto" role="search" onSubmit={(e) => { e.preventDefault(); setUrl({ search: search.trim(), posts_page: "1" }); }}>
               <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Member or words in the post" className="w-60" aria-label="Search posts" />
               <Button type="submit" variant="outline">Search</Button>
             </form>
@@ -403,5 +411,11 @@ const GoodsPage = () => {
     </div>
   );
 };
+
+const GoodsPage = () => (
+  <Suspense>
+    <GoodsInner />
+  </Suspense>
+);
 
 export default GoodsPage;

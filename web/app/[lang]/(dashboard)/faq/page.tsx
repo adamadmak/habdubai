@@ -134,27 +134,27 @@ const FaqPage = () => {
               </DialogHeader>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label className="mb-1.5 block">Topic</Label>
+                  <Label htmlFor="faq-topic" className="mb-1.5 block">Topic</Label>
                   <Select value={faq.category} onValueChange={(v) => setFaq({ ...faq, category: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="faq-topic"><SelectValue /></SelectTrigger>
                     <SelectContent>{Object.entries(data?.categories ?? {}).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Source link</Label>
-                  <Input value={faq.source_url ?? ""} onChange={(e) => setFaq({ ...faq, source_url: e.target.value })} placeholder="https://…" />
+                  <Label htmlFor="faq-source-link" className="mb-1.5 block">Source link</Label>
+                  <Input id="faq-source-link" value={faq.source_url ?? ""} onChange={(e) => setFaq({ ...faq, source_url: e.target.value })} placeholder="https://…" />
                   {err("source_url")}
                 </div>
                 {([["en", "English"], ["am", "Amharic"], ["ti", "Tigrinya"], ["om", "Afaan Oromoo"]] as const).map(([l, name]) => (
                   <div key={l} className="md:col-span-2 grid gap-2 md:grid-cols-2">
                     <div>
-                      <Label className="mb-1.5 block">Question, {name}{l === "en" && " *"}</Label>
-                      <Textarea rows={2} value={(faq as any)[`q_${l}`] ?? ""} onChange={(e) => setFaq({ ...faq, [`q_${l}`]: e.target.value })} className="text-base" />
+                      <Label htmlFor={`faq-q-${l}`} className="mb-1.5 block">Question, {name}{l === "en" && " *"}</Label>
+                      <Textarea id={`faq-q-${l}`} rows={2} value={(faq as any)[`q_${l}`] ?? ""} onChange={(e) => setFaq({ ...faq, [`q_${l}`]: e.target.value })} className="text-base" />
                       {err(`q_${l}`)}
                     </div>
                     <div>
-                      <Label className="mb-1.5 block">Answer, {name}{l === "en" && " *"}</Label>
-                      <Textarea rows={3} value={(faq as any)[`a_${l}`] ?? ""} onChange={(e) => setFaq({ ...faq, [`a_${l}`]: e.target.value })} className="text-base" />
+                      <Label htmlFor={`faq-a-${l}`} className="mb-1.5 block">Answer, {name}{l === "en" && " *"}</Label>
+                      <Textarea id={`faq-a-${l}`} rows={3} value={(faq as any)[`a_${l}`] ?? ""} onChange={(e) => setFaq({ ...faq, [`a_${l}`]: e.target.value })} className="text-base" />
                       {err(`a_${l}`)}
                     </div>
                   </div>
@@ -184,23 +184,23 @@ const FaqPage = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label className="mb-1.5 block">Title *</Label>
-                  <Input value={article.title} onChange={(e) => setArticle({ ...article, title: e.target.value })} placeholder="Who pays for a work visa renewal" />
+                  <Label htmlFor="faq-title" className="mb-1.5 block">Title *</Label>
+                  <Input id="faq-title" value={article.title} onChange={(e) => setArticle({ ...article, title: e.target.value })} placeholder="Who pays for a work visa renewal" />
                   {err("title")}
                 </div>
                 <div>
-                  <Label className="mb-1.5 block">Text *</Label>
-                  <Textarea rows={10} value={article.body} onChange={(e) => setArticle({ ...article, body: e.target.value })} />
+                  <Label htmlFor="faq-text" className="mb-1.5 block">Text *</Label>
+                  <Textarea id="faq-text" rows={10} value={article.body} onChange={(e) => setArticle({ ...article, body: e.target.value })} />
                   {err("body")}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label className="mb-1.5 block">Source name</Label>
-                    <Input value={article.source_name ?? ""} onChange={(e) => setArticle({ ...article, source_name: e.target.value })} placeholder="MoHRE" />
+                    <Label htmlFor="faq-source-name" className="mb-1.5 block">Source name</Label>
+                    <Input id="faq-source-name" value={article.source_name ?? ""} onChange={(e) => setArticle({ ...article, source_name: e.target.value })} placeholder="MoHRE" />
                   </div>
                   <div>
-                    <Label className="mb-1.5 block">Source link</Label>
-                    <Input value={article.source_url ?? ""} onChange={(e) => setArticle({ ...article, source_url: e.target.value })} placeholder="https://www.mohre.gov.ae/…" />
+                    <Label htmlFor="faq-source-link-2" className="mb-1.5 block">Source link</Label>
+                    <Input id="faq-source-link-2" value={article.source_url ?? ""} onChange={(e) => setArticle({ ...article, source_url: e.target.value })} placeholder="https://www.mohre.gov.ae/…" />
                     {err("source_url")}
                   </div>
                 </div>

@@ -9,8 +9,8 @@ import "flatpickr/dist/themes/light.css";
 import DirectionProvider from "@/provider/direction.provider";
 import { apiUrl } from "@/lib/api-url";
 
-// Every page is rendered per request: the API address below must be the running
-// container's, not whatever the build machine had (it has nothing).
+// Every page is rendered per request: the API address below is the running
+// server's, never one frozen into the page when it was built.
 export const dynamic = "force-dynamic";
 
 // Page titles only (`.font-display`); everything else is Inter, set on <body> in Providers.

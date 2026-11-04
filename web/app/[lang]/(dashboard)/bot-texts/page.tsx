@@ -33,8 +33,8 @@ const BotTextsPage = () => {
       <PageTitle title="Bot texts" description="Every message the bot sends, in Amharic, Tigrinya, Afaan Oromoo and English. An edit here changes the bot at once." />
       {error && <ErrorState className="mb-4" error={error} onRetry={() => refetch()} title="Bot texts could not be loaded" />}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="min-w-0 lg:col-span-1">
           <CardHeader className="pb-2">
             <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Find by key or by words in the text" aria-label="Find a bot text" />
           </CardHeader>
@@ -52,8 +52,8 @@ const BotTextsPage = () => {
                       aria-current={current?.key === row.key ? "true" : undefined}
                       className={cn("w-full text-left px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-default-50 border-l-2", current?.key === row.key ? "border-primary bg-default-50" : "border-transparent")}
                     >
-                      <span className="font-mono text-sm text-default-800">{row.key}</span>
-                      <span className="flex gap-1">
+                      <span className="min-w-0 break-all font-mono text-sm text-default-800">{row.key}</span>
+                      <span className="flex shrink-0 gap-1">
                         {row.is_button && <Badge color="secondary" variant="soft">button</Badge>}
                         {edited && <Badge color="info" variant="soft">edited</Badge>}
                       </span>
@@ -105,7 +105,7 @@ const Editor = ({ row, languages }: { row: BotTextRow; languages: string[] }) =>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={languages[0]}>
-          <TabsList>
+          <TabsList className="h-auto max-w-full flex-wrap justify-start">
             {languages.map((l) => (
               <TabsTrigger key={l} value={l}>
                 {LANGUAGE_NAMES[l] ?? l}{row.override[l] !== undefined && " •"}

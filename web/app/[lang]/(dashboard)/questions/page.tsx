@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { HelpCircle } from "lucide-react";
 import { EmptyState, ErrorState, LoadingRows, TableMessage } from "@/components/states";
 import { runAction, toastResult } from "@/lib/toast";
@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import PageTitle from "@/components/page-title";
 import { cn } from "@/lib/utils";
 import { useApiQuery, useApiMutation, formatDateTime, type QuestionRow, type QuestionDetail } from "@/lib/api";
+import { pageNumber, useLastPageAtMost, useUrlState } from "@/lib/use-url-state";
 
 type Page = { data: QuestionRow[]; meta: { total: number; page: number; last_page: number }; counts: Record<string, number>; categories: Record<string, string> };
 
@@ -25,16 +26,20 @@ const TABS = [
 
 const STATUS_COLOR = { open: "info", solved: "success", closed: "secondary" } as const;
 
-const QuestionsPage = () => {
-  const [status, setStatus] = useState<string>("all");
-  const [search, setSearch] = useState("");
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+const QuestionsInner = () => {
+  const [url, setUrl] = useUrlState({ status: "all", search: "", page: "1" });
+  const { status, search: query } = url;
+  const page = pageNumber(url.page);
+  const setPage = (next: number) => setUrl({ page: String(next) });
+  const [search, setSearch] = useState(query);
+  // Back and forward change the address; the box follows it.
+  useEffect(() => setSearch(query), [query]);
   const [openId, setOpenId] = useState<number | null>(null);
 
   const qs = new URLSearchParams({ status, page: String(page) });
   if (query) qs.set("search", query);
   const { data, isLoading, error, refetch } = useApiQuery<Page>(["questions", qs.toString()], `/admin/questions?${qs.toString()}`, { refetchInterval: 30_000, placeholderData: (previous) => previous });
+  useLastPageAtMost(data?.meta.last_page, page, setPage);
   const detail = useApiQuery<{ question: QuestionDetail }>(["question", openId], `/admin/questions/${openId}`, { enabled: openId !== null });
 
   const invalidate = [["questions"], ["question", openId], ["faq"], ["dashboard"]];
@@ -54,14 +59,14 @@ const QuestionsPage = () => {
             key={value}
             type="button"
             aria-pressed={status === value}
-            onClick={() => { setStatus(value); setPage(1); }}
+            onClick={() => setUrl({ status: value, page: "1" })}
             className={cn("px-3 py-1.5 rounded-md text-sm font-medium border", status === value ? "bg-primary text-primary-foreground border-primary" : "bg-card text-default-700 border-default-200 hover:border-primary")}
           >
             {label}
             {data && <span className="ml-1.5 opacity-75">{value === "all" ? total : data.counts[value] ?? 0}</span>}
           </button>
         ))}
-        <form className="flex gap-2 ml-auto" role="search" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPage(1); }}>
+        <form className="flex gap-2 ml-auto" role="search" onSubmit={(e) => { e.preventDefault(); setUrl({ search: search.trim(), page: "1" }); }}>
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Words in the question" className="w-56" aria-label="Search questions" />
           <Button type="submit" variant="outline">Search</Button>
         </form>
@@ -179,5 +184,11 @@ const QuestionsPage = () => {
     </div>
   );
 };
+
+const QuestionsPage = () => (
+  <Suspense>
+    <QuestionsInner />
+  </Suspense>
+);
 
 export default QuestionsPage;

@@ -12,7 +12,12 @@ import PageTitle from "@/components/page-title";
 import { ErrorState, PageLoading } from "@/components/states";
 import { useApiQuery, useApiMutation, type JobSettingsPayload, ApiError, errorText } from "@/lib/api";
 
-type Form = JobSettingsPayload["settings"] & { anthropic_api_key: string };
+// The two numbers are kept as typed, so a box can be emptied while retyping; the server checks what is saved.
+type Form = Omit<JobSettingsPayload["settings"], "job_review_threshold" | "job_warning_threshold"> & {
+  job_review_threshold: number | string;
+  job_warning_threshold: number | string;
+  anthropic_api_key: string;
+};
 
 const LANGS = [
   ["am", "Amharic"],
@@ -77,8 +82,8 @@ const JobSettingsPage = () => {
           </CardHeader>
           <CardContent className="space-y-5">
             <div>
-              <Label className="mb-1.5 block">Jobs channel</Label>
-              <Input value={form.job_channel_id} onChange={(e) => setForm({ ...form, job_channel_id: e.target.value })} placeholder="@habesha_dubai_jobs or -100…" />
+              <Label htmlFor="job-settings-jobs-channel" className="mb-1.5 block">Jobs channel</Label>
+              <Input id="job-settings-jobs-channel" value={form.job_channel_id} onChange={(e) => setForm({ ...form, job_channel_id: e.target.value })} placeholder="@habesha_dubai_jobs or -100…" />
               <p className="text-xs text-default-500 mt-1">The bot must be an admin of the channel. Empty: jobs are published to members' alerts only.</p>
               {err("job_channel_id")}
             </div>
@@ -87,7 +92,7 @@ const JobSettingsPage = () => {
                 <Label>Publish clean jobs automatically</Label>
                 <p className="text-xs text-default-500">Off: every job waits in the review queue.</p>
               </div>
-              <Switch checked={form.job_auto_publish} onCheckedChange={(v) => setForm({ ...form, job_auto_publish: v })} />
+              <Switch aria-label="Publish clean jobs automatically" checked={form.job_auto_publish} onCheckedChange={(v) => setForm({ ...form, job_auto_publish: v })} />
             </div>
             <div>
               <Label className="mb-2 block">Summaries on the channel card</Label>
@@ -103,13 +108,13 @@ const JobSettingsPage = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="mb-1.5 block">Review at scam score</Label>
-                <Input type="number" min={1} max={100} value={form.job_review_threshold} onChange={(e) => setForm({ ...form, job_review_threshold: Number(e.target.value) })} />
+                <Label htmlFor="job-settings-review-at-scam-score" className="mb-1.5 block">Review at scam score</Label>
+                <Input id="job-settings-review-at-scam-score" type="number" min={1} max={100} value={form.job_review_threshold} onChange={(e) => setForm({ ...form, job_review_threshold: e.target.value })} />
                 {err("job_review_threshold")}
               </div>
               <div>
-                <Label className="mb-1.5 block">Warn on card at</Label>
-                <Input type="number" min={1} max={100} value={form.job_warning_threshold} onChange={(e) => setForm({ ...form, job_warning_threshold: Number(e.target.value) })} />
+                <Label htmlFor="job-settings-warn-on-card-at" className="mb-1.5 block">Warn on card at</Label>
+                <Input id="job-settings-warn-on-card-at" type="number" min={1} max={100} value={form.job_warning_threshold} onChange={(e) => setForm({ ...form, job_warning_threshold: e.target.value })} />
                 {err("job_warning_threshold")}
               </div>
             </div>
@@ -128,14 +133,14 @@ const JobSettingsPage = () => {
           </CardHeader>
           <CardContent className="space-y-5">
             <div>
-              <Label className="mb-1.5 block">Anthropic API key</Label>
-              <Input type="password" autoComplete="off" value={form.anthropic_api_key} onChange={(e) => setForm({ ...form, anthropic_api_key: e.target.value })} placeholder={data.anthropic.configured ? "Leave blank to keep the current key" : "sk-ant-…"} />
+              <Label htmlFor="job-settings-anthropic-api-key" className="mb-1.5 block">Anthropic API key</Label>
+              <Input id="job-settings-anthropic-api-key" type="password" autoComplete="off" value={form.anthropic_api_key} onChange={(e) => setForm({ ...form, anthropic_api_key: e.target.value })} placeholder={data.anthropic.configured ? "Leave blank to keep the current key" : "sk-ant-…"} />
               <p className="text-xs text-default-500 mt-1">Stored encrypted and never shown again. Blank keeps the current key.</p>
               {err("anthropic_api_key")}
             </div>
             <div>
-              <Label className="mb-1.5 block">Model</Label>
-              <Input value={form.anthropic_model} onChange={(e) => setForm({ ...form, anthropic_model: e.target.value })} />
+              <Label htmlFor="job-settings-model" className="mb-1.5 block">Model</Label>
+              <Input id="job-settings-model" value={form.anthropic_model} onChange={(e) => setForm({ ...form, anthropic_model: e.target.value })} />
               <p className="text-xs text-default-500 mt-1">claude-opus-5-5 by default. A cheaper model lowers the cost per listing; check the Amharic, Tigrinya and Oromo summaries if you change it.</p>
               {err("anthropic_model")}
             </div>
@@ -149,12 +154,12 @@ const JobSettingsPage = () => {
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label className="mb-1.5 block">Phrases</Label>
-              <Textarea rows={8} value={form.job_scam_phrases} onChange={(e) => setForm({ ...form, job_scam_phrases: e.target.value })} placeholder={"pay for your visa\nsend the fee first"} />
+              <Label htmlFor="job-settings-phrases" className="mb-1.5 block">Phrases</Label>
+              <Textarea id="job-settings-phrases" rows={8} value={form.job_scam_phrases} onChange={(e) => setForm({ ...form, job_scam_phrases: e.target.value })} placeholder={"pay for your visa\nsend the fee first"} />
             </div>
             <div>
-              <Label className="mb-1.5 block">Blocked companies</Label>
-              <Textarea rows={8} value={form.job_blocked_companies} onChange={(e) => setForm({ ...form, job_blocked_companies: e.target.value })} placeholder="Rejecting a job with Block company adds it here." />
+              <Label htmlFor="job-settings-blocked-companies" className="mb-1.5 block">Blocked companies</Label>
+              <Textarea id="job-settings-blocked-companies" rows={8} value={form.job_blocked_companies} onChange={(e) => setForm({ ...form, job_blocked_companies: e.target.value })} placeholder="Rejecting a job with Block company adds it here." />
             </div>
           </CardContent>
         </Card>

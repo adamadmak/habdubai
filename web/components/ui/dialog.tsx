@@ -70,6 +70,7 @@ const DialogContent = React.forwardRef<
       overlayClass,
       overlayScroll = false,
       hiddenCloseIcon = false,
+      onEscapeKeyDown,
       ...props
     },
     ref
@@ -79,6 +80,17 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(dialogVariants({ size }), className)}
+        onEscapeKeyDown={(event) => {
+          // Esc in an open dropdown is for the dropdown. It comes with its own copy of Radix's layers, so
+          // the dialog does not know it is underneath and would close, form and all, while the dropdown,
+          // seeing the key already used, would stay. So the dialog stays and the dropdown gets what
+          // does close it: a press outside it, here on the dialog, which counts that as inside.
+          if (document.querySelector('[role="listbox"]')) {
+            event.preventDefault();
+            document.querySelector('[role="dialog"]')?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+          }
+          onEscapeKeyDown?.(event);
+        }}
         {...props}
       >
         {children}
