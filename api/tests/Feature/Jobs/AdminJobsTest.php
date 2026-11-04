@@ -8,6 +8,7 @@ use App\Models\PlatformSetting;
 use App\Support\JobSettings;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 
@@ -217,6 +218,19 @@ test('a run takes the lock, leaves the heartbeat, and gives way to one already r
 
 test('the server command is ours, and leaves a Windows machine as it was', function (): void {
     expect(Artisan::all()['serve'])->toBeInstanceOf(ServeWithWorkers::class);
+});
+
+test('the database cache does not keep expired rows for good', function (): void {
+    config(['cache.default' => 'database']);
+    DB::table('cache')->insert([
+        ['key' => 'old', 'value' => 'x', 'expiration' => now()->subMinute()->timestamp],
+        ['key' => 'fresh', 'value' => 'x', 'expiration' => now()->addHour()->timestamp],
+    ]);
+
+    Artisan::call('bot:updates-chores');
+
+    expect(DB::table('cache')->where('key', 'like', '%old')->exists())->toBeFalse()
+        ->and(DB::table('cache')->where('key', 'like', '%fresh')->exists())->toBeTrue();
 });
 
 test('a token too short to trust closes the tick rather than opening it', function (): void {

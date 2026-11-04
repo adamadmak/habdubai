@@ -45,7 +45,7 @@ class SystemTickController extends Controller
             if (strlen($expected) < 32 || ! hash_equals($expected, $provided)) {
                 return response()->json(['error' => 'Invalid token.'], 401);
             }
-        } elseif (! Cache::add('system-tick-open:'.now()->format('YmdHi'), true, 120)) {
+        } elseif (! Cache::add('system-tick-open:'.now()->format('i'), true, 120)) {
             return response()->json(['skipped' => 'Asked too soon after the last tick.'], 429);
         }
 

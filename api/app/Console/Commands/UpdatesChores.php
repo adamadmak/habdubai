@@ -7,6 +7,7 @@ use App\Jobs\HandleTelegramUpdate;
 use App\Models\TelegramUpdate;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -19,6 +20,20 @@ class UpdatesChores extends Command
     protected $signature = 'bot:updates-chores';
 
     protected $description = 'Retry Telegram updates left unhandled and delete week-old ones';
+
+    /**
+     * The database cache removes an expired row only when the same key is asked for again, so
+     * the keys that are never asked for twice (a rate limit per address, a one-time ticket)
+     * would stay for good. Once an hour they go.
+     */
+    private function pruneCache(): void
+    {
+        if (config('cache.default') !== 'database' || ! Cache::add('cache-pruned', true, 3600)) {
+            return;
+        }
+
+        DB::table((string) config('cache.stores.database.table', 'cache'))->where('expiration', '<=', now()->timestamp)->delete();
+    }
 
     public function handle(Home $home): int
     {
@@ -47,6 +62,8 @@ class UpdatesChores extends Command
         $deleted = TelegramUpdate::query()->where('received_at', '<', now()->subDays(TelegramUpdate::KEEP_DAYS))->delete();
 
         $refreshed = $home->refreshChats();
+
+        $this->pruneCache();
 
         $this->info("Queued {$retried} unhandled update(s) again, deleted {$deleted} old one(s), refreshed {$refreshed} member menu(s).");
 
