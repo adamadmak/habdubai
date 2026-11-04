@@ -29,7 +29,6 @@ export function ChoiceTile({ lang, tone, title, text, compact = false, className
         compact ? "min-h-[8.5rem] p-4" : "min-h-[9.5rem] p-5 md:min-h-[11rem] md:p-6"
       } ${className}`}
     >
-      <span className="weave" aria-hidden="true" />
       <span className={`grid place-items-center rounded-2xl bg-white/16 ring-1 ring-white/25 ${compact ? "size-9" : "size-11"}`}>
         <Icon className={compact ? "size-[1.125rem]" : "size-[1.375rem]"} aria-hidden="true" />
       </span>
@@ -57,12 +56,12 @@ export function goodsStats(stats: GoodsBoard["stats"] | undefined | null, d: Dic
  * numbers, and the three ways in. Without the board's numbers (the API was
  * away) it still offers the three ways in.
  */
-export function GoodsTeaser({ lang, d, board, mark }: { lang: Locale; d: Dictionary; board: GoodsBoard | null; mark: number }) {
+export function GoodsTeaser({ lang, d, board, tone }: { lang: Locale; d: Dictionary; board: GoodsBoard | null; tone?: "iced" }) {
   const g = d.goods;
   const stats = goodsStats(board?.stats, d);
 
   return (
-    <Section mark={mark} title={g.title} lead={g.teaserLead} more={{ href: `/${lang}/goods`, label: g.seeBoard }}>
+    <Section tone={tone} kicker={d.nav.goods} title={g.title} lead={g.teaserLead} more={{ href: `/${lang}/goods`, label: g.seeBoard }}>
       <div className="grid gap-3 md:gap-4 lg:grid-cols-[1.25fr_1fr]">
         <Link href={`/${lang}/goods`} className="night tile tile-link flex min-h-[15rem] flex-col p-5 md:p-6">
           <FlightPath still direction="to_et" home={{ name: d.clock.home, code: "ADD · ASM" }} gulf={{ name: d.clock.dubai, code: "DXB" }} className="mx-auto max-w-md" />

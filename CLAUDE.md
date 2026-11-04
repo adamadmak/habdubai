@@ -200,37 +200,44 @@ carries fixed tables for them. The fixed lists (kinds of work, emirates, busines
 come from the API's `/public/meta`, i.e. from `Choices`, so the site and the
 bot never word them differently.
 
-- **Design: "two homes, one thread", morning edition.** It follows the
-  apple-design skill (in the Addis game repo, `.claude/skills/apple-design/`).
-  Light first: the page is warm white over a faint aurora (`body::before`)
-  with paper grain; the header and the phone tab bar are floating islands of
-  frosted white (`.chrome`); frosted panels are `.glass`. The three heroes
-  (front page, goods board, owners' landing) are night bands
-  (`components/Dawn.tsx` → `Night`) holding white frosted panels
-  (`.glass-white`, which resets every token inside it to the light set);
-  every other page head is a `Dawn` band whose tint follows the hour in
-  Dubai (`data-sky`). The horizon under a band is one line of ink
-  (`--ink`), not a silhouette. The footer and a few islands stay `.night`.
+- **Design: white, one strong red, heavy type.** The owner chose the look of
+  klik.delivery on 4 Nov 2026: its style and colours, with our own words and
+  data. Never copy its logo, photos, mascot or wording. Interaction still
+  follows the apple-design skill (in the Addis game repo,
+  `.claude/skills/apple-design/`). Ink `#191919`, red `#D40511` for actions and
+  the marked words of a heading (`.gild`, red on a yellow line), yellow
+  `#FFC20E` for that line and stars, royal blue `#266EF3` for trips. The page
+  is white; sections run as full-width bands (`Section` with `tone`: cream,
+  iced, mint, grey), each headed by a small `.kicker` pill. Type is one heavy
+  family, Urbanist, with Noto Sans Ethiopic for Ge'ez (`.display`, `.headline`,
+  weight 900, lighter and with more leading in Ge'ez). Buttons are pills
+  (`.btn-gold` is the red action in either theme, whatever its old name says;
+  `.btn-white` is for the red band), cards are white with a hairline and a 1.5rem
+  corner, and the header and phone tab bar are floating white islands (`.chrome`).
+  The heroes (front page, goods board, owners' landing) are ink bands
+  (`components/Dawn.tsx` → `Night`) holding white panels (`.glass-white`, which
+  resets every token inside it to the light set), with our horizon line and the
+  tibeb, which stay as our own identity. Every other page head is a plain cream
+  `Dawn` band. The footer is ink. Pale tiles take a colour from `--tint`
+  (`.kind-tile`, `.tint-soft`, `.tint-solid`, `.tint-ink`), so they work in both
+  themes. Numbered steps are `Steps` in `Bits.tsx`. Numbers on the front page
+  are real: anything still zero is left out.
   Dark follows the device unless the reader chose a theme
   (`components/ThemeToggle.tsx`, `data-theme` on `<html>`, applied before
   paint by the script in `layout.tsx`); every colour is a token, and the dark
   set is written twice in `globals.css` (media query and `data-theme`), so
-  keep both lists the same. Gold as text is `--color-gild` (honey on paper,
-  gold on night); `--color-accent` is for fills and the thread only.
-  `app/manifest.ts`, `apple-icon.tsx` and `opengraph-image.tsx` make the
-  site installable and give shared links a card; the locale middleware
-  excludes those two generated routes. Headings are Fraunces and Noto
-  Serif Ethiopic (`.display`, `.headline`); body text is the system font with
-  Noto Sans Ethiopic. Places without a photo get a cover in their kind's
-  colours with their initials (`components/Cover.tsx`); kinds of work and of
-  place have fixed colour pairs there. Ge'ez numerals mark sections
-  (`GEEZ` in `Bits.tsx`). The front page shows Dubai and Addis Ababa time,
-  the Ethiopian clock and calendar (`Clocks.tsx`). Motion: the hero settles
-  once, sections marked `.reveal` rise in once (`Motion.tsx`, never hiding
-  what is already on screen), tiles marked `.spot` carry a light under the
-  pointer, press feedback is `scale` on `:active`. Every effect has its
-  reduced-motion, reduced-transparency and more-contrast fallback in
-  `globals.css`. The tibeb has diamonds and no crosses: it is for everyone.
+  keep both lists the same. `app/manifest.ts`, `apple-icon.tsx` and
+  `opengraph-image.tsx` make the site installable and give shared links a
+  card; the locale middleware excludes those two generated routes. Places
+  without a photo get a cover in their kind's colours with their initials
+  (`components/Cover.tsx`); kinds of work and of place have fixed colour pairs
+  there. The front page shows Dubai and Addis Ababa time, the Ethiopian clock
+  and calendar (`Clocks.tsx`). Motion: the hero settles once, sections marked
+  `.reveal` rise in once (`Motion.tsx`, never hiding what is already on
+  screen), tiles marked `.spot` carry a light under the pointer, press feedback
+  is `scale` on `:active`. Every effect has its reduced-motion,
+  reduced-transparency and more-contrast fallback in `globals.css`. The tibeb
+  has diamonds and no crosses: it is for everyone.
 - **Owners sign in with Telegram** (`App\Directory\OwnerLogin`): the site
   shows a QR code / button; the bot asks the person who opened
   `/start login_<ref>` to confirm, then sends them a six-digit code that they

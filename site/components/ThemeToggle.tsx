@@ -50,7 +50,7 @@ export function ThemeToggle({ labels }: { labels: { light: string; dark: string 
     document.documentElement.dataset.theme = next;
     // The browser's own bar follows the device's scheme through its media query; a chosen theme overrides it here.
     document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
-      meta.content = next === "dark" ? "#070c1f" : "#fbf8f2";
+      meta.content = next === "dark" ? "#121212" : "#ffffff";
     });
     try {
       localStorage.setItem("theme", next);
@@ -58,7 +58,7 @@ export function ThemeToggle({ labels }: { labels: { light: string; dark: string 
       // Private browsing: the choice lasts for this page only.
     }
     if (insideTelegram()) {
-      const color = next === "dark" ? "#070c1f" : "#fbf8f2";
+      const color = next === "dark" ? "#121212" : "#ffffff";
       tellTelegram("web_app_set_header_color", { color });
       tellTelegram("web_app_set_background_color", { color });
     }

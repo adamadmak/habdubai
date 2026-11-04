@@ -1,6 +1,6 @@
 import "../globals.css";
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Noto_Sans_Ethiopic, Noto_Serif_Ethiopic } from "next/font/google";
+import { Noto_Sans_Ethiopic, Urbanist } from "next/font/google";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { FallbackCopyProvider } from "@/components/FallbackCopy";
@@ -14,12 +14,10 @@ import { api, type Meta } from "@/lib/api";
 import { dict, isLocale, LOCALES } from "@/lib/i18n";
 import { siteUrl } from "@/lib/site";
 
-/** Ge'ez script everywhere, whatever the device ships with. Latin text uses the system font. */
+/** One heavy geometric family for everything Latin, headings and text alike. */
+const urbanist = Urbanist({ subsets: ["latin"], variable: "--font-urbanist", display: "swap" });
+/** Ge'ez script everywhere, whatever the device ships with. Variable, so it carries the heavy headings too. */
 const ethiopic = Noto_Sans_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic", display: "swap" });
-/** Headings: Fraunces for Latin, Noto Serif Ethiopic for Ge'ez, so a heading reads like print in both scripts. */
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap", axes: ["SOFT", "WONK", "opsz"] });
-// Not preloaded: two heavy weights that only Ge'ez headings use; English pages would fetch them for nothing.
-const ethiopicSerif = Noto_Serif_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic-serif", display: "swap", weight: ["600", "700"], preload: false });
 
 /**
  * Reads the theme the reader chose (ThemeToggle) and sets it on <html>; nothing stored means "follow the device".
@@ -44,8 +42,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbf8f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#070c1f" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
   ],
 };
 
@@ -74,7 +72,7 @@ export default async function LangLayout({ children, params }: { children: React
   const meta = await api<Meta>("/public/meta", { revalidate: 300 }).catch(() => null);
 
   return (
-    <html lang={lang} className={`${ethiopic.variable} ${fraunces.variable} ${ethiopicSerif.variable}`} suppressHydrationWarning>
+    <html lang={lang} className={`${urbanist.variable} ${ethiopic.variable}`} suppressHydrationWarning>
       <body className="antialiased">
         {/* The reader's theme, applied before the first paint so a dark choice never flashes light. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />

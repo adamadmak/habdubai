@@ -136,7 +136,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
 
           {meta.bot.link && (
             <a href={`${meta.bot.link}?start=jobs`} target="_blank" rel="noopener noreferrer" className="night tile tile-link spot mt-10 flex items-center gap-4 p-5 md:p-6 lg:order-4 lg:mt-0">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent text-[#10142b]">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent text-[#191919]">
                 <Bell className="size-6" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">

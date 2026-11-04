@@ -20,8 +20,8 @@ export function TelegramEntry({ lang }: { lang: string }) {
     tellTelegram("web_app_ready");
     tellTelegram("web_app_expand");
     const dark = document.documentElement.dataset.theme === "dark";
-    tellTelegram("web_app_set_header_color", { color: dark ? "#070c1f" : "#fbf8f2" });
-    tellTelegram("web_app_set_background_color", { color: dark ? "#070c1f" : "#fbf8f2" });
+    tellTelegram("web_app_set_header_color", { color: dark ? "#121212" : "#ffffff" });
+    tellTelegram("web_app_set_background_color", { color: dark ? "#121212" : "#ffffff" });
 
     const signedIn = telegramSignIn(lang);
     clearLaunchFromAddress();

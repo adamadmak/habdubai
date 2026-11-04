@@ -20,7 +20,7 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
         <Link href={`/${lang}`} className="press flex shrink-0 items-center gap-2.5 rounded-full pr-1" aria-label={d.brand}>
           <Mark className="size-9" />
           <span className="hidden flex-col leading-none min-[350px]:flex md:max-lg:hidden">
-            <span className="text-[0.9375rem] font-bold tracking-tight">{d.brand}</span>
+            <span className="text-[1.0625rem] font-black tracking-tight text-primary">{d.brand}</span>
             {/* The name in the other script: Ge'ez on English and Oromo pages, Latin on Amharic and Tigrinya ones. */}
             <span lang={isGeez(lang) ? "en" : "am"} className="mt-1 text-[0.6875rem] font-medium text-muted">{d.brandNative}</span>
           </span>

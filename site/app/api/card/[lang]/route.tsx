@@ -17,8 +17,8 @@ const WORDS: Record<Locale, { welcome: string; line: string; labels: [string, st
   ti: { welcome: "Habesha Dubai", line: "Dubai · Abu Dhabi · Sharjah · Ajman · Al Ain", labels: null },
 };
 
-const GOLD = "#f5c542";
-const INK = "#eef1fb";
+const GOLD = "#ffc20e";
+const INK = "#f5f5f5";
 
 /** Four line icons, hand drawn so the card needs no font or network for them. */
 const ICONS = [
@@ -53,18 +53,17 @@ export async function GET(_request: Request, { params }: { params: Promise<{ lan
 
   const image = new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", background: "linear-gradient(160deg, #0a1433 0%, #070c1f 60%, #0b1030 100%)", color: INK, fontFamily: "Arial, Helvetica, sans-serif" }}>
-        {/* The aurora, as on the website's night bands: blue high on the left, gold low on the right. */}
-        <div style={{ position: "absolute", left: -240, top: -300, width: 820, height: 680, borderRadius: 999, background: "rgba(42,92,240,0.34)", filter: "blur(90px)" }} />
-        <div style={{ position: "absolute", right: -260, bottom: -340, width: 820, height: 700, borderRadius: 999, background: "rgba(245,197,66,0.22)", filter: "blur(100px)" }} />
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", background: "#191919", color: INK, fontFamily: "Arial, Helvetica, sans-serif" }}>
+        {/* The soft red glow of the website's dark bands, low on the right. */}
+        <div style={{ position: "absolute", right: -260, bottom: -340, width: 820, height: 700, borderRadius: 999, background: "rgba(212,5,17,0.34)", filter: "blur(100px)" }} />
         {/* The horizon: one thin line of ink, the skyline's idea rather than its picture. */}
         <div style={{ position: "absolute", left: 0, right: 0, top: 418, height: 1, background: "rgba(238,241,251,0.18)" }} />
 
         <div style={{ display: "flex", alignItems: "center", gap: 22, padding: "56px 72px 0" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 24, background: "linear-gradient(135deg, #2a5cf0, #1336a6)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 24, background: "linear-gradient(135deg, #e0101c, #a8040d)" }}>
             <svg width="60" height="60" viewBox="0 0 32 32">
-              <path d="M16 5.5 26.5 16 16 26.5 5.5 16Z" fill="#f2b705" />
-              <path d="M16 10 22 16 16 22 10 16Z" fill="#1b4ddb" />
+              <path d="M16 5.5 26.5 16 16 26.5 5.5 16Z" fill="#ffc20e" />
+              <path d="M16 10 22 16 16 22 10 16Z" fill="#d40511" />
               <path d="M16 13.6 18.4 16 16 18.4 13.6 16Z" fill="#fff" />
             </svg>
           </div>
@@ -75,7 +74,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ lan
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", padding: "48px 72px 0" }}>
-          <div style={{ fontSize: 66, lineHeight: 1.05, fontWeight: 600, letterSpacing: -2, color: GOLD, fontFamily: "Georgia, serif", fontStyle: "italic" }}>{w.welcome}</div>
+          <div style={{ fontSize: 66, lineHeight: 1.05, fontWeight: 700, letterSpacing: -2, color: "#ffffff" }}>{w.welcome}</div>
           <div style={{ marginTop: 18, fontSize: 26, color: "rgba(238,241,251,0.72)" }}>{w.line}</div>
         </div>
 
@@ -90,10 +89,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ lan
         </div>
 
         {/* The tibeb thread along the foot. */}
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 22, background: "#1b4ddb", display: "flex", overflow: "hidden" }}>
-          <div style={{ position: "absolute", left: 0, right: 0, top: 2, height: 2, background: "#f2b705" }} />
-          <div style={{ position: "absolute", left: 0, right: 0, bottom: 2, height: 2, background: "#f2b705" }} />
-          {Array.from({ length: 30 }, (_, i) => diamond(10 + i * 40, 6, 10, i % 3 === 1 ? "#ffffff" : "#f2b705", i % 3 === 2 ? 0.9 : 1))}
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 22, background: "#d40511", display: "flex", overflow: "hidden" }}>
+          <div style={{ position: "absolute", left: 0, right: 0, top: 2, height: 2, background: "#ffc20e" }} />
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 2, height: 2, background: "#ffc20e" }} />
+          {Array.from({ length: 30 }, (_, i) => diamond(10 + i * 40, 6, 10, i % 3 === 1 ? "#ffffff" : "#ffc20e", i % 3 === 2 ? 0.9 : 1))}
         </div>
       </div>
     ),

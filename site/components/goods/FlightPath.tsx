@@ -37,8 +37,8 @@ export function FlightPath({ direction, home, gulf, still = false, className = "
       <svg viewBox="0 0 480 240" className="absolute inset-0 size-full overflow-visible">
         <defs>
           <radialGradient id="flight-glow">
-            <stop offset="0" stopColor="#f2b705" stopOpacity="0.45" />
-            <stop offset="1" stopColor="#f2b705" stopOpacity="0" />
+            <stop offset="0" stopColor="#ffc20e" stopOpacity="0.45" />
+            <stop offset="1" stopColor="#ffc20e" stopOpacity="0" />
           </radialGradient>
         </defs>
         <path d={path} fill="none" stroke="var(--ink)" strokeOpacity="0.5" strokeWidth="1.6" strokeDasharray="2 7" strokeLinecap="round" />

@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     // The root: the middleware sends an installed app to the language the reader last chose.
     start_url: "/",
     display: "standalone",
-    background_color: "#fbf8f2",
-    theme_color: "#fbf8f2",
+    background_color: "#ffffff",
+    theme_color: "#ffffff",
     lang: DEFAULT_LOCALE,
     icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
   };

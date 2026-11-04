@@ -16,7 +16,7 @@ const PLACE_HUES: Record<string, [string, string]> = {
   worship: ["#1e3a8a", "#4f7cf7"],
   education: ["#3730a3", "#8b5cf6"],
   services: ["#3f3f46", "#8a817a"],
-  other: ["#0a1433", "#1b4ddb"],
+  other: ["#191919", "#d40511"],
 };
 
 /** And each kind of work. */
@@ -32,7 +32,7 @@ const TRADE_HUES: Record<string, [string, string]> = {
   nursing: ["#155e75", "#22b8cf"],
   office: ["#312e81", "#6366f1"],
   construction: ["#7c2d12", "#ea580c"],
-  other: ["#0a1433", "#1b4ddb"],
+  other: ["#191919", "#d40511"],
 };
 
 function style([a, b]: [string, string]): CSSProperties {
@@ -69,6 +69,9 @@ export function Cover({ category, name, seed, className = "", big = false }: { c
     </div>
   );
 }
+
+/** A kind of place as a pale tile takes it: the kind's own colour, for `.kind-tile` to tint with. */
+export const placeTint = (category: string) => ({ "--tint": (PLACE_HUES[category] ?? PLACE_HUES.other)[1] }) as CSSProperties;
 
 /** A small square for a kind of work or of place, in its colours. */
 export function KindBadge({ kind, category, className = "size-11 rounded-2xl", iconClass = "size-5" }: { kind: "trade" | "place"; category: string; className?: string; iconClass?: string }) {

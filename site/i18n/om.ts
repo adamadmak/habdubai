@@ -18,6 +18,7 @@ export const om: Dictionary = {
   navLabel: "Baafata ijoo",
 
   common: {
+    step: "Tarkaanfii {n}",
     seeAll: "Hunda ilaalaa",
     next: "Itti aanu",
     previous: "Kan duraa",
@@ -46,6 +47,8 @@ export const om: Dictionary = {
   },
 
   footer: {
+    explore: "Ilaalaa",
+    community: "Hawaasa",
     tagline: "Hawaasa kaffaltii hin qabne, Itoophiyaanotaa fi Eertiraawota Emireetota Arabaa Gamtooman keessa jiraataniif. Marsariitii kana keessa maallaqni tokko illee hin darbu.",
     caution: "Hojiiwwanii fi galmeewwan marsariitiiwwan uummataa fi miseensota irraa dhufu. Osoo hin kaffalin, hin mallatteessin ykn hin imalin dura mirkaneeffadhaa.",
     rules: "Seera hawaasaa",
@@ -55,6 +58,16 @@ export const om: Dictionary = {
   },
 
   home: {
+    forYou: { kicker: "Hawaasa keenyaaf kan ijaarame", title: "Wanta hawaasni keenya barbaadu hunda.", lead: "Hojii amanamaa, bakkeewwan namoota keenyaan hoogganaman, fi meeshaa gara manaatti erguu. Miseensa hundaaf bilisaan." },
+    how: {
+      kicker: "Miseensa ta'uu",
+      title: "Tarkaanfii sadiin miseensa ta'aa.",
+      items: [
+        { title: "Boottii banaa", text: "Qabduu tuqaa, boottiin Telegiraamii keenyaa ni banama." },
+        { title: "Nama dhugaa ta'uu agarsiisaa", text: "Lakkoofsa bilbilaa keessan boottiif al tokko qoodaa. Namni biraa hin argu." },
+        { title: "Hunda fayyadamaa", text: "Beeksisa hojii, gaaffilee, gabatee meeshaa fi deeskii nageenyaa bilisaan kan keessani." },
+      ],
+    },
     hello: "Akkam, baga nagaan dhuftan",
     title: "Hawaasa keenya kan Emireetota keessaa, bakka tokkotti.",
     lead: "Hojiiwwan mallattoo gowwoomsaa irraa qoratamanii, bakkeewwan hawaasa keenyaa isinitti dhihoo jiran, fi oduu nu ilaallatu. Tolaan, Amaariffaa, Tigiriffaa, Afaan Oromoo fi Ingiliffaan.",

@@ -76,7 +76,7 @@ export function BusinessCard({ business, lang, meta }: { business: Business; lan
           <Cover category={business.category} name={business.name} seed={business.id} className="size-full" />
         )}
         {business.verified && (
-          <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-white/92 px-2 py-1 text-[0.6875rem] font-semibold text-[#143aa8] shadow-sm">
+          <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-white/92 px-2 py-1 text-[0.6875rem] font-semibold text-[#a8040d] shadow-sm">
             <BadgeCheck className="size-3.5" aria-hidden="true" /> {d.common.verified}
           </span>
         )}
@@ -161,18 +161,18 @@ export function ListingMock({ lang, className = "" }: { lang: Locale; className?
   const d = dict(lang);
   const sample = d.home.bento;
   return (
-    <div aria-hidden="true" className={`w-64 overflow-hidden rounded-[1.375rem] bg-white text-[#10142b] shadow-[0_24px_50px_-20px_rgb(6_12_36/0.55)] ring-1 ring-black/5 ${className}`}>
+    <div aria-hidden="true" className={`w-64 overflow-hidden rounded-[1.375rem] bg-white text-[#191919] shadow-[0_24px_50px_-20px_rgb(6_12_36/0.55)] ring-1 ring-black/5 ${className}`}>
       <Cover category="cafe" name={sample.ownerSample} seed={2} className="aspect-[16/10]" />
       <div className="p-3.5">
-        <p className="text-[0.6875rem] font-semibold text-[#855f00]">{sample.ownerSampleKind}</p>
+        <p className="text-[0.6875rem] font-semibold text-[#7d5a00]">{sample.ownerSampleKind}</p>
         <p className="mt-0.5 flex items-center gap-1 font-semibold">
-          {sample.ownerSample} <BadgeCheck className="size-4 text-[#1b4ddb]" />
+          {sample.ownerSample} <BadgeCheck className="size-4 text-[#d40511]" />
         </p>
-        <p className="mt-0.5 flex items-center gap-1 text-xs text-[#586078]"><MapPin className="size-3" /> {sample.ownerSamplePlace}</p>
+        <p className="mt-0.5 flex items-center gap-1 text-xs text-[#5b5b5b]"><MapPin className="size-3" /> {sample.ownerSamplePlace}</p>
         <div className="mt-3 flex gap-1.5">
-          <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#1b4ddb] py-1.5 text-[0.6875rem] font-semibold text-white"><Phone className="size-3" /> {d.common.call}</span>
-          <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#f3eee3] py-1.5 text-[0.6875rem] font-semibold"><MessageCircle className="size-3" /> {d.common.whatsapp}</span>
-          <span className="grid place-items-center rounded-lg bg-[#f3eee3] px-2 py-1.5"><Navigation className="size-3" /></span>
+          <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#d40511] py-1.5 text-[0.6875rem] font-semibold text-white"><Phone className="size-3" /> {d.common.call}</span>
+          <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#f4f4f4] py-1.5 text-[0.6875rem] font-semibold"><MessageCircle className="size-3" /> {d.common.whatsapp}</span>
+          <span className="grid place-items-center rounded-lg bg-[#f4f4f4] px-2 py-1.5"><Navigation className="size-3" /></span>
         </div>
       </div>
     </div>

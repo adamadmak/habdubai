@@ -12,6 +12,7 @@ export const en = {
   navLabel: "Main",
 
   common: {
+    step: "Step {n}",
     seeAll: "See all",
     next: "Next",
     previous: "Previous",
@@ -41,6 +42,8 @@ export const en = {
   },
 
   footer: {
+    explore: "Explore",
+    community: "Community",
     tagline: "A free community for Habesha in the United Arab Emirates. No money moves through this website.",
     caution: "Jobs and listings come from public sites and members. Check before you pay, sign or travel.",
     rules: "Community rules",
@@ -50,6 +53,16 @@ export const en = {
   },
 
   home: {
+    forYou: { kicker: "Built for our community", title: "Everything our community needs.", lead: "Work you can trust, places run by our people, and a way to send things home. Free for every member." },
+    how: {
+      kicker: "Joining",
+      title: "Three steps, and you are in.",
+      items: [
+        { title: "Open the bot", text: "Press the button and our Telegram bot opens." },
+        { title: "Show you are real", text: "Share your phone number with the bot once. Nobody else ever sees it." },
+        { title: "Use everything", text: "Job alerts, questions, the goods board and the safety desk are yours, free." },
+      ],
+    },
     hello: "Selam, welcome",
     title: "The Habesha community in the Emirates, in one place.",
     lead: "Jobs checked for scam signs, Habesha places near you, and the news that matters to us. Free, in Amharic, Tigrinya, Afaan Oromo and English.",
