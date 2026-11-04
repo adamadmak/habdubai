@@ -362,15 +362,23 @@ class QuestionsFlow
             ? $this->messages->text('q_anonymous_asker', $label)
             : '👤 '.e($question->member?->display_name ?? '').' ✅';
 
-        $body = mb_strlen($question->body) > 3000 ? mb_substr($question->body, 0, 2997).'…' : $question->body;
+        // A short question is its own title: said twice, it looks like a mistake.
+        $sameAsTitle = self::oneLine($question->body) === $question->title;
+        $body = match (true) {
+            $sameAsTitle => '',
+            mb_strlen($question->body) > 3000 => mb_substr($question->body, 0, 2997).'…',
+            default => $question->body,
+        };
+
+        $post = $this->messages->text('q_group_post', $label, [
+            'title' => e($question->title),
+            'body' => e($body),
+            'asker' => $asker,
+            'category' => $question->category,
+        ]);
 
         return ($question->status === 'solved' ? $this->messages->text('q_solved_tag', $label)."\n" : '')
-            .$this->messages->text('q_group_post', $label, [
-                'title' => e($question->title),
-                'body' => e($body),
-                'asker' => $asker,
-                'category' => $question->category,
-            ]);
+            .($sameAsTitle ? (preg_replace("/\n{3,}/u", "\n\n", $post) ?? $post) : $post);
     }
 
     private function solveKeyboard(Question $question): array
@@ -380,9 +388,14 @@ class QuestionsFlow
 
     public static function title(string $body): string
     {
-        $first = trim(preg_replace('/\s+/u', ' ', $body) ?? $body);
+        $first = self::oneLine($body);
 
         return mb_strlen($first) > 80 ? rtrim(mb_substr($first, 0, 77)).'…' : $first;
+    }
+
+    private static function oneLine(string $body): string
+    {
+        return trim(preg_replace('/\s+/u', ' ', $body) ?? $body);
     }
 
     private function validText(string $text): bool

@@ -74,6 +74,20 @@ test('/ask posts the question in its own forum topic with a Mark solved button',
         ->and(lastText())->toContain('Your question is posted');
 });
 
+test('a short question is said once in the group, and a long one keeps its title and its whole text', function (): void {
+    joinMember(402);
+
+    askQuestion(402, 'Which site is good for jobs?');
+    $post = collect(telegramCalls('sendMessage'))->where('chat_id', QGROUP)->last();
+    expect(substr_count($post['text'], 'Which site is good for jobs?'))->toBe(1)
+        ->and($post['text'])->not->toContain("\n\n\n")->toContain('Abebe K')->toContain('#visa');
+
+    $long = 'How do I renew my residence visa when my employer has not paid the fees yet and the office has closed?';
+    askQuestion(402, $long);
+    $post = collect(telegramCalls('sendMessage'))->where('chat_id', QGROUP)->last();
+    expect($post['text'])->toContain('…')->toContain($long);
+});
+
 test('an anonymous question hides the asker in the group', function (): void {
     joinMember(401);
 
