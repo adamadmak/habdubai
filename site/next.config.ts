@@ -44,6 +44,10 @@ const contentSecurityPolicy = [
 const config: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // A page's title and preview tags go in its head for every reader. Next otherwise streams them into
+  // the body after the page for ordinary browsers, which adds a race to hydration for no gain here:
+  // they come from answers that are cached anyway.
+  htmlLimitedBots: /.*/,
   // Listing photos come from the API host; plain <img> with explicit sizes, no optimizer to configure.
   images: { unoptimized: true },
   experimental: {
