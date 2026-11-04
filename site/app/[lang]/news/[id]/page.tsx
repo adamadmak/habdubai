@@ -87,7 +87,8 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
             {a.event_date && (
               <div className="card mt-6 flex flex-wrap items-center gap-4 p-4">
                 <DateLeaf date={a.event_date} lang={lang} size="lg" />
-                <div className="min-w-0 flex-1">
+                {/* A basis, so in a narrow card the button drops to its own line rather than squeezing this into a thin column. */}
+                <div className="min-w-0 flex-1 basis-44">
                   <p className="font-semibold">
                     {soon === 0 ? d.news.days.today : soon === 1 ? d.news.days.tomorrow : weekday(a.event_date, lang)}, {formatDate(a.event_date, lang)}
                   </p>

@@ -1262,6 +1262,11 @@ html[data-reveal] .reveal:not([data-in]) {
   transition-delay: 240ms;
 }
 
+/* Two full-width bands that touch meet directly: the top margin is only for white space above a band. */
+[class*="band-"] + [class*="band-"] {
+  margin-top: 0;
+}
+
 @keyframes pulse-soft {
   0%,
   100% {
