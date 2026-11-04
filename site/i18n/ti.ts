@@ -56,7 +56,7 @@ export const ti: Dictionary = {
     searchPlaceholder: "ስራሕ፣ ቦታ ወይ ዜና ድለዩ",
     scopes: { jobs: "ስራሕ", directory: "ቦታታት", news: "ዜና" },
     searchIn: "ኣበይ ትደልዩ",
-    stats: { members: "ዝተረጋገጹ ኣባላት", jobs: "ክፉታት ስራሓት", businesses: "ቦታታት ሓበሻ", goods: "ኣብ ሰሌዳ ኣቕሑ ዘለዉ ጉዕዞታትን ኣቕሑን" },
+    stats: { memberOne: "ዝተረጋገጸ ኣባል", jobOne: "ክፉት ስራሕ", businessOne: "ቦታ ሓበሻ", members: "ዝተረጋገጹ ኣባላት", jobs: "ክፉታት ስራሓት", businesses: "ቦታታት ሓበሻ", goods: "ኣብ ሰሌዳ ኣቕሑ ዘለዉ ጉዕዞታትን ኣቕሑን" },
     jobsTitle: "ሓደስቲ ስራሓት",
     jobsLead: "ነፍሲ ወከፍ መወዓውዒ ቅድሚ ምውጽኡ ካብ ምልክታት ምትላል ይፍተሽ።",
     kindsTitle: "ቦታ ሓበሻ ድለዩ",

@@ -56,7 +56,7 @@ export const am: Dictionary = {
     searchPlaceholder: "ሥራ፣ ቦታ ወይም ዜና ይፈልጉ",
     scopes: { jobs: "ሥራ", directory: "ቦታዎች", news: "ዜና" },
     searchIn: "የት ይፈልጉ",
-    stats: { members: "የተረጋገጡ አባላት", jobs: "ክፍት ሥራዎች", businesses: "የሐበሻ ቦታዎች", goods: "በዕቃ ሰሌዳው ላይ ያሉ ጉዞዎችና ዕቃዎች" },
+    stats: { memberOne: "የተረጋገጠ አባል", jobOne: "ክፍት ሥራ", businessOne: "የሐበሻ ቦታ", members: "የተረጋገጡ አባላት", jobs: "ክፍት ሥራዎች", businesses: "የሐበሻ ቦታዎች", goods: "በዕቃ ሰሌዳው ላይ ያሉ ጉዞዎችና ዕቃዎች" },
     jobsTitle: "አዳዲስ ሥራዎች",
     jobsLead: "እያንዳንዱ ማስታወቂያ ከመውጣቱ በፊት ከማጭበርበር ምልክቶች ይፈተሻል።",
     kindsTitle: "የሐበሻ ቦታ ይፈልጉ",

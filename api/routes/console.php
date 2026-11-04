@@ -30,3 +30,6 @@ Schedule::command('announcements:chores --reminders')->hourly()->withoutOverlapp
 Schedule::command('goods:chores')->everyTenMinutes()->withoutOverlapping(10);
 
 Schedule::command('bot:updates-chores')->everyMinute()->withoutOverlapping(5);
+
+// Sign-ins that ran out: a website session lasts sixty days and each new one adds a row.
+Schedule::command('sanctum:prune-expired --hours=24')->hourly()->withoutOverlapping(10);

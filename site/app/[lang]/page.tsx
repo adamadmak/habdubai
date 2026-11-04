@@ -34,10 +34,12 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   const jobsTile =
     "tile spot reveal col-span-2 flex min-h-[22rem] flex-col bg-[linear-gradient(145deg,#1b4ddb_0%,#2b5cff_45%,#3a2fb8_100%)] p-6 text-white md:p-8 lg:row-span-2";
 
+  const jobsLabel = stats.jobs === 1 ? d.home.stats.jobOne : d.home.stats.jobs;
+  const placesLabel = stats.businesses === 1 ? d.home.stats.businessOne : d.home.stats.businesses;
   const statItems = [
-    stats.members > 0 && { n: stats.members, label: d.home.stats.members },
-    stats.jobs > 0 && { n: stats.jobs, label: d.home.stats.jobs },
-    stats.businesses > 0 && { n: stats.businesses, label: d.home.stats.businesses },
+    stats.members > 0 && { n: stats.members, label: stats.members === 1 ? d.home.stats.memberOne : d.home.stats.members },
+    stats.jobs > 0 && { n: stats.jobs, label: jobsLabel },
+    stats.businesses > 0 && { n: stats.businesses, label: placesLabel },
   ].filter(Boolean) as { n: number; label: string }[];
 
   // The bot's address as a code to scan from a computer; phones get the button.
@@ -121,7 +123,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
               </span>
               <span className="mt-6 flex items-end gap-3">
                 <span className="display text-[4.5rem] leading-[0.85] tabular md:text-[5.5rem]">{number(stats.jobs, lang)}</span>
-                <span className="headline pb-1 text-xl">{d.home.stats.jobs}</span>
+                <span className="headline pb-1 text-xl">{jobsLabel}</span>
               </span>
               <span className="mt-3 max-w-md text-[0.9375rem] text-white/80">{d.home.bento.jobsText}</span>
               {home.jobs.length > 0 && (
@@ -172,7 +174,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
               <>
                 <span className="mt-5 flex items-end gap-2">
                   <span className="display text-[3rem] leading-[0.85] tabular">{number(stats.businesses, lang)}</span>
-                  <span className="headline pb-0.5 text-lg">{d.home.bento.placesTitle}</span>
+                  <span className="headline pb-0.5 text-lg">{placesLabel}</span>
                 </span>
                 <span className="mt-2 text-sm text-white/80">{d.home.bento.placesText}</span>
                 <span className="mt-auto flex items-center gap-1.5 pt-4 text-sm font-semibold">

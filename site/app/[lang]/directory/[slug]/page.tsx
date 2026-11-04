@@ -82,8 +82,14 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
       <div className="mx-auto mt-4 max-w-page px-4 lg:px-8">
         <div className="overflow-hidden rounded-[1.75rem] shadow-[0_24px_60px_-30px_rgb(6_12_36/0.5)]">
           {b.photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={b.photo} alt={b.name} className="aspect-[16/9] w-full object-cover md:aspect-[21/9] xl:aspect-[3/1]" />
+            // The whole photo, whatever its shape: a logo or a shopfront is not cropped by a wide screen. The same
+            // photo, blurred, fills what is left, so it costs no second download.
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-surface md:aspect-[21/9] xl:aspect-[3/1]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={b.photo} alt="" aria-hidden="true" className="absolute inset-0 size-full scale-110 object-cover opacity-70 blur-2xl" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={b.photo} alt={b.name} className="relative size-full object-contain" />
+            </div>
           ) : (
             <Cover category={b.category} name={b.name} seed={b.id} big className="aspect-[16/9] md:aspect-[21/8] xl:aspect-[3.4/1]" />
           )}

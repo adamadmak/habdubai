@@ -61,7 +61,7 @@ export const om: Dictionary = {
     searchPlaceholder: "Hojii, bakkeewwan fi oduu barbaadaa",
     scopes: { jobs: "Hojii", directory: "Bakka", news: "Oduu" },
     searchIn: "Keessaa barbaadaa",
-    stats: { members: "miseensota mirkanaa'an", jobs: "hojiiwwan banaa", businesses: "bakkeewwan hawaasaa", goods: "imalaa fi paakeejii gabatee meeshaa irra jiran" },
+    stats: { memberOne: "miseensa mirkanaa'e", jobOne: "hojii banaa", businessOne: "bakka hawaasaa", members: "miseensota mirkanaa'an", jobs: "hojiiwwan banaa", businesses: "bakkeewwan hawaasaa", goods: "imalaa fi paakeejii gabatee meeshaa irra jiran" },
     jobsTitle: "Hojiiwwan haaraa",
     jobsLead: "Beeksisni hojii hundi utuu hin mul'atin dura mallattoo gowwoomsaa irraa ni qoratama.",
     kindsTitle: "Bakka hawaasaa barbaadaa",

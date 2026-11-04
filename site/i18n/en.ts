@@ -56,7 +56,7 @@ export const en = {
     searchPlaceholder: "Search jobs, places and news",
     scopes: { jobs: "Jobs", directory: "Places", news: "News" },
     searchIn: "Search in",
-    stats: { members: "verified members", jobs: "open jobs", businesses: "Habesha places", goods: "trips and parcels on the goods board" },
+    stats: { memberOne: "verified member", jobOne: "open job", businessOne: "Habesha place", members: "verified members", jobs: "open jobs", businesses: "Habesha places", goods: "trips and parcels on the goods board" },
     jobsTitle: "New jobs",
     jobsLead: "Every listing is checked for scam signs before it appears.",
     kindsTitle: "Find a Habesha place",
