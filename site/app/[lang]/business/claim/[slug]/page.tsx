@@ -27,15 +27,17 @@ export default async function Claim({ params }: { params: Promise<Params> }) {
   const owner = await currentOwner(lang);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-6 md:pt-10">
+    <div className="mx-auto grid max-w-page gap-6 px-4 pt-6 md:pt-10 lg:grid-cols-2 lg:gap-16 lg:px-8">
+      <div>
       <Link href={`/${lang}/directory/${b.slug}`} className="press inline-flex items-center gap-1 text-sm font-semibold text-primary">
         <ChevronLeft className="size-4" aria-hidden="true" /> {b.name}
       </Link>
       <h1 className="display mt-4 text-[1.75rem] md:text-[2.25rem]">{fill(d.business.claimTitle, { name: b.name })}</h1>
       <p className="mt-2 flex items-center gap-1.5 text-muted"><MapPin className="size-4" aria-hidden="true" /> {[b.area, pick(b.city?.name, lang)].filter(Boolean).join(", ")}</p>
-      <p className="mt-5">{d.business.claimText}</p>
+      <p className="mt-5 max-w-[70ch]">{d.business.claimText}</p>
+      </div>
 
-      <div className="card mt-6 p-5">
+      <div className="card self-start p-5 lg:mt-9">
         {b.owner_managed ? (
           <p className="text-muted">{d.common.ownerManaged}</p>
         ) : owner ? (

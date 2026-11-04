@@ -14,6 +14,7 @@ import { currentClient } from "@/lib/client";
 import { number } from "@/lib/format";
 import { dict, fill, isLocale } from "@/lib/i18n";
 import { currentOwner } from "@/lib/owner";
+import { alternatesFor } from "@/lib/site";
 
 type Search = { direction?: string; kind?: string; page?: string };
 
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const d = dict(lang);
-  return { title: d.goods.title, description: d.goods.lead, alternates: { canonical: `/${lang}/goods` } };
+  return { title: d.goods.title, description: d.goods.lead, alternates: alternatesFor(lang, `/goods`) };
 }
 
 export default async function GoodsBoardPage({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<Search> }) {
@@ -60,7 +61,7 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
   return (
     <>
       <Night word="ሰሌዳ">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 pb-4 pt-10 md:grid-cols-[1.05fr_0.95fr] md:items-center md:gap-12 md:pb-8 md:pt-16">
+        <div className="mx-auto grid max-w-page gap-6 px-4 lg:px-8 pb-4 pt-10 md:grid-cols-[1.05fr_0.95fr] md:items-center md:gap-12 md:pb-8 md:pt-16">
           <div className="settle">
             <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
               <span className="grid size-6 place-items-center rounded-full bg-accent text-night">
@@ -100,7 +101,7 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
       </Night>
 
       {/* ---- The three ways in. ---- */}
-      <section className="mx-auto mt-8 max-w-7xl px-4 md:mt-10" aria-label={g.form.steps.purpose}>
+      <section className="mx-auto mt-8 max-w-page px-4 lg:px-8 md:mt-10" aria-label={g.form.steps.purpose}>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
           <ChoiceTile lang={lang} tone="traveller" title={g.choose.traveller.title} text={g.choose.traveller.text} className="col-span-2 md:col-span-1" />
           <ChoiceTile lang={lang} tone="send" title={g.choose.send.title} text={g.choose.send.text} />
@@ -112,7 +113,7 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
       </section>
 
       {/* ---- The board. ---- */}
-      <section className="mx-auto mt-10 max-w-7xl px-4 md:mt-14">
+      <section className="mx-auto mt-10 max-w-page px-4 lg:px-8 md:mt-14">
         <h2 className="sr-only">{d.common.results}</h2>
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
           <ToggleRow
@@ -151,7 +152,7 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
             </div>
           </div>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {board.data.map((post, i) => (
               <li key={post.id} className={`reveal ${["", "reveal-2", "reveal-3"][i % 3]}`}>
                 <GoodsCard post={post} lang={lang} t={g.card} maxKilos={board.choices.max_kilos} signedIn={Boolean(owner)} />

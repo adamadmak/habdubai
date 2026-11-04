@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { insideTelegram, tellTelegram } from "@/lib/telegram-app";
 
 type Mode = "light" | "dark";
 
@@ -9,6 +10,16 @@ function current(): Mode {
   const chosen = document.documentElement.dataset.theme;
   if (chosen === "light" || chosen === "dark") return chosen;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+/** What the script in layout.tsx applied before the first paint: the reader's choice, else Telegram's. */
+function remembered(): Mode | null {
+  try {
+    const saved = localStorage.getItem("theme") ?? sessionStorage.getItem("telegram-theme");
+    return saved === "light" || saved === "dark" ? saved : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -21,6 +32,9 @@ export function ThemeToggle({ labels }: { labels: { light: string; dark: string 
   const [mode, setMode] = useState<Mode>("light");
 
   useEffect(() => {
+    // A change of language rebuilds <html> without what that script put on it.
+    const saved = remembered();
+    if (saved && !document.documentElement.dataset.theme) document.documentElement.dataset.theme = saved;
     setMode(current());
     // A device that changes its scheme while the page is open, when the reader has not chosen.
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -42,6 +56,11 @@ export function ThemeToggle({ labels }: { labels: { light: string; dark: string 
       localStorage.setItem("theme", next);
     } catch {
       // Private browsing: the choice lasts for this page only.
+    }
+    if (insideTelegram()) {
+      const color = next === "dark" ? "#070c1f" : "#fbf8f2";
+      tellTelegram("web_app_set_header_color", { color });
+      tellTelegram("web_app_set_background_color", { color });
     }
     setMode(next);
   };

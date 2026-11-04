@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Bell, BellOff, Briefcase, Building2, CircleCheck, Hourglass, MessageCircleQuestion, Package, Send, ShieldCheck, Star, type LucideIcon } from "lucide-react";
-import { GEEZ, PageHead } from "@/components/Bits";
+import { PageHead } from "@/components/Bits";
 import { Night } from "@/components/Dawn";
-import { LoginPanel } from "@/components/owner/LoginPanel";
+import { SignInBody } from "@/components/owner/SignInBody";
 import { api, type Meta, type OwnerHome } from "@/lib/api";
 import { formatDate, number } from "@/lib/format";
 import { dict, fill, isLocale, label, type Dictionary, type Locale } from "@/lib/i18n";
@@ -42,41 +42,11 @@ export default async function AccountPage({ params }: { params: Promise<{ lang: 
 
 function SignedOut({ lang, d }: { lang: Locale; d: Dictionary }) {
   const a = d.account;
-  const b = d.business;
 
   return (
     <>
       <PageHead title={a.signInTitle} lead={a.signInLead} />
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-[1fr_0.9fr] md:gap-12">
-        <div className="mt-8">
-          <LoginPanel
-            lang={lang}
-            next={`/${lang}/account`}
-            labels={{
-              phone: b.loginPhone, desktop: b.loginDesktop, open: b.openTelegram, waiting: b.waiting, codeTitle: b.codeTitle, codeHint: b.codeHint,
-              codeSubmit: b.codeSubmit, codeWrong: b.codeWrong, locked: b.locked, busy: b.busy, expired: b.expired, declined: b.declined,
-              retry: b.retry, done: b.done, unavailable: b.unavailable, privacy: b.privacy, network: b.network,
-            }}
-          />
-          <p className="mt-6 text-sm text-muted">
-            {d.legal.beforeSignIn}{" "}
-            <Link href={`/${lang}/terms`} className="font-semibold text-primary">{d.legal.termsLink}</Link>
-            <span aria-hidden="true"> · </span>
-            <Link href={`/${lang}/privacy`} className="font-semibold text-primary">{d.legal.privacyLink}</Link>
-          </p>
-        </div>
-
-        {/* What the page holds once they are in. */}
-        <ol className="reveal mt-2 grid gap-3 sm:grid-cols-2 md:mt-8 md:grid-cols-1">
-          {a.perks.map((perk, i) => (
-            <li key={perk.title} className="card relative overflow-hidden p-5">
-              <span className="geez-mark" aria-hidden="true">{GEEZ[i]}</span>
-              <h2 className="headline mt-3 text-[1.125rem]">{perk.title}</h2>
-              <p className="mt-1 text-sm text-muted">{perk.text}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
+      <SignInBody lang={lang} d={d} next={`/${lang}/account`} />
     </>
   );
 }
@@ -92,7 +62,7 @@ function Home({ lang, d, home, meta }: { lang: Locale; d: Dictionary; home: Owne
   return (
     <>
       <Night>
-        <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 md:pb-14 md:pt-12">
+        <div className="mx-auto max-w-page px-4 lg:px-8 pb-10 pt-8 md:pb-14 md:pt-12">
           <div className="settle flex flex-wrap items-start justify-between gap-6">
             <div className="min-w-0">
               <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
@@ -127,7 +97,7 @@ function Home({ lang, d, home, meta }: { lang: Locale; d: Dictionary; home: Owne
         </div>
       </Night>
 
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-page px-4 lg:px-8">
         {!m && (
           <div className="card reveal relative mt-8 overflow-hidden p-6 md:p-8">
             <div className="tibeb-thin absolute inset-x-0 top-0" aria-hidden="true" />

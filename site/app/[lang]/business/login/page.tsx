@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { LoginPanel } from "@/components/owner/LoginPanel";
+import { SignInBody } from "@/components/owner/SignInBody";
 import { PageHead } from "@/components/Bits";
 import { dict, isLocale } from "@/lib/i18n";
 import { currentOwner } from "@/lib/owner";
@@ -25,44 +24,11 @@ export default async function Login({ params, searchParams }: { params: Promise<
   const next = safeNext((await searchParams).next, lang);
   if (await currentOwner(lang)) redirect(next);
   const d = dict(lang);
-  const b = d.business;
 
   return (
     <>
-    <PageHead title={b.loginTitle} />
-    <div className="mx-auto max-w-2xl px-4">
-      <div className="mt-8">
-        <LoginPanel
-          lang={lang}
-          next={next}
-          labels={{
-            phone: b.loginPhone,
-            desktop: b.loginDesktop,
-            open: b.openTelegram,
-            waiting: b.waiting,
-            codeTitle: b.codeTitle,
-            codeHint: b.codeHint,
-            codeSubmit: b.codeSubmit,
-            codeWrong: b.codeWrong,
-            locked: b.locked,
-            busy: b.busy,
-            expired: b.expired,
-            declined: b.declined,
-            retry: b.retry,
-            done: b.done,
-            unavailable: b.unavailable,
-            privacy: b.privacy,
-            network: b.network,
-          }}
-        />
-      </div>
-      <p className="mt-6 text-sm text-muted">
-        {d.legal.beforeSignIn}{" "}
-        <Link href={`/${lang}/terms`} className="font-semibold text-primary">{d.legal.termsLink}</Link>
-        <span aria-hidden="true"> · </span>
-        <Link href={`/${lang}/privacy`} className="font-semibold text-primary">{d.legal.privacyLink}</Link>
-      </p>
-    </div>
+      <PageHead title={d.business.loginTitle} />
+      <SignInBody lang={lang} d={d} next={next} />
     </>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LegalPage } from "@/components/Legal";
 import { dict, isLocale } from "@/lib/i18n";
+import { alternatesFor } from "@/lib/site";
 
 // The dawn band is tinted by the hour in Dubai; a page with nothing to fetch would otherwise keep its first hour until the next deploy.
 export const revalidate = 900;
@@ -10,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const d = dict(lang);
-  return { title: d.terms.title, description: d.terms.lead, alternates: { canonical: `/${lang}/terms` } };
+  return { title: d.terms.title, description: d.terms.lead, alternates: alternatesFor(lang, `/terms`) };
 }
 
 /** The few rules for using the website, the bot, its groups and its channel. */

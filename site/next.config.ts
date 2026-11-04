@@ -24,7 +24,8 @@ const apiOrigin = (() => {
 
 /*
  * What a page may load: its own scripts and styles (Next inlines a few of
- * each), photos from the API, nothing framed elsewhere, forms only to itself.
+ * each), photos from the API, framed by nobody but Telegram's web client (where
+ * the bot's buttons open it), forms only to itself.
  * Production only: the dev server's hot reload needs eval.
  */
 const contentSecurityPolicy = [
@@ -34,7 +35,7 @@ const contentSecurityPolicy = [
   `img-src 'self' data: blob:${apiOrigin ? ` ${apiOrigin}` : ""}`,
   "font-src 'self' data:",
   "connect-src 'self'",
-  "frame-ancestors 'self'",
+  "frame-ancestors 'self' https://web.telegram.org",
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
@@ -56,7 +57,6 @@ const config: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           ...(process.env.NODE_ENV === "production" ? [{ key: "Content-Security-Policy", value: contentSecurityPolicy }] : []),
         ],

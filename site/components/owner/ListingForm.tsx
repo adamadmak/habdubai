@@ -8,6 +8,7 @@ import type { OwnerBusiness, OwnerChoices } from "@/lib/api";
 import type { Dictionary } from "@/lib/i18n";
 import type { Locale } from "@/lib/locales";
 import { clearDraft, keepDraft, restoreDraft } from "./draft";
+import { keepPhotoHere, sendPhotoWithThisSave } from "./PhotoUpload";
 
 type Values = Partial<OwnerBusiness>;
 
@@ -67,6 +68,8 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
 
   // After each answer: keep the form for a sign-in, forget it on success, or take the owner to the first field to fix.
   useEffect(() => {
+    // Still on this page after an answer: the save did not go through, so a chosen photo stays here.
+    keepPhotoHere();
     if (!form.current) return;
     if (state.ok) clearDraft(draftKey);
     else if (state.message === "signin") keepDraft(draftKey, form.current);
@@ -76,6 +79,7 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
   // Submitted by hand rather than through the form's action, so a refused save keeps what was typed.
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!v.id) sendPhotoWithThisSave();
     const data = new FormData(event.currentTarget);
     startTransition(() => action(data));
   };

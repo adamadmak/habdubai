@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
@@ -12,6 +13,12 @@ import { GoodsTeaser } from "@/components/goods/GoodsBits";
 import { api, type GoodsBoard, type Home } from "@/lib/api";
 import { dayAndMonth, ethiopianDate, number, relative, weekday } from "@/lib/format";
 import { dict, isLocale, label, pick, pickLang } from "@/lib/i18n";
+import { alternatesFor } from "@/lib/site";
+
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params;
+  return isLocale(lang) ? { alternates: alternatesFor(lang) } : {};
+}
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
@@ -43,7 +50,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       {/* ---- The hero: the night over the Gulf, white frosted panels on it, the thread underneath. ---- */}
       <Night word="ሰላም">
         {/* grid-cols-1 on phones: one column that never grows past the screen, so a long word or label truncates instead of widening the hero. */}
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 pb-10 pt-10 md:grid-cols-[1.12fr_0.88fr] md:items-center md:pb-14 md:pt-16 lg:gap-16">
+        <div className="mx-auto grid max-w-page grid-cols-1 gap-10 px-4 lg:px-8 pb-10 pt-10 md:grid-cols-[1.12fr_0.88fr] md:items-center md:pb-14 md:pt-16 lg:gap-16">
           <div className="settle">
             <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
               <span className="tibeb-thin inline-block w-7 rounded-full" aria-hidden="true" />
@@ -103,7 +110,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       </Night>
 
       {/* ---- Bento: the four things this site is for, one tile each. ---- */}
-      <section className="mx-auto mt-10 max-w-7xl px-4 md:mt-14" aria-label={d.brand}>
+      <section className="mx-auto mt-10 max-w-page px-4 lg:px-8 md:mt-14" aria-label={d.brand}>
         <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
           {/* Jobs. Before the first one is published: a welcome, and the alerts in the bot (a tile cannot be a link holding a link). */}
           {stats.jobs > 0 ? (
@@ -268,7 +275,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       <GoodsTeaser lang={lang} d={d} board={goods} mark={4} />
 
       {(home.events.length > 0 || home.announcements.length > 0) && (
-        <div className="mx-auto grid max-w-7xl gap-x-8 md:grid-cols-[1fr_1.6fr]">
+        <div className="mx-auto grid max-w-page gap-x-8 md:grid-cols-[1fr_1.6fr]">
           {home.events.length > 0 && (
             <Section mark={5} title={d.home.eventsTitle} more={{ href: `/${lang}/news?events=1`, label: d.common.seeAll }} className="w-full md:px-0 md:pl-4">
               <div className="flex flex-col gap-3">
@@ -287,7 +294,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       )}
 
       {/* ---- Join: everything else happens in the bot. ---- */}
-      <section className="reveal mx-auto mt-20 max-w-7xl px-4 md:mt-28">
+      <section className="reveal mx-auto mt-20 max-w-page px-4 lg:px-8 md:mt-28">
         <div className="night tile p-6 md:p-10 lg:p-12">
           <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>

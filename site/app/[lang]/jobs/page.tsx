@@ -7,6 +7,7 @@ import { Chip, ChipRow, hrefWith, SearchBox } from "@/components/Filters";
 import { api, query, type Job, type Meta, type Page } from "@/lib/api";
 import { currentClient } from "@/lib/client";
 import { dict, fill, isLocale, label } from "@/lib/i18n";
+import { alternatesFor } from "@/lib/site";
 
 type JobsPage = Page<Job> & { counts: { categories: Record<string, number>; emirates: Record<string, number> } };
 type Search = { q?: string; category?: string; emirate?: string; page?: string };
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const d = dict(lang);
-  return { title: d.jobs.title, description: d.jobs.lead, alternates: { canonical: `/${lang}/jobs` } };
+  return { title: d.jobs.title, description: d.jobs.lead, alternates: alternatesFor(lang, `/jobs`) };
 }
 
 export default async function JobsIndex({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<Search> }) {
@@ -42,7 +43,7 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
     <>
       <PageHead title={d.jobs.title} lead={d.jobs.lead} word="ሥራ" />
 
-      <div className="mx-auto mt-6 flex max-w-7xl flex-col gap-3 px-4">
+      <div className="mx-auto mt-6 flex max-w-page flex-col gap-3 px-4 lg:px-8">
         <SearchBox action={base} q={current.q} placeholder={d.jobs.searchPlaceholder} keep={{ category: current.category, emirate: current.emirate }} labels={{ search: d.common.search, clear: d.common.clear }} />
         <ChipRow label={d.jobs.facts.kind}>
           <Chip href={hrefWith(base, current, { category: undefined })} active={!current.category}>{d.jobs.allKinds}</Chip>
@@ -64,13 +65,13 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
         )}
       </div>
 
-      <div className="mx-auto mt-6 max-w-7xl px-4">
+      <div className="mx-auto mt-6 max-w-page px-4 lg:px-8">
         <h2 className="sr-only">{d.common.results}</h2>
         <p className="mb-3 text-sm text-muted" aria-live="polite">{countLabel(jobs.meta.total, d.jobs.countOne, d.jobs.count, lang)}</p>
         {jobs.data.length === 0 ? (
           <Empty>{d.jobs.empty}</Empty>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
             {jobs.data.map((job) => <JobCard key={job.id} job={job} lang={lang} meta={meta} />)}
           </div>
         )}

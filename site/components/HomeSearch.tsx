@@ -29,6 +29,9 @@ export function HomeSearch({ lang, placeholder, scopes, scopeLabel, searchLabel 
     <form
       role="search"
       className="mt-8 max-w-xl"
+      // Without its script yet (a slow phone) the form still goes to the chosen list.
+      action={`/${lang}/${scope}`}
+      method="get"
       onSubmit={(e) => {
         e.preventDefault();
         const term = q.trim();
@@ -57,6 +60,7 @@ export function HomeSearch({ lang, placeholder, scopes, scopeLabel, searchLabel 
         <Search className="size-5 shrink-0 text-muted" aria-hidden="true" />
         <input
           type="search"
+          name="q"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={placeholder}

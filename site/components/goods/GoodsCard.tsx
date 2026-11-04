@@ -136,7 +136,8 @@ export function TrustBadge({ member, t, lang, className = "" }: { member: GoodsM
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1 font-semibold">
           <span className="truncate">{member.name}</span>
-          <BadgeCheck className="size-4 shrink-0 text-primary" aria-label={t.verified} />
+          <BadgeCheck className="size-4 shrink-0 text-primary" aria-hidden="true" />
+          <span className="sr-only">{t.verified}</span>
         </p>
         <p className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted">
           <span>{since ? fill(t.verifiedSince, { date: since }) : t.verified}</span>
@@ -242,7 +243,7 @@ export function GoodsCard({ post, lang, t, maxKilos = 46, signedIn = false, prev
         {preview ? (
           <span className="btn btn-kind pointer-events-none w-full" aria-hidden="true">{t.interested}</span>
         ) : (
-          <InterestButton id={post.id} lang={lang} signedIn={signedIn} labels={{ interested: t.interested, sending: t.sending, error: t.error }} />
+          <InterestButton id={post.id} lang={lang} signedIn={signedIn} labels={{ interested: t.interested, sending: t.sending, error: t.error, signInFirst: t.signInFirst }} />
         )}
       </div>
     </article>

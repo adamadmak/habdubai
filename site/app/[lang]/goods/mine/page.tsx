@@ -65,7 +65,7 @@ export default async function MyGoodsPage({ params }: { params: Promise<{ lang: 
         )}
       </PageHead>
 
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="mx-auto max-w-page px-4 lg:px-8">
         {!mine.member ? (
           <div className="mt-8">
             <MemberGate d={d} botLink={mine.bot_link} />
@@ -78,6 +78,8 @@ export default async function MyGoodsPage({ params }: { params: Promise<{ lang: 
               </div>
             )}
 
+            {/* Side by side from a wide laptop up: what the member posted, and the deals it led to. */}
+            <div className="xl:grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] xl:items-start xl:gap-12">
             {/* ---- ፩ The posts. ---- */}
             <section className="mt-10">
               <div className="flex flex-wrap items-end justify-between gap-3">
@@ -102,7 +104,7 @@ export default async function MyGoodsPage({ params }: { params: Promise<{ lang: 
             </section>
 
             {/* ---- ፪ The deals. ---- */}
-            <section className="mt-12">
+            <section className="mt-12 xl:mt-10">
               <h2 className="flex items-center gap-3">
                 <span className="geez-mark" aria-hidden="true">{GEEZ[1]}</span>
                 <span className="headline text-[1.5rem] md:text-[1.75rem]">{g.deals}</span>
@@ -117,6 +119,7 @@ export default async function MyGoodsPage({ params }: { params: Promise<{ lang: 
                 </ul>
               )}
             </section>
+            </div>
           </>
         )}
 

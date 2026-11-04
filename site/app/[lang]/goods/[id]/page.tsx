@@ -42,7 +42,7 @@ export default async function GoodsPostPage({ params }: { params: Promise<Params
   const tone = toneOf(post);
 
   return (
-    <div className={`goods-${tone} mx-auto max-w-7xl px-4 pt-6 md:pt-10`}>
+    <div className={`goods-${tone} mx-auto max-w-page px-4 lg:px-8 pt-6 md:pt-10`}>
       <Link href={`/${lang}/goods`} className="press inline-flex items-center gap-1 text-sm font-semibold text-primary">
         <ChevronLeft className="size-4" aria-hidden="true" /> {g.detail.back}
       </Link>

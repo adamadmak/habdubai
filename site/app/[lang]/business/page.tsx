@@ -14,6 +14,7 @@ import { number } from "@/lib/format";
 import { photoSrcSet } from "@/lib/photos";
 import { dict, fill, isLocale, pick, type Dictionary, type Locale } from "@/lib/i18n";
 import { currentOwner, ownerApi } from "@/lib/owner";
+import { alternatesFor } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const d = dict(lang);
-  return { title: d.nav.business, description: d.business.landingLead, alternates: { canonical: `/${lang}/business` } };
+  return { title: d.nav.business, description: d.business.landingLead, alternates: alternatesFor(lang, `/business`) };
 }
 
 export default async function BusinessHome({ params }: { params: Promise<{ lang: string }> }) {
@@ -37,7 +38,7 @@ function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
   return (
     <>
       <Night>
-        <div className="mx-auto grid max-w-7xl gap-12 px-4 pb-12 pt-10 md:grid-cols-[1.15fr_0.85fr] md:items-center md:pb-16 md:pt-16">
+        <div className="mx-auto grid max-w-page gap-12 px-4 lg:px-8 pb-12 pt-10 md:grid-cols-[1.15fr_0.85fr] md:items-center md:pb-16 md:pt-16">
           <div className="settle">
             <p className="glass-white inline-flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3.5 text-[0.8125rem] font-semibold">
               <span className="tibeb-thin inline-block w-7 rounded-full" aria-hidden="true" /> {d.nav.business}
@@ -64,7 +65,7 @@ function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
         </div>
       </Night>
 
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-page px-4 lg:px-8">
         <ol className="reveal mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {d.business.steps.map((step, i) => (
             <li key={step.title} className="card relative overflow-hidden p-5 md:p-6">
@@ -102,7 +103,7 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
         </form>
       </div>
     </PageHead>
-    <div className="mx-auto max-w-4xl px-4">
+    <div className="mx-auto max-w-page px-4 lg:px-8">
 
       {data.businesses.length === 0 ? (
         <div className="card mt-8 p-8 text-center">
@@ -110,10 +111,10 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
           <Link href={`/${lang}/business/new`} className="btn btn-primary mt-5"><Plus className="size-4" aria-hidden="true" /> {b.add}</Link>
         </div>
       ) : (
-        <ul className="mt-8 flex flex-col gap-3">
+        <ul className="mt-8 grid gap-3 lg:grid-cols-2">
           {data.businesses.map((x) => (
-            <li key={x.id} className="card overflow-hidden">
-              <div className="flex gap-4 p-4">
+            <li key={x.id} className="card flex flex-col overflow-hidden">
+              <div className="flex flex-1 gap-4 p-4">
                 <div className="size-20 shrink-0 overflow-hidden rounded-2xl">
                   {x.photo || x.pending_photo ? (
                     // An 80px thumbnail: the 480px copy when the photo is public (a photo in review is a signed link, left alone).
@@ -158,7 +159,7 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
       {data.claims.length > 0 && (
         <section className="mt-10">
           <h2 className="title text-xl">{b.claimsTitle}</h2>
-          <ul className="mt-3 flex flex-col gap-2">
+          <ul className="mt-3 grid gap-2 lg:grid-cols-2">
             {data.claims.map((c) => (
               <li key={c.id} className="card flex flex-wrap items-center justify-between gap-2 p-4">
                 <span className="font-semibold">{c.business?.name}</span>

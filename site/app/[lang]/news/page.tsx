@@ -6,6 +6,7 @@ import { Chip, ChipRow, hrefWith, SearchBox } from "@/components/Filters";
 import { api, query, type Announcement, type Page, type Topic } from "@/lib/api";
 import { currentClient } from "@/lib/client";
 import { dict, fill, isLocale, label } from "@/lib/i18n";
+import { alternatesFor } from "@/lib/site";
 
 type NewsPage = Page<Announcement> & { topics: Topic[] };
 type Search = { q?: string; topic?: string; events?: string; page?: string };
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const d = dict(lang);
-  return { title: d.news.title, description: d.news.lead, alternates: { canonical: `/${lang}/news` } };
+  return { title: d.news.title, description: d.news.lead, alternates: alternatesFor(lang, `/news`) };
 }
 
 export default async function NewsIndex({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<Search> }) {
@@ -36,7 +37,7 @@ export default async function NewsIndex({ params, searchParams }: { params: Prom
     <>
       <PageHead title={d.news.title} lead={d.news.lead} word="ዜና" />
 
-      <div className="mx-auto mt-6 flex max-w-7xl flex-col gap-3 px-4">
+      <div className="mx-auto mt-6 flex max-w-page flex-col gap-3 px-4 lg:px-8">
         <SearchBox action={base} q={current.q} placeholder={d.news.searchPlaceholder} keep={{ topic: current.topic, events: current.events }} labels={{ search: d.common.search, clear: d.common.clear }} />
         <ChipRow label={d.news.title}>
           <Chip href={hrefWith(base, { q: current.q, topic: current.topic }, {})} active={!events}>{d.news.all}</Chip>
@@ -52,7 +53,7 @@ export default async function NewsIndex({ params, searchParams }: { params: Prom
         </ChipRow>
       </div>
 
-      <div className="mx-auto mt-6 max-w-7xl px-4">
+      <div className="mx-auto mt-6 max-w-page px-4 lg:px-8">
         <h2 className="sr-only">{d.common.results}</h2>
         {news.data.length === 0 ? (
           <Empty>{current.q ? d.news.noMatch : d.news.empty}</Empty>

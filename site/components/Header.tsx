@@ -16,10 +16,10 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
 
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 md:px-4">
-      <div className="chrome mx-auto flex h-[var(--header-h)] max-w-7xl items-center gap-3 rounded-full pl-2 pr-2 md:gap-5 md:pl-2.5">
+      <div className="chrome mx-auto flex h-[var(--header-h)] max-w-island items-center gap-2 rounded-full pl-2 pr-2 md:gap-5 md:pl-2.5">
         <Link href={`/${lang}`} className="press flex shrink-0 items-center gap-2.5 rounded-full pr-1" aria-label={d.brand}>
           <Mark className="size-9" />
-          <span className="flex flex-col leading-none">
+          <span className="hidden flex-col leading-none min-[350px]:flex md:max-lg:hidden">
             <span className="text-[0.9375rem] font-bold tracking-tight">{d.brand}</span>
             {/* The name in the other script: Ge'ez on English and Oromo pages, Latin on Amharic and Tigrinya ones. */}
             <span lang={isGeez(lang) ? "en" : "am"} className="mt-1 text-[0.6875rem] font-medium text-muted">{d.brandNative}</span>
@@ -32,11 +32,12 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
             <Suspense fallback={<LangSwitchPlain lang={lang} label={d.language} />}>
               <LangSwitch lang={lang} label={d.language} />
             </Suspense>
-            <ThemeToggle labels={d.theme} />
+            {/* The first thing to give way on a small phone: it follows the device there. */}
+            <span className="contents max-[374px]:hidden"><ThemeToggle labels={d.theme} /></span>
             <AccountChip lang={lang} labels={{ signIn: d.account.signIn, myPage: d.account.myPage }} />
             {join && (
               // On a tablet the links take the room, so the button keeps only its icon there (its words stay for screen readers).
-              <a href={join} target="_blank" rel="noopener noreferrer" className="btn btn-gold hidden min-h-10 rounded-full px-4 text-sm sm:inline-flex md:max-lg:px-3">
+              <a href={join} target="_blank" rel="noopener noreferrer" className="join-cta btn btn-gold hidden min-h-10 rounded-full px-4 text-sm sm:inline-flex md:max-lg:px-3">
                 <Send className="size-4" aria-hidden="true" />
                 <span className="md:max-lg:sr-only">{d.join}</span>
               </a>

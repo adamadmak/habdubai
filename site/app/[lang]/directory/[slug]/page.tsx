@@ -9,7 +9,7 @@ import { ViewPing } from "@/components/ViewPing";
 import { api, apiOrNull, type Business, type Meta } from "@/lib/api";
 import { digits, formatDate, host } from "@/lib/format";
 import { dict, fill, isLocale, label, pick } from "@/lib/i18n";
-import { siteUrl } from "@/lib/site";
+import { alternatesFor, siteUrl } from "@/lib/site";
 
 type Detail = { business: Business; nearby: Business[] };
 type Params = { lang: string; slug: string };
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   return {
     title: `${b.name} · ${where}`,
     description: b.description ?? where,
-    alternates: { canonical: `/${lang}/directory/${b.slug}` },
+    alternates: alternatesFor(lang, `/directory/${b.slug}`),
     openGraph: b.photo ? { images: [{ url: b.photo }] } : undefined,
   };
 }
@@ -73,66 +73,70 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <ViewPing slug={b.slug} />
 
-      <div className="mx-auto max-w-4xl px-4 pt-6 md:pt-10">
+      <div className="mx-auto max-w-page px-4 pt-6 md:pt-10 lg:px-8">
         <Link href={`/${lang}/directory`} className="press inline-flex items-center gap-1 text-sm font-semibold text-primary">
           <ChevronLeft className="size-4" aria-hidden="true" /> {d.directory.back}
         </Link>
       </div>
 
-      <div className="mx-auto mt-4 max-w-4xl px-4">
+      <div className="mx-auto mt-4 max-w-page px-4 lg:px-8">
         <div className="overflow-hidden rounded-[1.75rem] shadow-[0_24px_60px_-30px_rgb(6_12_36/0.5)]">
           {b.photo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={b.photo} alt={b.name} className="aspect-[16/9] w-full object-cover md:aspect-[21/9]" />
+            <img src={b.photo} alt={b.name} className="aspect-[16/9] w-full object-cover md:aspect-[21/9] xl:aspect-[3/1]" />
           ) : (
-            <Cover category={b.category} name={b.name} seed={b.id} big className="aspect-[16/9] md:aspect-[21/8]" />
+            <Cover category={b.category} name={b.name} seed={b.id} big className="aspect-[16/9] md:aspect-[21/8] xl:aspect-[3.4/1]" />
           )}
           <div className="tibeb" aria-hidden="true" />
         </div>
 
-        <header className="mt-6">
-          <p className="text-sm font-semibold text-accent-ink">{kind}</p>
-          <h1 className="display mt-1.5 flex flex-wrap items-center gap-2 text-[2.25rem] md:text-[3rem]">
-            {b.name}
-            {b.verified && <BadgeCheck className="size-7 text-primary" aria-label={d.common.verified} />}
-          </h1>
-          <p className="mt-2 flex items-center gap-1.5 text-muted">
-            <MapPin className="size-4 shrink-0" aria-hidden="true" /> {[b.area, city].filter(Boolean).join(", ")}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium">
-            {b.verified && <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 text-primary"><BadgeCheck className="size-3.5" aria-hidden="true" />{d.common.verifiedNote}</span>}
-            {b.owner_managed && <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2.5 py-1 text-success"><UserCheck className="size-3.5" aria-hidden="true" />{d.common.ownerManaged}</span>}
-          </div>
-        </header>
+        <div className="mt-6 grid gap-8 md:mt-8 md:grid-cols-[minmax(0,1fr)_19rem] lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-12 xl:gap-16">
+          <div className="min-w-0">
+            <header>
+              <p className="text-sm font-semibold text-accent-ink">{kind}</p>
+              <h1 className="display mt-1.5 flex flex-wrap items-center gap-2 text-[2.25rem] md:text-[3rem]">
+                {b.name}
+                {b.verified && (
+                  <>
+                    <BadgeCheck className="size-7 text-primary" aria-hidden="true" />
+                    <span className="sr-only">{d.common.verified}</span>
+                  </>
+                )}
+              </h1>
+              <p className="mt-2 flex items-center gap-1.5 text-muted">
+                <MapPin className="size-4 shrink-0" aria-hidden="true" /> {[b.area, city].filter(Boolean).join(", ")}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium">
+                {b.verified && <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 text-primary"><BadgeCheck className="size-3.5" aria-hidden="true" />{d.common.verifiedNote}</span>}
+                {b.owner_managed && <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2.5 py-1 text-success"><UserCheck className="size-3.5" aria-hidden="true" />{d.common.ownerManaged}</span>}
+              </div>
+            </header>
 
-        {actions.length > 0 && (
-          <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-            {actions.map((a) => (
-              <a
-                key={a.label}
-                href={a.href}
-                target={a.href.startsWith("tel:") ? undefined : "_blank"}
-                rel="noopener noreferrer"
-                className={`btn ${a.primary ? "btn-primary" : "btn-quiet"}`}
-              >
-                <a.icon className="size-4" aria-hidden="true" /> {a.label}
-              </a>
-            ))}
-            <ShareButton title={b.name} url={siteUrl(`${lang}/directory/${b.slug}`)} labels={{ share: d.common.share, copied: d.common.copied }} />
-          </div>
-        )}
+            <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              {actions.map((a) => (
+                <a
+                  key={a.label}
+                  href={a.href}
+                  target={a.href.startsWith("tel:") ? undefined : "_blank"}
+                  rel="noopener noreferrer"
+                  className={`btn ${a.primary ? "btn-primary" : "btn-quiet"}`}
+                >
+                  <a.icon className="size-4" aria-hidden="true" /> {a.label}
+                </a>
+              ))}
+              <ShareButton title={b.name} url={siteUrl(`${lang}/directory/${b.slug}`)} labels={{ share: d.common.share, copied: d.common.copied }} />
+            </div>
 
-        <div className="mt-8 grid gap-8 md:grid-cols-[1.6fr_1fr]">
-          <div>
             {(b.description || b.about) && (
-              <section>
+              <section className="mt-8">
                 <h2 className="headline text-2xl">{d.directory.about}</h2>
-                {b.description && <p className="mt-3 text-[1.0625rem] font-medium">{b.description}</p>}
-                {b.about && <p className="prose-plain mt-3 leading-relaxed text-muted">{b.about}</p>}
+                {b.description && <p className="mt-3 max-w-[70ch] text-[1.0625rem] font-medium">{b.description}</p>}
+                {b.about && <p className="prose-plain mt-3 max-w-[70ch] leading-relaxed text-muted">{b.about}</p>}
               </section>
             )}
           </div>
-          <aside className="flex flex-col gap-3">
+
+          <aside className="flex flex-col gap-3 md:sticky md:top-[calc(var(--header-space)+1.5rem)] md:self-start">
             {b.hours && (
               <div className="card p-4">
                 <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="size-4 text-primary" aria-hidden="true" /> {d.directory.hours}</p>
@@ -167,7 +171,7 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
       </div>
 
       {nearby.length > 0 && (
-        <section className="mx-auto mt-12 max-w-7xl px-4">
+        <section className="mx-auto mt-12 max-w-page px-4 lg:px-8">
           <h2 className="headline text-[1.75rem]">{d.directory.nearby}</h2>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {nearby.map((n) => <BusinessCard key={n.id} business={n} lang={lang} meta={meta} />)}

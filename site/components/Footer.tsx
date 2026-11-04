@@ -13,7 +13,7 @@ export function Footer({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
     <footer className="night mt-20 md:mt-28">
       <Tibeb />
       <span aria-hidden="true" className="sky-word absolute -bottom-10 -right-4 text-[9rem] md:-bottom-16 md:text-[16rem]">ሐበሻ</span>
-      <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-12 pt-14 md:grid-cols-[1.5fr_1fr_1fr]">
+      <div className="relative mx-auto grid max-w-page gap-10 px-4 lg:px-8 pb-12 pt-14 md:grid-cols-[1.5fr_1fr_1fr]">
         <div className="max-w-sm">
           <div className="flex items-center gap-2.5">
             <Mark className="size-9" />
@@ -45,7 +45,7 @@ export function Footer({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
         </div>
       </div>
       {/* At least 4.5:1 even where the dusk glow lightens the band. */}
-      <div className="relative mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 px-4 pb-[calc(var(--tabbar-space)+1.5rem)] pt-6 text-xs text-white/75 md:pb-10">
+      <div className="relative mx-auto flex max-w-page flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 px-4 lg:px-8 pb-[calc(var(--tabbar-space)+1.5rem)] pt-6 text-xs text-white/75 md:pb-10">
         <span>© {new Date().getFullYear()} {d.brand}</span>
         <Link className="transition-colors hover:text-white" href={`/${lang}/privacy`}>{d.legal.privacyLink}</Link>
         <Link className="transition-colors hover:text-white" href={`/${lang}/terms`}>{d.legal.termsLink}</Link>

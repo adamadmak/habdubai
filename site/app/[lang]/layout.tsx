@@ -9,6 +9,7 @@ import { Header } from "@/components/Header";
 import { Motion } from "@/components/Motion";
 import { TabBar } from "@/components/NavLinks";
 import { PageViews } from "@/components/PageViews";
+import { TelegramEntry } from "@/components/TelegramEntry";
 import { api, type Meta } from "@/lib/api";
 import { dict, isLocale, LOCALES } from "@/lib/i18n";
 import { siteUrl } from "@/lib/site";
@@ -20,8 +21,17 @@ const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", dis
 // Not preloaded: two heavy weights that only Ge'ez headings use; English pages would fetch them for nothing.
 const ethiopicSerif = Noto_Serif_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic-serif", display: "swap", weight: ["600", "700"], preload: false });
 
-/** Reads the theme the reader chose (ThemeToggle) and sets it on <html>; nothing stored means "follow the device". */
-const THEME_SCRIPT = "try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}";
+/**
+ * Reads the theme the reader chose (ThemeToggle) and sets it on <html>; nothing stored means "follow the device".
+ * Inside Telegram (see lib/telegram-app.ts) nothing stored means "follow Telegram": light or dark from the background it passes.
+ */
+const THEME_SCRIPT =
+  "try{var d=document.documentElement,t=localStorage.getItem('theme'),h=location.hash;if(t==='light'||t==='dark')d.dataset.theme=t;" +
+  "var a=window.TelegramWebviewProxy||(window.external&&'notify' in window.external)||window.parent!==window;" +
+  "if((a&&h.indexOf('tgWebAppData=')>-1)||sessionStorage.getItem('in-telegram')==='1'){d.dataset.telegram='1';" +
+  "var m=decodeURIComponent(h).match(/\"bg_color\":\"#([0-9a-f]{6})\"/i);" +
+  "if(m){var n=parseInt(m[1],16);sessionStorage.setItem('telegram-theme',(n>>16)*.299+(n>>8&255)*.587+(n&255)*.114<128?'dark':'light')}" +
+  "var g=sessionStorage.getItem('telegram-theme');if(g&&!d.dataset.theme)d.dataset.theme=g}}catch(e){}";
 
 /*
  * No generateStaticParams: nothing under /[lang] is pre-rendered at build time,
@@ -89,6 +99,7 @@ export default async function LangLayout({ children, params }: { children: React
         <TabBar lang={lang} labels={d.tabs} label={d.navLabel} />
         <Motion />
         <PageViews />
+        <TelegramEntry lang={lang} />
       </body>
     </html>
   );

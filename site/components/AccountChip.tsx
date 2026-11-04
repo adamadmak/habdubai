@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { telegramSignIn } from "@/lib/telegram-app";
 import { UserRound } from "lucide-react";
 import type { Locale } from "@/lib/locales";
 
@@ -18,14 +19,20 @@ export function AccountChip({ lang, labels }: { lang: Locale; labels: { signIn: 
 
   useEffect(() => {
     let live = true;
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : { owner: null }))
-      .then((json: { owner: Who }) => live && setWho(json.owner ?? null))
-      .catch(() => live && setWho(null));
+    const ask = () =>
+      fetch("/api/auth/me", { cache: "no-store" })
+        .then((response) => (response.ok ? response.json() : { owner: null }))
+        .then((json: { owner: Who }) => live && setWho(json.owner ?? null))
+        .catch(() => live && setWho(null));
+    // After the sign-in from Telegram, if there is one: a stale cookie checked at the same moment could be cleared after the new one is set.
+    void telegramSignIn(lang).finally(() => void ask());
+    // Signed in on this very page, by opening it inside Telegram.
+    window.addEventListener("hd:signed-in", ask);
     return () => {
       live = false;
+      window.removeEventListener("hd:signed-in", ask);
     };
-  }, []);
+  }, [lang]);
 
   const first = who?.name.trim().split(/\s+/)[0] ?? "";
   const initial = first.charAt(0).toUpperCase();
@@ -33,7 +40,7 @@ export function AccountChip({ lang, labels }: { lang: Locale; labels: { signIn: 
   return (
     <Link
       href={`/${lang}/account`}
-      className="press inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-fg/8 pl-1 pr-3 text-sm font-semibold text-fg"
+      className="press inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-fg/8 pl-1 pr-1 text-sm font-semibold text-fg xl:pr-3"
       aria-label={who ? labels.myPage : labels.signIn}
       title={who ? labels.myPage : labels.signIn}
       data-signed-in={who ? "true" : undefined}
@@ -42,7 +49,7 @@ export function AccountChip({ lang, labels }: { lang: Locale; labels: { signIn: 
         {who ? initial : <UserRound className="size-4" strokeWidth={2} />}
       </span>
       {/* No word until the answer is in: a member never sees "sign in" flash before their own name. */}
-      {who !== undefined && <span className="hidden max-w-[7rem] truncate sm:inline">{who ? first : labels.signIn}</span>}
+      {who !== undefined && <span className="hidden max-w-[7rem] truncate xl:inline">{who ? first : labels.signIn}</span>}
     </Link>
   );
 }

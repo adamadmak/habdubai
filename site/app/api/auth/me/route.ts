@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clearCookie, currentOwner, OWNER_COOKIE, ownerToken } from "@/lib/owner";
+import { checkOwner, clearCookie, OWNER_COOKIE, ownerToken } from "@/lib/owner";
 
 /**
  * Who is signed in, for the chip in the header: the name only. Without a
@@ -12,7 +12,7 @@ export async function GET() {
 
   if (!(await ownerToken())) return NextResponse.json({ owner: null }, { headers });
 
-  const owner = await currentOwner().catch(() => undefined);
+  const owner = await checkOwner();
   if (owner === undefined) {
     // The API is briefly away: the header shows "sign in"; the page itself will say more.
     return NextResponse.json({ owner: null }, { headers });

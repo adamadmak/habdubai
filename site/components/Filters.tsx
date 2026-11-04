@@ -37,7 +37,7 @@ export function SearchBox({ action, q, placeholder, keep, labels }: {
 /** A row of filter chips that scrolls sideways on a phone. */
 export function ChipRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div role="group" aria-label={label} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div role="group" aria-label={label} className="relative -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {children}
     </div>
   );

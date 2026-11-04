@@ -47,17 +47,25 @@ export async function ownerApi<T>(path: string, init: { method?: string; body?: 
 }
 
 /**
- * The signed-in owner, or null: no cookie, an expired token, a banned account,
- * or the API briefly away. The last case reads as signed out rather than as a
- * broken page; the next request asks again.
+ * Who the API says this is. An owner; null when it says nobody (no cookie, an expired
+ * token, a banned account); undefined when it did not say at all (a restart, a timeout,
+ * a limit), which must never be taken for the session being over.
  */
-export async function currentOwner(locale?: Locale): Promise<Owner | null> {
+export async function checkOwner(locale?: Locale): Promise<Owner | null | undefined> {
   if (!(await ownerToken())) return null;
   try {
     return (await ownerApi<{ owner: Owner }>("/me", { locale })).owner;
   } catch (error) {
     if (error instanceof ApiError && (error.status === 401 || error.status === 403)) return null;
     console.error("owner/me failed", error instanceof ApiError ? error.status : error);
-    return null;
+    return undefined;
   }
+}
+
+/**
+ * The signed-in owner, or null. The API being briefly away reads as signed out
+ * rather than as a broken page; the next request asks again.
+ */
+export async function currentOwner(locale?: Locale): Promise<Owner | null> {
+  return (await checkOwner(locale)) ?? null;
 }

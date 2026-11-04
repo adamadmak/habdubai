@@ -9,6 +9,7 @@ import { Chip, ChipRow, hrefWith, SearchBox } from "@/components/Filters";
 import { api, query, type Business, type Facets, type Meta, type Page } from "@/lib/api";
 import { currentClient } from "@/lib/client";
 import { dict, fill, isLocale, label, pick } from "@/lib/i18n";
+import { alternatesFor } from "@/lib/site";
 
 type Search = { q?: string; city?: string; category?: string; page?: string };
 
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const d = dict(lang);
-  return { title: d.directory.title, description: d.directory.lead, alternates: { canonical: `/${lang}/directory` } };
+  return { title: d.directory.title, description: d.directory.lead, alternates: alternatesFor(lang, `/directory`) };
 }
 
 export default async function DirectoryIndex({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<Search> }) {
@@ -48,7 +49,7 @@ export default async function DirectoryIndex({ params, searchParams }: { params:
         </Link>
       </PageHead>
 
-      <div className="mx-auto mt-6 flex max-w-7xl flex-col gap-3 px-4">
+      <div className="mx-auto mt-6 flex max-w-page flex-col gap-3 px-4 lg:px-8">
         <SearchBox action={base} q={current.q} placeholder={d.directory.searchPlaceholder} keep={{ city: current.city, category: current.category }} labels={{ search: d.common.search, clear: d.common.clear }} />
         {cities.length > 1 && (
           <ChipRow label={d.directory.allCities}>
@@ -71,7 +72,7 @@ export default async function DirectoryIndex({ params, searchParams }: { params:
         </ChipRow>
       </div>
 
-      <div className="mx-auto mt-6 max-w-7xl px-4">
+      <div className="mx-auto mt-6 max-w-page px-4 lg:px-8">
         <h2 className="sr-only">{d.common.results}</h2>
         <p className="mb-3 text-sm text-muted" aria-live="polite">{countLabel(list.meta.total, d.directory.countOne, d.directory.count, lang)}</p>
         {list.data.length === 0 ? (

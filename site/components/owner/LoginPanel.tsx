@@ -4,14 +4,18 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import QRCode from "qrcode";
 import { CircleAlert, CircleCheck, KeyRound, Send, ShieldCheck, Smartphone } from "lucide-react";
 import type { Locale } from "@/lib/locales";
+import { telegramSignIn } from "@/lib/telegram-app";
 
-type Phase = "starting" | "waiting" | "code" | "approved" | "expired" | "declined" | "locked" | "unavailable" | "busy";
+type Phase = "starting" | "waiting" | "code" | "approved" | "expired" | "declined" | "locked" | "unavailable" | "busy" | "framed";
 
 type Labels = {
   phone: string;
   desktop: string;
   open: string;
   waiting: string;
+  opening: string;
+  framed: string;
+  openTab: string;
   codeTitle: string;
   codeHint: string;
   codeSubmit: string;
@@ -125,8 +129,31 @@ export function LoginPanel({ lang, next, labels }: { lang: Locale; next: string;
   };
 
   useEffect(() => {
-    void start();
-  }, [start]);
+    let live = true;
+    // Inside Telegram's web client the page sits in a frame, where the browser keeps no cookie, so
+    // no way of signing in can work; a tab of its own can. Starting one here would only say "expired".
+    if (window.parent !== window) {
+      setPhase("framed");
+      return;
+    }
+    // Opened inside Telegram there is nothing to scan or type; everyone else starts the ordinary way.
+    void telegramSignIn(lang).then((status) => {
+      if (!live) return;
+      if (status === "approved" || status === "same") {
+        setPhase("approved");
+        router.replace(next);
+        router.refresh();
+      } else if (status === "blocked") {
+        // Telegram already said who this is, and the bot would only decline a code.
+        setPhase("declined");
+      } else {
+        void start();
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [start, lang, next, router]);
 
   useEffect(() => {
     if (phase !== "waiting") return;
@@ -151,6 +178,15 @@ export function LoginPanel({ lang, next, labels }: { lang: Locale; next: string;
         <CircleAlert className="mx-auto size-8 text-warning" aria-hidden="true" />
         <p className="mt-3 font-semibold">{labels[phase]}</p>
         <button type="button" onClick={() => void start()} className="btn btn-primary mt-5">{labels.retry}</button>
+      </div>
+    );
+  }
+
+  if (phase === "framed") {
+    return (
+      <div className="card p-6 text-center" role="status">
+        <p className="font-semibold">{labels.framed}</p>
+        <a href={window.location.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-5">{labels.openTab}</a>
       </div>
     );
   }
@@ -195,7 +231,15 @@ export function LoginPanel({ lang, next, labels }: { lang: Locale; next: string;
   }
 
   return (
-    <div className="card overflow-hidden">
+    <>
+    {/* Opened from a button in the bot there is nothing to scan: Telegram already said who this is. Decided in CSS, so the first paint is right. */}
+    {phase === "starting" && (
+      <div className="telegram-only card p-6 text-center" role="status">
+        <span className="waiting mx-auto block size-8 rounded-full bg-primary/25" aria-hidden="true" />
+        <p className="mt-3 font-semibold">{labels.opening}</p>
+      </div>
+    )}
+    <div className={`card overflow-hidden ${phase === "starting" ? "telegram-hidden" : ""}`}>
       <div className="grid gap-6 p-6 md:grid-cols-[auto_1fr] md:items-center">
         {/* On a computer: scan with the phone. On a phone: the button below does it. */}
         <div className="mx-auto hidden size-[13.75rem] place-items-center rounded-2xl border border-line bg-white p-2 md:grid">
@@ -224,5 +268,6 @@ export function LoginPanel({ lang, next, labels }: { lang: Locale; next: string;
         <ShieldCheck className="size-3.5 shrink-0" aria-hidden="true" /> {labels.privacy}
       </p>
     </div>
+    </>
   );
 }

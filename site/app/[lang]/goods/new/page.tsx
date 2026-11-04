@@ -55,7 +55,7 @@ export default async function NewGoodsPost({ params, searchParams }: { params: P
   return (
     <>
       <PageHead title={g.form.title} lead={g.form.lead} word="ሰሌዳ" />
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-page px-4 lg:px-8">
         <Link href={`/${lang}/goods`} className="press mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary">
           <ChevronLeft className="size-4" aria-hidden="true" /> {g.detail.back}
         </Link>

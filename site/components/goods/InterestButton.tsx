@@ -23,15 +23,18 @@ export function InterestButton({ id, lang, signedIn, labels }: {
   id: number;
   lang: Locale;
   signedIn: boolean;
-  labels: { interested: string; sending: string; error: string };
+  labels: { interested: string; sending: string; error: string; signInFirst: string };
 }) {
   const [state, action, pending] = useActionState<InterestState, FormData>(goodsInterest, {});
 
   if (!signedIn) {
     return (
-      <Link href={`/${lang}/business/login?next=/${lang}/goods/${id}`} className="btn btn-kind relative z-10 w-full">
-        {labels.interested}
-      </Link>
+      <div className="relative z-10">
+        <Link href={`/${lang}/business/login?next=/${lang}/goods/${id}`} className="btn btn-kind w-full">
+          {labels.interested}
+        </Link>
+        <p className="mt-1.5 text-center text-xs text-muted">{labels.signInFirst}</p>
+      </div>
     );
   }
 
