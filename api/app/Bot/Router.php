@@ -40,11 +40,16 @@ class Router
         private readonly GoodsFlow $goods,
         private readonly \App\Directory\OwnerLogin $ownerLogin,
         private readonly Home $home,
+        private readonly SmartReply $smart,
+        private readonly BotProfile $profile,
     ) {}
 
     public function handle(TelegramUpdate $update): void
     {
         $payload = $update->payload;
+
+        // How the bot presents itself in Telegram, when it has changed: once, on the first update after.
+        $this->profile->syncIfStale();
 
         if (isset($payload['callback_query'])) {
             $this->callback(Callback::fromUpdate($payload));
@@ -223,12 +228,7 @@ class Router
 
                 return;
             case 'language':
-                $conversation->moveTo('set_language');
-                $this->telegram->sendText(
-                    $conversation->chat_id,
-                    $this->messages->text('choose_language', $language),
-                    $this->telegram->replyKeyboard(Choices::languageRows())
-                );
+                $this->askLanguage($conversation, $language);
 
                 return;
             case 'leave':
@@ -329,10 +329,13 @@ class Router
             return;
         }
 
-        // Free text from a member, outside any flow, is a question for the assistant.
+        // Free text from a member, outside any flow: what they asked for when the bot can tell
+        // ("driver job sharjah"), and otherwise a question for the assistant.
         // A slash word the bot does not know is a typo, not a question worth a call to Claude.
         if ($member?->isActive() && $conversation->state === 'idle' && $in->text !== null && trim($in->text) !== '' && $in->command() === null) {
-            $this->assistant->ask($member, $in->text);
+            if (! $this->smart->answer($member, $in->text)) {
+                $this->assistant->ask($member, $in->text);
+            }
 
             return;
         }
@@ -386,7 +389,36 @@ class Router
             'points' => $member->helper_points,
             'rank' => ($rank = Choices::rank((int) $member->helper_points)) ? ' · '.$this->messages->text('rank_'.$rank, $language) : '',
             'goods' => $this->goods->profileLine($member),
-        ]);
+        ], $this->home->profileKeyboard($language));
+    }
+
+    private function askLanguage(Conversation $conversation, string $language): void
+    {
+        $conversation->moveTo('set_language');
+        $this->telegram->sendText(
+            $conversation->chat_id,
+            $this->messages->text('choose_language', $language),
+            $this->telegram->replyKeyboard(Choices::languageRows())
+        );
+    }
+
+    /** A button under the member's home, their profile, or something the bot found for them. */
+    private function homeButton(Member $member, Callback $cb): void
+    {
+        $parts = $cb->parts();
+
+        match ($parts[1] ?? '') {
+            'alerts' => $this->jobs->menu($member),
+            'alert' => $this->smart->alertFor($member, (string) ($parts[2] ?? '')),
+            'myq' => $this->questions->myQuestions($member),
+            'mine' => $this->goods->mine($member),
+            'lang' => $this->askLanguage(Conversation::forUser($cb->userId, (int) $cb->chatId, $cb->languageCode), $member->language),
+            'ai' => $this->smart->askAssistant($member, (string) ($parts[2] ?? '')),
+            'safe' => $this->safety->card($member),
+            default => null,
+        };
+
+        $this->telegram->answerCallback($cb->id);
     }
 
     private function setLanguage(Conversation $conversation, ?Member $member, Incoming $in): void
@@ -406,8 +438,11 @@ class Router
         $conversation->forceFill(['language' => $language])->save();
         $member?->forceFill(['language' => $language])->save();
         $conversation->reset();
-        // The menu comes back in the new language.
+        // The menu comes back in the new language, and the command list and Open button with it.
         $this->reply($conversation, 'language_set', [], $this->menuOrNone($member, $language));
+        if ($member?->isActive()) {
+            $this->home->personalise($member);
+        }
     }
 
     /** One of the menu buttons: the same as typing its command. */
@@ -482,6 +517,12 @@ class Router
         if ($parts[0] === 'd' && $member?->isActive() && $cb->inPrivateChat()) {
             $conversation = Conversation::forUser($cb->userId, (int) $cb->chatId, $cb->languageCode);
             $this->directory->button($member, $conversation, $cb);
+
+            return;
+        }
+
+        if ($parts[0] === 'h' && $member?->isActive() && $cb->inPrivateChat()) {
+            $this->homeButton($member, $cb);
 
             return;
         }

@@ -36,7 +36,7 @@ test('joining ends with the welcome card from the website, the links as buttons,
     expect($card['chat_id'])->toBe(31)
         ->and($card['photo'])->toBe('https://habesha.example/api/card/en')
         ->and($card['caption'])->toContain('You are in, Abebe K')->not->toContain('not set yet')
-        ->and(buttonsOf($card))->toBe(['https://t.me/habesha_dubai', 'https://t.me/+goods', 'https://habesha.example/en', 'https://habesha.example/en/account']);
+        ->and(buttonsOf($card))->toBe(['https://habesha.example/en', 'https://habesha.example/en/account', 'https://t.me/habesha_dubai', 'https://t.me/+goods']);
 
     $menu = lastMessage();
     expect($menu['text'])->toContain('menu at the bottom')
@@ -85,8 +85,10 @@ test('/start for a member, a change of language and a cancelled flow all bring t
     joinMember(35);
 
     say(35, '/start');
-    expect(lastText())->toContain('Welcome back, Abebe K')
-        ->and(lastMessage()['reply_markup']['is_persistent'])->toBeTrue();
+    $sent = sentMessages();
+    $hello = $sent[count($sent) - 2];
+    expect($hello['text'])->toContain('Welcome back, Abebe K')
+        ->and($hello['reply_markup']['is_persistent'])->toBeTrue();
 
     say(35, '/language');
     say(35, 'አማርኛ');

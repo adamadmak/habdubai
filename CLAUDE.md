@@ -1,9 +1,9 @@
 # Working notes for this repository
 
-Two applications, one repository. `api/` is Laravel 13 and owns everything
-that talks to Telegram, the database and Claude. `web/` is Next.js 14 on the
-DashTail starter (shadcn/ui, Tailwind 3) and owns every screen: the admin
-now, the Telegram Mini App later. The API serves JSON only.
+Three applications, one repository. `api/` is Laravel 13 and owns everything
+that talks to Telegram, the database and Claude; it serves JSON only. `web/` is
+the admin, Next.js 14 on the DashTail starter (shadcn/ui, Tailwind 3). `site/` is
+the public website, Next.js 15, which also opens inside Telegram as a Mini App.
 
 The product spec is the "Habesha Dubai Bot: Phase One Spec" doc; phase one
 takes no money anywhere, so there is no wallet, no escrow and no payment code.
@@ -85,8 +85,8 @@ the real SDK against a fake PSR-18 transport (`fakeTransport()` in
 
 Alerts are queued on publish (`JobAlerts::queueFor`) and sent by the
 scheduler at most once per fifteen minutes per member. The scheduler only
-runs when something calls `POST /api/system/tick` with `TICK_TOKEN`; the host
-has no cron.
+runs when something calls `POST /api/system/tick`; the host has no cron, and the
+website's server does it once a minute.
 
 ## Business directory
 
@@ -223,8 +223,15 @@ bot never word them differently.
   both apps) with the visitor's address and browser (`App\Support\ClientIp`).
   Without the key the API cannot tell visitors apart and falls back to
   generous per-address limits.
+- **The host runs the API with `php artisan serve`, PHP's built-in server** (the
+  format of its log lines gives it away). On its own that answers one request at
+  a time, so `App\Console\Commands\ServeWithWorkers` asks for four workers;
+  `/api/health` reports how many there are. Keep slow work out of requests all the
+  same: the scheduler tick takes one worker for as long as a run lasts, and on a
+  single worker it would start `system:tick` in a process of its own instead.
 - **Environment variables on this host never reach the API.** The host
-  writes its own `.env` with only `APP_KEY` and the database; anything else set
+  writes its own `.env` with only `APP_KEY` and the database, and `artisan serve`
+  clears everything else from the server's environment; so anything set
   on the app (SETUP_TOKEN, TICK_TOKEN, SITE_API_KEY) is invisible at runtime
   (`GET /api/system/status` shows yes/no for each). So the tick token and
   the website key are write-only fields on admin Settings, and setup accepts
@@ -244,7 +251,10 @@ bot never word them differently.
   API (photo links), `site_url` the website (channel and bot buttons). Both
   are on the admin's Settings page.
 - **The scheduler tick** comes from the website's server
-  (`site/instrumentation.ts`) when `TICK_URL` and `TICK_TOKEN` are set on it.
+  (`site/instrumentation.ts`), which calls `{API_URL}/system/tick` once a minute
+  with nothing to set up. With no token saved the API takes one run a minute
+  from anyone, which is what the minute was going to do anyway; a token saved on
+  Settings closes it, and then the website needs the same value as `TICK_TOKEN`.
 - **Caching:** anything cached with `Cache::remember` in the API must be
   plain arrays; the cache refuses to restore objects it does not know, and
   the in-memory store in tests hides that.
@@ -329,3 +339,47 @@ only; a deal, a question or an alert is handled where it was started. The
 header's `AccountChip` learns who is signed in after mount through
 `/api/auth/me`, so cached pages stay shared. Sign-in is the business owners'
 "Continue with Telegram"; the same account serves both.
+
+## The bot answers what people type, and the website opens inside Telegram
+
+**Free text at idle.** `App\Bot\Understand` reads a message in any of the four
+languages into a kind (safety, hello, thanks, jobs, places, goods) plus what it
+could pick out (trade, emirate, category); `App\Bot\SmartReply` answers from the
+database with one-tap buttons. Only what it does not understand goes to the Claude
+assistant, which costs a call. A new word for a trade or a place goes in
+`Understand`'s tables, in all four languages; an everyday phrase that merely holds
+such a word ("good job", "work permit") goes in its `NOT_REQUESTS`. Someone in
+trouble comes first: safety words send the card however the message is worded,
+question or long story included, and a sentence goes on to the assistant as well.
+The assistant can be off, out of its daily limit or down, so it must never be the
+only way to the numbers. Ge'ez words match where a word starts ("አስራ" is not "ስራ").
+
+**Commands and profile.** `App\Bot\BotProfile` is the one list of commands and
+the bot's descriptions per language. `syncIfStale()` runs at the top of the
+Router and only talks to Telegram when the texts, the website's address or the bot
+changed (a fingerprint in `bot_profile_synced`, written only once all of it landed;
+a refusal tries again five minutes later, not on every message). A member's own
+chat gets their language's commands and a menu button that opens the website
+(`Home::personalise`), which outranks those defaults, so after a change
+`bot:updates-chores` brings each member's up to date, a few each minute
+(`Home::refreshChats`). `Home::dashboard` is what /start says to someone who
+already joined.
+
+**The Mini App.** `PublicUrls::siteButton` makes a `web_app` button when the
+website is on a public https address and a plain link otherwise; Telegram takes
+`web_app` buttons in private chats only, so a channel card or group post must
+never use it. A reply-keyboard `web_app` button carries no signed data, which is
+why these are inline buttons and the menu button. Telegram puts the signed data
+in the address's fragment; `site/lib/telegram-app.ts` reads it once, sends it to
+`POST /api/auth/webapp` and clears it from the address, and
+`TelegramBotService::webAppUser()` checks the signature (`WebAppData` HMAC, one
+hour). The data counts only where Telegram's bridge is in the page
+(`TelegramWebviewProxy`): in a plain tab it came in a link someone sent, and signing
+in with it would put the reader in the sender's account. No third-party script loads:
+messages to the app go through the same small events Telegram's own script sends. In
+Telegram's web client the page sits in a frame, where the browser keeps no cookie, so
+no way of signing in can work there and the page offers a tab of its own.
+
+**The scheduler runs by itself.** See "The scheduler tick" above: the website's
+server starts it, with nothing to set up. If `tick_age_seconds` on `/api/health`
+is null after a deploy, check the website first.

@@ -17,7 +17,7 @@ use Laravel\Sanctum\Sanctum;
 test('health answers with numbers only, never cached', function (): void {
     $response = $this->getJson('/api/health')->assertOk();
 
-    expect($response->json())->toBe(['ok' => true, 'db' => true, 'tick_age_seconds' => null, 'queue_pending' => 0, 'failed_updates_24h' => 0])
+    expect($response->json())->toBe(['ok' => true, 'db' => true, 'tick_age_seconds' => null, 'queue_pending' => 0, 'failed_updates_24h' => 0, 'workers' => 1])
         ->and($response->headers->get('Cache-Control'))->toContain('no-store');
 });
 
@@ -47,7 +47,7 @@ test('health answers 503 when the database cannot be reached', function (): void
     }
 
     $response->assertStatus(503);
-    expect($response->json())->toBe(['ok' => false, 'db' => false, 'tick_age_seconds' => null, 'queue_pending' => 0, 'failed_updates_24h' => 0])
+    expect($response->json())->toBe(['ok' => false, 'db' => false, 'tick_age_seconds' => null, 'queue_pending' => 0, 'failed_updates_24h' => 0, 'workers' => 1])
         ->and($response->headers->get('Cache-Control'))->toContain('no-store');
 });
 
@@ -148,7 +148,7 @@ test('every item says what it is, how bad, what is wrong, how to fix it and wher
     // A fresh install: no webhook, addresses, tick, channel or groups yet.
     $failingBlockers = $items->where('severity', 'blocker')->where('ok', false)->pluck('key')->all();
     expect($response->json('ready'))->toBeFalse()
-        ->and($failingBlockers)->toContain('webhook', 'public_url', 'scheduler', 'tick_token', 'jobs_channel', 'questions_group')
+        ->and($failingBlockers)->toContain('webhook', 'public_url', 'scheduler', 'jobs_channel', 'questions_group')
         ->and($items->firstWhere('key', 'migrations')['ok'])->toBeTrue()
         ->and($items->firstWhere('key', 'admin_user')['ok'])->toBeTrue()
         ->and($items->firstWhere('key', 'announcement_topics')['ok'])->toBeTrue();

@@ -83,7 +83,7 @@ test('a new member joins in Afaan Oromoo and the bot answers in Oromo', function
         ->and(lastText())->toContain('Miseensonni biroo maqaa kamiin');
 
     say(40, 'Caalaa Tolasaa');
-    expect(lastText())->toBe('Eessa jiraattu?')
+    expect(lastText())->toContain('Eessa jiraattu?')
         ->and(collect(lastMessage()['reply_markup']['keyboard'])->flatten(1)->pluck('text'))->toContain('Imaaraa biraa');
 
     say(40, 'Sharjah');

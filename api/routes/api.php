@@ -86,6 +86,7 @@ Route::prefix('owner')->name('owner.')->middleware('locale')->group(function ():
     Route::post('login/start', [OwnerAuth::class, 'start'])->middleware('throttle:owner-login-start')->name('login.start');
     Route::post('login/poll', [OwnerAuth::class, 'poll'])->middleware('throttle:owner-login-poll')->name('login.poll');
     Route::post('login/verify', [OwnerAuth::class, 'verify'])->middleware('throttle:owner-login-verify')->name('login.verify');
+    Route::post('login/webapp', [OwnerAuth::class, 'webapp'])->middleware('throttle:owner-webapp')->name('login.webapp');
 
     Route::middleware(['auth:sanctum', 'abilities:owner', 'owner', 'throttle:120,1'])->group(function (): void {
         Route::get('me', [OwnerAuth::class, 'me'])->name('me');

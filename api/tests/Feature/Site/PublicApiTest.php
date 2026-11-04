@@ -131,8 +131,7 @@ test('with the website address set, bot cards link to its pages', function (): v
 
     $member = joinMember(9200, '+971500009200');
     app(\App\Bot\DirectoryFlow::class)->card($member, $business->fresh());
-    expect(collect(lastTo(9200)['reply_markup']['inline_keyboard'])->flatten(1)->pluck('url')->filter()->values()->all())
-        ->toContain('https://habesha.example/en/directory/'.$business->slug);
+    expect(buttonsOf(lastTo(9200)))->toContain('https://habesha.example/en/directory/'.$business->slug);
 });
 
 test('jobs: filters, the detail with all three summaries, and Apply counts the click before going to the source', function (): void {

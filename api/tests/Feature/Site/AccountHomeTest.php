@@ -48,7 +48,7 @@ test('the home page carries who the member is and what they have going on', func
         'from' => 'dubai', 'to' => 'addis_ababa', 'kilos' => 10, 'categories' => ['clothes', 'documents'],
     ])->assertCreated();
     Question::query()->create(['member_id' => $member->id, 'category' => 'visa', 'title' => 'Can I change employer?', 'body' => 'Still on probation.', 'status' => 'open', 'last_activity_at' => now()]);
-    JobFilter::query()->create(['member_id' => $member->id, 'alerts_on' => true]);
+    JobFilter::forMember($member)->forceFill(['alerts_on' => true])->save();
 
     $home = asHome($token)->getJson('/api/owner/home')->assertOk()->json();
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Owner;
 
 use App\Directory\OwnerLogin;
 use App\Http\Controllers\Controller;
+use App\Services\TelegramBotService;
 use App\Support\ClientIp;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,6 +42,22 @@ class AuthController extends Controller
         ]);
 
         return response()->json($login->verify($data['ref'], $data['secret'], $data['code']));
+    }
+
+    /** The website opened inside Telegram: signed in by what Telegram signed, with no code to type. */
+    public function webapp(Request $request, OwnerLogin $login, TelegramBotService $telegram): JsonResponse
+    {
+        $data = $request->validate(['init_data' => ['required', 'string', 'max:4096']]);
+
+        $user = $telegram->webAppUser($data['init_data']);
+
+        if ($user === null) {
+            return response()->json(['status' => 'invalid'], 401);
+        }
+
+        $result = $login->webApp($user, $request->bearerToken(), ClientIp::of($request));
+
+        return response()->json($result, $result['status'] === 'blocked' ? 403 : 200);
     }
 
     public function me(Request $request): JsonResponse

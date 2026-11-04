@@ -2044,10 +2044,10 @@ return [
         'om' => '📦 Garee meeshaalee',
     ],
     'btn_open_site' => [
-        'am' => '🌐 ድረ-ገጽ',
-        'ti' => '🌐 መርበብ',
-        'en' => '🌐 Website',
-        'om' => '🌐 Marsariitii',
+        'am' => '🌐 ድረ-ገጹን ይጎብኙ',
+        'ti' => '🌐 ነቲ መርበብ ብጽሑ',
+        'en' => '🌐 Visit the website',
+        'om' => '🌐 Marsariitii daawwadhaa',
     ],
     'btn_my_page' => [
         'am' => '👤 የእኔ ገጽ',
@@ -2090,5 +2090,223 @@ return [
         'ti' => '👤 ኣነ',
         'en' => '👤 Me',
         'om' => '👤 Ana',
+    ],
+
+    // ---- how the bot presents itself in Telegram (App\Bot\BotProfile) ----
+    'bot_description' => [
+        'am' => "ሐበሻ ዱባይ፡ በኤምሬትስ ለሚኖሩ ኢትዮጵያውያንና ኤርትራውያን ነጻ ማህበረሰብ። 🇦🇪🇪🇹\n\n💼 ከማጭበርበር የተጣሩ ሥራዎች፣ በቋንቋዎ\n📍 በመላው ኤምሬትስ የሐበሻ ቦታዎች\n❓ ልምድ ካላቸው አባላት መልሶች\n📦 በኤምሬትስና በሀገር ቤት መካከል ትርፍ ኪሎ\n\nለመቀላቀል «Start» ይጫኑ። ሁለት ደቂቃ ብቻ ነው።",
+        'ti' => "ሓበሻ ዱባይ፡ ኣብ ኢማራት ንዝነብሩ ኢትዮጵያውያንን ኤርትራውያንን ናጻ ማሕበረሰብ። 🇦🇪🇪🇹\n\n💼 ካብ ምትላል ዝተጻረዩ ስራሓት፣ ብቋንቋኹም\n📍 ኣብ መላእ ኢማራት ናይ ሓበሻ ቦታታት\n❓ ካብ ተመክሮ ዘለዎም ኣባላት መልስታት\n📦 ኣብ መንጎ ኢማራትን ዓዲን ትርፊ ኪሎ\n\nንምጽንባር «Start» ጠውቑ። ክልተ ደቒቕ ጥራይ እዩ።",
+        'en' => "Habesha Dubai: the free community for Ethiopians and Eritreans in the UAE. 🇦🇪🇪🇹\n\n💼 Jobs checked for scam signs, in your language\n📍 Habesha places across the Emirates\n❓ Answers from members who have been there\n📦 Spare kilos between the UAE and home\n\nPress Start to join. It takes two minutes.",
+        'om' => "Habesha Dubai: hawaasa bilisaa Itoophiyaanotaa fi Eertiraanota Imaaraat keessa jiraataniif. 🇦🇪🇪🇹\n\n💼 Hojiiwwan gowwoomsaa irraa qulqullaa'an, afaan keessaniin\n📍 Bakkeewwan Habashaa Imaaraat guutuu keessatti\n❓ Deebiiwwan miseensota muuxannoo qaban irraa\n📦 Kiiloo hafaa Imaaraatii fi biyya gidduu\n\nMakamuuf \"Start\" tuqaa. Daqiiqaa lama qofa.",
+    ],
+    'bot_short_description' => [
+        'am' => 'ሥራ፣ የሐበሻ ቦታዎች፣ መልሶችና ትርፍ ኪሎ፣ በኤምሬትስ ላሉ ኢትዮጵያውያንና ኤርትራውያን። ነጻ።',
+        'ti' => 'ስራሕ፣ ናይ ሓበሻ ቦታታት፣ መልስታትን ትርፊ ኪሎን፣ ኣብ ኢማራት ንዘለዉ ኢትዮጵያውያንን ኤርትራውያንን። ናጻ።',
+        'en' => 'Jobs, Habesha places, answers and spare kilos for Ethiopians and Eritreans in the UAE. Free.',
+        'om' => "Hojii, bakkeewwan Habashaa, deebiiwwanii fi kiiloo hafaa, Imaaraat keessaaf. Bilisa.",
+    ],
+    'btn_menu_open' => [
+        'am' => 'ክፈት',
+        'ti' => 'ክፈት',
+        'en' => 'Open',
+        'om' => 'Bani',
+    ],
+    'cmd_jobs' => [
+        'am' => 'ሥራዎችና የሥራ ማንቂያዎች',
+        'ti' => 'ስራሓትን መጠንቀቕታ ስራሕን',
+        'en' => 'Jobs and job alerts',
+        'om' => 'Hojiiwwanii fi beeksisa hojii',
+    ],
+    'cmd_goods' => [
+        'am' => 'የዕቃ ሰሌዳ፡ ኤምሬትስ ⇄ ሀገር ቤት',
+        'ti' => 'ሰሌዳ ኣቕሑ፡ ኢማራት ⇄ ዓዲ',
+        'en' => 'Goods board: UAE ⇄ home',
+        'om' => 'Gabatee meeshaalee: Imaaraat ⇄ biyya',
+    ],
+    'cmd_ask' => [
+        'am' => 'ማህበረሰቡን ይጠይቁ',
+        'ti' => 'ንማሕበረሰብ ሕተቱ',
+        'en' => 'Ask the community',
+        'om' => 'Hawaasa gaafadhaa',
+    ],
+    'cmd_directory' => [
+        'am' => 'የሐበሻ ቦታዎች',
+        'ti' => 'ናይ ሓበሻ ቦታታት',
+        'en' => 'Habesha places',
+        'om' => 'Bakkeewwan Habashaa',
+    ],
+    'cmd_safe' => [
+        'am' => 'እርዳታና ደህንነት',
+        'ti' => 'ሓገዝን ድሕነትን',
+        'en' => 'Help and safety',
+        'om' => 'Gargaarsaa fi nageenya',
+    ],
+    'cmd_profile' => [
+        'am' => 'የእኔ መገለጫ',
+        'ti' => 'መግለጺይ',
+        'en' => 'My profile',
+        'om' => 'Piroofaayilii koo',
+    ],
+    'cmd_language' => [
+        'am' => 'ቋንቋ መቀየር',
+        'ti' => 'ቋንቋ ምቕያር',
+        'en' => 'Change language',
+        'om' => 'Afaan jijjiiruu',
+    ],
+    'cmd_help' => [
+        'am' => 'እርዳታና ሁሉም ትዕዛዞች',
+        'ti' => 'ሓገዝን ኩሎም ትእዛዛትን',
+        'en' => 'Help and every command',
+        'om' => 'Gargaarsaa fi ajajawwan hunda',
+    ],
+
+    // ---- the welcome: job alerts start from the work they just named ----
+    'welcome_alerts' => [
+        'am' => '🔔 የሥራ ማንቂያዎች በርተዋል፡ {trades}። በ /jobs መቀየር ይችላሉ።',
+        'ti' => '🔔 መጠንቀቕታ ስራሕ ተወሊዑ፡ {trades}። ብ /jobs ክትቅይሩ ትኽእሉ።',
+        'en' => '🔔 Job alerts are on for {trades}. Change them any time with /jobs.',
+        'om' => '🔔 Beeksisni hojii banaa dha: {trades}. /jobs tiin jijjiiruu dandeessu.',
+    ],
+
+    // ---- what is new for this member, on /start ----
+    'home_title' => [
+        'am' => '🏠 <b>ለእርስዎ አዲስ የሆነው</b>',
+        'ti' => '🏠 <b>ንዓኹም ሓድሽ</b>',
+        'en' => '🏠 <b>What is new for you</b>',
+        'om' => '🏠 <b>Wanta isiniif haaraa</b>',
+    ],
+    'home_jobs' => [
+        'am' => '💼 በዚህ ሳምንት ለእርስዎ {count} አዲስ ሥራዎች',
+        'ti' => '💼 ኣብዚ ሰሙን ንዓኹም {count} ሓደስቲ ስራሓት',
+        'en' => '💼 {count} new jobs for you this week',
+        'om' => '💼 Torban kana hojiiwwan haaraa {count} isiniif',
+    ],
+    'home_jobs_none' => [
+        'am' => '💼 በዚህ ሳምንት ለእርስዎ አዲስ ሥራ የለም፤ ሲመጣ እነግርዎታለሁ',
+        'ti' => '💼 ኣብዚ ሰሙን ንዓኹም ሓድሽ ስራሕ የለን፤ ምስ መጸ ክነግረኩም እየ',
+        'en' => '💼 No new jobs for you this week yet; I will tell you when one comes in',
+        'om' => "💼 Torban kana hojiin haaraan isiniif hin jiru; yommuu dhufu isinitti himna",
+    ],
+    'home_goods' => [
+        'am' => '📦 በሰሌዳው ላይ {count} ጉዞዎችና ዕቃዎች',
+        'ti' => '📦 ኣብቲ ሰሌዳ {count} ጉዕዞታትን ኣቕሑን',
+        'en' => '📦 {count} trips and parcels on the board',
+        'om' => '📦 Gabatee irra imalaa fi paarsalii {count}',
+    ],
+    'home_deals' => [
+        'am' => '🤝 {count} ስምምነቶች በሂደት ላይ',
+        'ti' => '🤝 {count} ስምምዓት ኣብ መስርሕ',
+        'en' => '🤝 {count} of your deals in progress',
+        'om' => '🤝 Waliigaltee {count} adeemsa irra',
+    ],
+    'home_answers' => [
+        'am' => '❓ {count} ጥያቄዎችዎ መልስ አግኝተዋል',
+        'ti' => '❓ {count} ሕቶታትኩም መልሲ ረኺቦም',
+        'en' => '❓ {count} of your questions have answers',
+        'om' => '❓ Gaaffileen keessan {count} deebii argataniiru',
+    ],
+    'home_event' => [
+        'am' => '📅 {date}፡ {title}',
+        'ti' => '📅 {date}፡ {title}',
+        'en' => '📅 {date}: {title}',
+        'om' => '📅 {date}: {title}',
+    ],
+    'btn_home_jobs' => [
+        'am' => '💼 ሥራዎች ለእኔ',
+        'ti' => '💼 ስራሓት ንዓይ',
+        'en' => '💼 Jobs for me',
+        'om' => '💼 Hojii anaaf',
+    ],
+    'btn_home_alerts' => [
+        'am' => '🔔 የሥራ ማንቂያዎች',
+        'ti' => '🔔 መጠንቀቕታ ስራሕ',
+        'en' => '🔔 Job alerts',
+        'om' => '🔔 Beeksisa hojii',
+    ],
+    'btn_home_questions' => [
+        'am' => '❓ ጥያቄዎቼ',
+        'ti' => '❓ ሕቶታተይ',
+        'en' => '❓ My questions',
+        'om' => '❓ Gaaffilee koo',
+    ],
+    'btn_home_goods' => [
+        'am' => '📦 ልጥፎቼ',
+        'ti' => '📦 ልጥፋተይ',
+        'en' => '📦 My posts',
+        'om' => '📦 Maxxansa koo',
+    ],
+    'btn_profile_language' => [
+        'am' => '🌍 ቋንቋ',
+        'ti' => '🌍 ቋንቋ',
+        'en' => '🌍 Language',
+        'om' => '🌍 Afaan',
+    ],
+
+    // ---- what the bot found for what a member typed (App\Bot\SmartReply) ----
+    'find_jobs_title' => [
+        'am' => '💼 <b>{what}</b>',
+        'ti' => '💼 <b>{what}</b>',
+        'en' => '💼 <b>{what}</b>',
+        'om' => '💼 <b>{what}</b>',
+    ],
+    'find_jobs_none' => [
+        'am' => '💼 <b>{what}</b>፡ አሁን ክፍት ሥራ የለም። ሲመጣ ልንገርዎት?',
+        'ti' => '💼 <b>{what}</b>፡ ሕጂ ክፉት ስራሕ የለን። ምስ መጸ ክነግረኩም?',
+        'en' => '💼 <b>{what}</b>: nothing is open right now. Shall I tell you when one comes in?',
+        'om' => '💼 <b>{what}</b>: amma hojiin banaan hin jiru. Yommuu dhufu isinitti haa himu?',
+    ],
+    'find_places_none' => [
+        'am' => '📍 <b>{what}</b>፡ እስካሁን የተዘረዘረ የለም። የሚያውቁት ቦታ ካለ ይጠቁሙን።',
+        'ti' => '📍 <b>{what}</b>፡ ክሳብ ሕጂ ዝተዘርዘረ የለን። እትፈልጥዎ ቦታ እንተሎ ሓብሩና።',
+        'en' => '📍 <b>{what}</b>: nothing listed yet. If you know a place, suggest it.',
+        'om' => '📍 <b>{what}</b>: ammallee homtuu hin galmoofne. Bakka beektan yoo jiraate nutti himaa.',
+    ],
+    'find_alert_set' => [
+        'am' => '🔔 ተመዝግቧል። አዲስ የ{what} ሥራ ሲመጣ መልዕክት እልክልዎታለሁ።',
+        'ti' => '🔔 ተመዝጊቡ። ሓድሽ ስራሕ {what} ምስ መጸ መልእኽቲ ክሰደልኩም እየ።',
+        'en' => '🔔 Done. I will message you when a new {what} job comes in.',
+        'om' => '🔔 Galmaa\'eera. Hojiin haaraan {what} yommuu dhufu ergaa isiniif erga.',
+    ],
+    'find_alert_areas' => [
+        'am' => 'በ/jobs በመረጧቸው ቦታዎች ብቻ፡ {areas}።',
+        'ti' => 'ኣብ /jobs ዝሓረኽምዎም ቦታታት ጥራይ፡ {areas}።',
+        'en' => 'Only in {areas}, the places you chose under /jobs.',
+        'om' => 'Bakkeewwan /jobs keessatti filattan qofa: {areas}.',
+    ],
+    'find_thanks' => [
+        'am' => '🙏 ምንም አይደል። ከታች ያለውን ቁልፍ ይጫኑ፣ ወይም የሚፈልጉትን ብቻ ይጻፉልኝ።',
+        'ti' => '🙏 ጸገም የለን። ኣብ ታሕቲ ዘሎ መልጎም ጠውቑ፡ ወይ እትደልይዎ ጽሓፉለይ።',
+        'en' => '🙏 Anytime. Tap a button below, or just tell me what you are looking for.',
+        'om' => '🙏 Rakkoo hin qabu. Qabduu armaan gadii tuqaa, ykn waan barbaaddan natti barreessaa.',
+    ],
+    'find_ask_again' => [
+        'am' => 'ይህ ከቆየ ሆኗል። ጥያቄዎን እንደገና ይላኩ፣ ለረዳቱ አስተላልፋለሁ።',
+        'ti' => 'እዚ ካብ ዝኸውን ጸኒሑ እዩ። ሕቶኹም ደጊምኩም ስደዱ፣ ናብቲ ሓጋዚ ከመሓላልፎ እየ።',
+        'en' => 'That was a while ago. Send your question again and I will pass it on.',
+        'om' => 'Sun yeroo dheeraa dura ture. Gaaffii keessan irra deebi\'aa ergaa, gargaaraatti nan dabarsa.',
+    ],
+    'btn_find_safe' => [
+        'am' => '🆘 እርዳታ እፈልጋለሁ፡ የደህንነት ቁጥሮች',
+        'ti' => '🆘 ሓገዝ የድልየኒ፡ ቁጽርታት ድሕነት',
+        'en' => '🆘 I need help: the safety numbers',
+        'om' => '🆘 Gargaarsa nan barbaada: lakkoofsota nageenyaa',
+    ],
+    'btn_find_alert' => [
+        'am' => '🔔 ሲመጣ ንገረኝ',
+        'ti' => '🔔 ምስ መጸ ንገረኒ',
+        'en' => '🔔 Tell me when one comes in',
+        'om' => '🔔 Yommuu dhufu natti himi',
+    ],
+    'btn_find_all_site' => [
+        'am' => '🌐 ሁሉንም በድረ-ገጹ ይመልከቱ',
+        'ti' => '🌐 ኩሉ ኣብ መርበብ ርኣዩ',
+        'en' => '🌐 See them all on the website',
+        'om' => '🌐 Hunda marsariitii irratti ilaalaa',
+    ],
+    'btn_find_ask_ai' => [
+        'am' => '💬 ይህ አይደለም፡ ረዳቱን ጠይቅ',
+        'ti' => '💬 እዚ ኣይኮነን፡ ነቲ ሓጋዚ ሕተት',
+        'en' => '💬 Not this: ask the assistant',
+        'om' => '💬 Kana miti: gargaaraa gaafadhu',
     ],
 ];

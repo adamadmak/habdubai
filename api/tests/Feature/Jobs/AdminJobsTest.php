@@ -1,9 +1,13 @@
 <?php
 
+use App\Console\Commands\ServeWithWorkers;
+use App\Http\Controllers\SystemTickController;
 use App\Models\Job;
 use App\Models\JobSource;
 use App\Models\PlatformSetting;
 use App\Support\JobSettings;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 
@@ -182,10 +186,48 @@ test('a link inside a listing is never followed to a private address', function 
     expect($private->fresh()->status)->toBe('published');
 });
 
-test('the tick needs its token and runs the scheduler', function (): void {
-    $this->postJson('/api/system/tick')->assertStatus(401);
+test('with no token saved the tick runs the scheduler once per minute of the clock', function (): void {
+    Artisan::shouldReceive('call')->twice()->with('system:tick')->andReturn(0);
+    $this->travelTo(now()->startOfMinute()->addSeconds(55));
 
+    $this->postJson('/api/system/tick')->assertOk()->assertJsonPath('ok', true);
+    // Whoever asks: what it does is what this minute was going to do anyway, and no more of it.
+    $this->postJson('/api/system/tick')->assertStatus(429);
+
+    // A caller late in one minute does not use up the next, in which something may be due.
+    $this->travel(10)->seconds();
+    $this->postJson('/api/system/tick')->assertOk();
+});
+
+test('a run takes the lock, leaves the heartbeat, and gives way to one already running', function (): void {
+    Artisan::call('system:tick');
+    expect(Cache::get(SystemTickController::LAST_TICK_KEY))->toHaveKeys(['at', 'seconds']);
+
+    Cache::forget(SystemTickController::LAST_TICK_KEY);
+    $held = Cache::lock(SystemTickController::LOCK, 60);
+    expect($held->get())->toBeTrue();
+
+    Artisan::call('system:tick');
+    expect(Cache::get(SystemTickController::LAST_TICK_KEY))->toBeNull();
+
+    // The route says so too, once it is asked with the right to ask.
+    $this->postJson('/api/system/tick')->assertStatus(409);
+    $held->release();
+});
+
+test('the server command is ours, and leaves a Windows machine as it was', function (): void {
+    expect(Artisan::all()['serve'])->toBeInstanceOf(ServeWithWorkers::class);
+});
+
+test('a token too short to trust closes the tick rather than opening it', function (): void {
+    putenv('TICK_TOKEN=short');
+    $this->postJson('/api/system/tick')->assertStatus(401);
+    putenv('TICK_TOKEN');
+});
+
+test('a saved token closes the tick, and the tick then runs the scheduler for whoever has it', function (): void {
     putenv('TICK_TOKEN=tick-token-that-is-long-enough-1234567890');
+    $this->postJson('/api/system/tick')->assertStatus(401);
     $this->withHeader('X-Tick-Token', 'wrong')->postJson('/api/system/tick')->assertStatus(401);
     $this->withHeader('X-Tick-Token', 'tick-token-that-is-long-enough-1234567890')->postJson('/api/system/tick')->assertOk()->assertJsonPath('ok', true);
     putenv('TICK_TOKEN');

@@ -34,7 +34,7 @@ class TelegramWebhookController extends Controller
         $updateId = (int) ($payload['update_id'] ?? 0);
 
         if ($updateId <= 0) {
-            return response('OK', 200);
+            return self::received();
         }
 
         try {
@@ -45,7 +45,7 @@ class TelegramWebhookController extends Controller
             ]);
         } catch (UniqueConstraintViolationException) {
             // Telegram redelivered an update we already have.
-            return response('OK', 200);
+            return self::received();
         }
 
         // After the response, in this process: replies stay instant without a
@@ -53,6 +53,16 @@ class TelegramWebhookController extends Controller
         // process dies first, `bot:updates-chores` runs the update again.
         HandleTelegramUpdate::dispatchAfterResponse($update->id, TelegramUpdate::orderKey($payload));
 
-        return response('OK', 200);
+        return self::received();
+    }
+
+    /**
+     * With its length, so Telegram has the whole answer at once: this host's PHP server
+     * closes the connection only when the handler ends, and without a length Telegram
+     * would hold the connection, and the next delivery, until then.
+     */
+    private static function received(): Response
+    {
+        return response('OK', 200)->header('Content-Length', '2');
     }
 }

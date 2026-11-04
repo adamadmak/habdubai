@@ -43,6 +43,8 @@ class HealthController extends Controller
             'tick_age_seconds' => $db ? SystemPulse::tickAgeSeconds() : null,
             'queue_pending' => $db ? SystemPulse::queuePending() : 0,
             'failed_updates_24h' => $db ? SystemPulse::failedUpdates24h() : 0,
+            // How many requests this server can answer at a time (see ServeWithWorkers).
+            'workers' => max(1, (int) getenv('PHP_CLI_SERVER_WORKERS')),
         ], $db ? 200 : 503)->header('Cache-Control', 'no-store');
     }
 }

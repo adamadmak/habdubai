@@ -160,7 +160,7 @@ function lastTo(int|string $chatId): array
 /** The callback_data (or url) of every inline button on a sent message. */
 function buttonsOf(array $message): array
 {
-    return collect($message['reply_markup']['inline_keyboard'] ?? [])->flatten(1)->map(fn (array $b) => $b['callback_data'] ?? $b['url'] ?? null)->all();
+    return collect($message['reply_markup']['inline_keyboard'] ?? [])->flatten(1)->map(fn (array $b) => $b['callback_data'] ?? $b['url'] ?? $b['web_app']['url'] ?? null)->all();
 }
 
 /** Walk a fresh user through the whole join flow; returns the member. */

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Bot\Home;
 use App\Jobs\HandleTelegramUpdate;
 use App\Models\TelegramUpdate;
 use Illuminate\Console\Command;
@@ -19,7 +20,7 @@ class UpdatesChores extends Command
 
     protected $description = 'Retry Telegram updates left unhandled and delete week-old ones';
 
-    public function handle(): int
+    public function handle(Home $home): int
     {
         if (! Schema::hasColumn('telegram_updates', 'attempts')) {
             $this->info('telegram_updates.attempts not migrated yet.');
@@ -45,7 +46,9 @@ class UpdatesChores extends Command
 
         $deleted = TelegramUpdate::query()->where('received_at', '<', now()->subDays(TelegramUpdate::KEEP_DAYS))->delete();
 
-        $this->info("Queued {$retried} unhandled update(s) again, deleted {$deleted} old one(s).");
+        $refreshed = $home->refreshChats();
+
+        $this->info("Queued {$retried} unhandled update(s) again, deleted {$deleted} old one(s), refreshed {$refreshed} member menu(s).");
 
         return self::SUCCESS;
     }

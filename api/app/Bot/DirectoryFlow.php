@@ -123,7 +123,7 @@ class DirectoryFlow
         $keyboard = ['inline_keyboard' => array_values(array_filter([
             [['text' => $this->messages->button('btn_dir_map', $l), 'url' => $business->mapLink()]],
             // The full page: photo, hours, languages and every way to reach them.
-            $site !== '' ? [['text' => $this->messages->button('btn_dir_open_site', $l), 'url' => $site]] : null,
+            $site !== '' ? [\App\Support\PublicUrls::siteButton($this->messages->button('btn_dir_open_site', $l), $site)] : null,
             [$this->btn('btn_dir_report', $l, 'd:rep:'.$business->id)],
         ]))];
 
@@ -451,7 +451,7 @@ class DirectoryFlow
     }
 
     /** @param Collection<int, Business> $businesses */
-    private function listText(Member $member, string $title, Collection $businesses, int $offset): string
+    public function listText(Member $member, string $title, Collection $businesses, int $offset): string
     {
         $l = $member->language;
         $lines = ['🏪 <b>'.$title.'</b>'];
@@ -469,7 +469,7 @@ class DirectoryFlow
     }
 
     /** @param Collection<int, Business> $businesses */
-    private function numberRows(Collection $businesses, int $offset): array
+    public function numberRows(Collection $businesses, int $offset): array
     {
         $buttons = $businesses->values()->map(fn (Business $b, int $i) => ['text' => (string) ($offset + $i + 1), 'callback_data' => 'd:b:'.$b->id])->all();
 

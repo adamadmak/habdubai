@@ -113,7 +113,7 @@ class Onboarding
     {
         $this->telegram->sendText(
             $conversation->chat_id,
-            $this->messages->text('ask_phone', $conversation->language),
+            self::progress(1).$this->messages->text('ask_phone', $conversation->language),
             $this->telegram->contactKeyboard($this->messages->button('btn_share_phone', $conversation->language))
         );
     }
@@ -170,7 +170,7 @@ class Onboarding
 
         $this->telegram->sendText(
             $conversation->chat_id,
-            $this->messages->text('ask_name', $conversation->language),
+            self::progress(2).$this->messages->text('ask_name', $conversation->language),
             $this->telegram->replyKeyboard([[$this->messages->button('btn_keep_name', $conversation->language, ['name' => $suggested])]])
         );
     }
@@ -201,7 +201,7 @@ class Onboarding
     {
         $this->telegram->sendText(
             $conversation->chat_id,
-            $this->messages->text('ask_emirate', $conversation->language),
+            self::progress(3).$this->messages->text('ask_emirate', $conversation->language),
             $this->telegram->replyKeyboard(Choices::rows(Choices::EMIRATES, $conversation->language))
         );
     }
@@ -230,7 +230,7 @@ class Onboarding
 
         $this->telegram->sendText(
             $conversation->chat_id,
-            $this->messages->text('ask_trades', $conversation->language),
+            self::progress(4).$this->messages->text('ask_trades', $conversation->language),
             $this->telegram->replyKeyboard($rows, oneTime: false)
         );
     }
@@ -293,7 +293,7 @@ class Onboarding
     {
         $this->telegram->sendText(
             $conversation->chat_id,
-            $this->messages->text('rules', $conversation->language),
+            self::progress(5).$this->messages->text('rules', $conversation->language),
             $this->telegram->replyKeyboard([[$this->messages->button('btn_agree', $conversation->language)]])
         );
     }
@@ -322,6 +322,14 @@ class Onboarding
     }
 
     // ---- helpers --------------------------------------------------------
+
+    /** How far along joining is: the same in every language, and a reason to finish. */
+    private static function progress(int $step): string
+    {
+        return str_repeat('▰', $step).str_repeat('▱', 5 - $step).' <b>'.$step.'/5</b>'."
+
+";
+    }
 
     private function supportHandle(): string
     {

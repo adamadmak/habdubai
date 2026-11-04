@@ -4,6 +4,7 @@ namespace App\Directory;
 
 use App\Bot\BotMessages;
 use App\Bot\Callback;
+use App\Bot\Choices;
 use App\Models\AuditLog;
 use App\Models\BusinessOwner;
 use App\Models\Member;
@@ -11,6 +12,7 @@ use App\Models\OwnerLoginRequest;
 use App\Services\TelegramBotService;
 use App\Support\PublicUrls;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * "Continue with Telegram" on the website.
@@ -112,13 +114,7 @@ class OwnerLogin
             return;
         }
 
-        $name = trim(($cb->from['first_name'] ?? '').' '.($cb->from['last_name'] ?? ''));
-        $owner = BusinessOwner::query()->updateOrCreate(['telegram_user_id' => $cb->userId], [
-            'display_name' => mb_substr($member?->display_name ?: ($name !== '' ? $name : 'Business owner'), 0, 120),
-            'telegram_username' => isset($cb->from['username']) ? mb_substr((string) $cb->from['username'], 0, 64) : null,
-            'member_id' => $member?->id,
-            'language' => $member?->language ?? $language,
-        ]);
+        $owner = $this->account($cb->userId, $cb->from, $member, $language);
 
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $request->forceFill([
@@ -212,6 +208,61 @@ class OwnerLogin
         AuditLog::record(null, 'owner.login', 'business_owner', $owner->id, null, ['ip' => $request->ip]);
 
         return ['status' => 'approved', 'token' => $token, 'owner' => $owner->payload()];
+    }
+
+    /**
+     * The website opened inside Telegram: Telegram has already signed who this is
+     * (TelegramBotService::webAppUser), so there is no code to type. Someone
+     * already signed in as this person keeps their session, rather than each
+     * opening adding another token.
+     *
+     * @param  array<string, mixed>  $user  Telegram's user object
+     * @return array{status: string, token?: string, owner?: array}
+     */
+    public function webApp(array $user, ?string $currentToken, ?string $ip): array
+    {
+        $userId = (int) $user['id'];
+        $member = Member::findByTelegramUser($userId);
+        $existing = BusinessOwner::query()->where('telegram_user_id', $userId)->first();
+
+        if ($member?->isBanned() || $existing?->banned_at !== null) {
+            return ['status' => 'blocked'];
+        }
+
+        $code = (string) ($user['language_code'] ?? '');
+        $owner = $this->account($userId, $user, $member, in_array($code, Choices::LANGUAGES, true) ? $code : 'en');
+
+        // Only the shape we issue: findToken looks the first part up as a number.
+        if ($currentToken !== null && preg_match('/^\d{1,18}\|/', $currentToken) === 1) {
+            $current = PersonalAccessToken::findToken($currentToken);
+            if ($current !== null && $current->tokenable_type === $owner->getMorphClass() && (int) $current->tokenable_id === $owner->id
+                && ($current->expires_at === null || $current->expires_at->isFuture())) {
+                return ['status' => 'same', 'owner' => $owner->payload()];
+            }
+        }
+
+        $owner->forceFill(['last_login_at' => now()])->save();
+        $token = $owner->createToken('site', ['owner'], now()->addDays(60))->plainTextToken;
+        AuditLog::record(null, 'owner.login', 'business_owner', $owner->id, null, ['ip' => $ip, 'via' => 'telegram_app']);
+
+        return ['status' => 'approved', 'token' => $token, 'owner' => $owner->payload()];
+    }
+
+    /**
+     * The website account of this Telegram user, made or brought up to date.
+     *
+     * @param  array<string, mixed>  $from  Telegram's user object
+     */
+    private function account(int $userId, array $from, ?Member $member, string $language): BusinessOwner
+    {
+        $name = trim(($from['first_name'] ?? '').' '.($from['last_name'] ?? ''));
+
+        return BusinessOwner::query()->updateOrCreate(['telegram_user_id' => $userId], [
+            'display_name' => mb_substr($member?->display_name ?: ($name !== '' ? $name : 'Business owner'), 0, 120),
+            'telegram_username' => isset($from['username']) ? mb_substr((string) $from['username'], 0, 64) : null,
+            'member_id' => $member?->id,
+            'language' => $member?->language ?? $language,
+        ]);
     }
 
     private function find(string $ref, string $secret): ?OwnerLoginRequest

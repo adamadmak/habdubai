@@ -86,7 +86,7 @@ final class LaunchReadiness
             ['public_url', 'Public address of the API', 'blocker', '/settings', fn () => $this->publicUrl()],
             ['site_url', 'Website address', 'important', '/settings', fn () => $this->siteUrl()],
             ['scheduler', 'Scheduler ticking', 'blocker', '/settings', fn () => $this->scheduler()],
-            ['tick_token', 'Tick token', 'blocker', '/settings', fn () => $this->secret('tick_token', 'services.host.tick_token', 'TICK_TOKEN', 32, 'Tick token')],
+            ['tick_token', 'Tick token', 'nice', '/settings', fn () => $this->tickToken()],
             ['site_api_key', 'Website key', 'important', '/settings', fn () => $this->secret('site_api_key', 'services.host.site_api_key', 'SITE_API_KEY', 24, 'Website key')],
             ['jobs_channel', 'Jobs channel', 'blocker', '/job-settings', fn () => $this->jobsChannel()],
             ['questions_group', 'Questions group', 'blocker', '/settings', fn () => $this->group(Community::questionsGroup(), 'questions group', 'telegram_questions_group_id', topics: true)],
@@ -331,13 +331,36 @@ final class LaunchReadiness
         return [true, $name.' is set.', ''];
     }
 
+    /**
+     * Optional: with none saved the website still drives the scheduler, and the
+     * API takes one run a minute from anyone, which is what the minute would do anyway.
+     *
+     * @return array{0: bool, 1: string, 2: string}
+     */
+    private function tickToken(): array
+    {
+        $value = RuntimeEnv::get('services.host.tick_token', 'tick_token', 'TICK_TOKEN');
+
+        if ($value === '' && RuntimeEnv::isUnreadable('tick_token')) {
+            return [false, 'The tick token was saved but can no longer be read.', 'Save it again on Settings, with the same value as TICK_TOKEN on the website.'];
+        }
+        if ($value === '') {
+            return [true, 'No token is set: the website starts the scheduler by itself, and the API takes at most one run a minute.', ''];
+        }
+        if (strlen($value) < 32) {
+            return [false, 'The tick token is shorter than 32 characters, so the API refuses every tick.', 'Save a value of at least 32 random characters on Settings and the same on the website (TICK_TOKEN).'];
+        }
+
+        return [true, 'A token is set; the website needs the same value as TICK_TOKEN.', ''];
+    }
+
     // ---- the API's own state ---------------------------------------------------------------
 
     /** @return array{0: bool, 1: string, 2: string} */
     private function scheduler(): array
     {
         $age = SystemPulse::tickAgeSeconds();
-        $fix = 'The website\'s server calls POST /api/system/tick every minute when TICK_URL and TICK_TOKEN are set on it, and the token matches the one on Settings. Set both on the website and rebuild it.';
+        $fix = 'The website\'s server calls POST /api/system/tick every minute by itself. Check that the website is running and that its API_URL is right. If a tick token is saved on Settings, the website must carry the same value as TICK_TOKEN.';
 
         if ($age === null) {
             return [false, 'No scheduler tick has ever arrived: job fetching, alerts, the queue and retries are not running.', $fix];

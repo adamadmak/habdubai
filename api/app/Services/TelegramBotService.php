@@ -249,6 +249,88 @@ class TelegramBotService
         }
     }
 
+    /**
+     * Who opened the website inside Telegram. Telegram signs what it hands the
+     * page with a key made from our bot token, so the person is who it says, and
+     * a forwarded link gives nobody else anything: each person gets their own.
+     * Null unless the signature is right and the launch is recent.
+     *
+     * @return array<string, mixed>|null Telegram's user object
+     */
+    public function webAppUser(string $initData, int $maxAgeSeconds = 3600): ?array
+    {
+        $token = $this->botToken();
+        if ($token === '' || $initData === '') {
+            return null;
+        }
+
+        $fields = [];
+        foreach (explode('&', $initData) as $pair) {
+            [$key, $value] = array_pad(explode('=', $pair, 2), 2, '');
+            $fields[$key] = urldecode($value);
+        }
+
+        $hash = (string) ($fields['hash'] ?? '');
+        unset($fields['hash']);
+        ksort($fields);
+        $checked = implode("\n", array_map(fn (string $key, string $value) => $key.'='.$value, array_keys($fields), $fields));
+
+        if ($hash === '' || ! hash_equals(hash_hmac('sha256', $checked, hash_hmac('sha256', $token, 'WebAppData', true)), $hash)) {
+            return null;
+        }
+
+        $age = now()->timestamp - (int) ($fields['auth_date'] ?? 0);
+        if ($age < -60 || $age > $maxAgeSeconds) {
+            return null;
+        }
+
+        $user = json_decode((string) ($fields['user'] ?? ''), true);
+
+        return is_array($user) && (int) ($user['id'] ?? 0) > 0 ? $user : null;
+    }
+
+    /**
+     * The command menu: for everyone, for everyone in a language, or for one chat.
+     *
+     * @param  array<int, array{command: string, description: string}>  $commands
+     */
+    public function setCommands(array $commands, ?int $chatId = null, ?string $language = null): bool
+    {
+        return $this->courtesy('setMyCommands', array_filter([
+            'commands' => $commands,
+            'scope' => $chatId ? ['type' => 'chat', 'chat_id' => $chatId] : ['type' => 'all_private_chats'],
+            'language_code' => $chatId ? null : $language,
+        ]));
+    }
+
+    /** What an empty chat with the bot says, and the line on its profile. */
+    public function setDescription(string $description, string $short, ?string $language = null): bool
+    {
+        return $this->courtesy('setMyDescription', array_filter(['description' => mb_substr($description, 0, 512), 'language_code' => $language]))
+            && $this->courtesy('setMyShortDescription', array_filter(['short_description' => mb_substr($short, 0, 120), 'language_code' => $language]));
+    }
+
+    /** The button beside the message box that opens the website inside Telegram: for everyone, or for one chat. */
+    public function setMenuButton(?int $chatId, string $text, string $url): bool
+    {
+        return $this->courtesy('setChatMenuButton', array_filter([
+            'chat_id' => $chatId,
+            'menu_button' => ['type' => 'web_app', 'text' => $text, 'web_app' => ['url' => $url]],
+        ]));
+    }
+
+    /** A call nothing else depends on: one try, a short wait, and a refusal changes nothing. */
+    private function courtesy(string $method, array $payload): bool
+    {
+        try {
+            $this->post($method, $payload, retry: false, timeout: 5);
+
+            return true;
+        } catch (RuntimeException) {
+            return false;
+        }
+    }
+
     /** Put another photo (a public https address) on a message, with its caption. False when Telegram refuses. */
     public function editPhoto(int|string $chatId, int $messageId, string $url, string $caption, ?array $replyMarkup = null): bool
     {

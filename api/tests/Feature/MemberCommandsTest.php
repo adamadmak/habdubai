@@ -9,7 +9,7 @@ test('a returning member gets welcome back, not the join flow', function (): voi
 
     say(30, '/start');
 
-    expect(lastText())->toContain('Welcome back, Abebe K')
+    expect(implode("\n", textsTo(30)))->toContain('Welcome back, Abebe K')
         ->and(Member::query()->count())->toBe(1);
 });
 

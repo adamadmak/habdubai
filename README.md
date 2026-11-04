@@ -72,13 +72,15 @@ The admin route works only while there is no administrator; migrations can
 be re-run after every deploy that adds one.
 
 The host runs no cron and no queue worker either. The public website calls
-the tick once a minute when `TICK_URL` and `TICK_TOKEN` are set on it
-(`site/instrumentation.ts`); any other timer may do it instead. The tick
-runs `schedule:run`, which fetches due job sources, drains the queue,
-sends job alerts and closes stale jobs:
+the tick once a minute by itself (`site/instrumentation.ts`, from `API_URL`);
+any other timer may do it instead. With a token saved on Settings it needs
+`X-Tick-Token` (`TICK_TOKEN` on the website); with none it takes one run a
+minute from anyone. The tick
+runs `system:tick`, which runs `schedule:run`: it fetches due job sources,
+drains the queue, sends job alerts and closes stale jobs:
 
 ```bash
-curl -X POST https://<api>/api/system/tick -H "X-Tick-Token: $TICK_TOKEN"
+curl -X POST https://<api>/api/system/tick
 ```
 
 Telegram updates do not wait for the tick: they run right after the
