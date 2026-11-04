@@ -8,7 +8,7 @@ test('/start greets in every language and offers the language buttons, two to a 
     say(7, '/start');
 
     $last = lastMessage();
-    expect($last['text'])->toContain('Welcome to Habesha Dubai')->toContain('እንኳን ደህና መጡ')->toContain('እንቋዕ ብደሓን')->toContain('Baga nagaan gara Habesha Dubai dhuftan')
+    expect($last['text'])->toContain('Welcome to HabUAE')->toContain('እንኳን ደህና መጡ')->toContain('እንቋዕ ብደሓን')->toContain('Baga nagaan gara HabUAE dhuftan')
         ->and(collect($last['reply_markup']['keyboard'])->map(fn (array $row) => array_column($row, 'text'))->all())
         ->toBe([['አማርኛ', 'ትግርኛ'], ['Afaan Oromoo', 'English']])
         ->and(Conversation::query()->where('telegram_user_id', 7)->value('state'))->toBe('language');

@@ -1,6 +1,6 @@
 export const siteConfig = {
-  name: "Habesha Dubai",
-  description: "Admin for the Habesha Dubai community bot",
+  name: "HabUAE",
+  description: "Admin for the HabUAE community bot",
   theme: "blue",
   layout: "vertical",
   // semi-box, horizontal, vertical

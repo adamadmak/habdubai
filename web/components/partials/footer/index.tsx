@@ -17,7 +17,7 @@ const Footer = (_: { handleOpenSearch?: () => void }) => {
       })}
     >
       <div className="mx-auto flex max-w-[1760px] flex-wrap items-center justify-between gap-2 text-xs text-default-500">
-        <p>© {new Date().getFullYear()} Habesha Dubai · Admin</p>
+        <p>© {new Date().getFullYear()} HabUAE · Admin</p>
         <p>Phase one: no money moves through the platform.</p>
       </div>
     </FooterLayout>

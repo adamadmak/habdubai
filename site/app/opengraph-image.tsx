@@ -3,7 +3,7 @@ import { LOGO_HEIGHT, LOGO_INK, LOGO_WIDTH } from "@/lib/logo-images";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Habesha Dubai";
+export const alt = "HabUAE";
 
 /**
  * The card a shared link shows in Telegram, WhatsApp and the rest: the

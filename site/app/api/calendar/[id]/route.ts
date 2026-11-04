@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Habesha Dubai//News//EN",
+    "PRODID:-//HabUAE//News//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     `UID:announcement-${a.id}@habesha-dubai`,

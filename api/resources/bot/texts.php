@@ -18,10 +18,10 @@
  */
 return [
     'welcome' => [
-        'am' => "ሰላም! ወደ ሐበሻ ዱባይ እንኳን ደህና መጡ። 🇦🇪🇪🇹\nቋንቋ ይምረጡ።",
-        'ti' => "ሰላም! ናብ ሓበሻ ዱባይ እንቋዕ ብደሓን መጻእኩም። 🇦🇪🇪🇹\nቋንቋ ምረጹ።",
-        'en' => "Welcome to Habesha Dubai. 🇦🇪🇪🇹\nChoose your language.",
-        'om' => "Akkam! Baga nagaan gara Habesha Dubai dhuftan. 🇦🇪🇪🇹\nAfaan filadhaa.",
+        'am' => "ሰላም! ወደ HabUAE እንኳን ደህና መጡ። 🇦🇪🇪🇹\nቋንቋ ይምረጡ።",
+        'ti' => "ሰላም! ናብ HabUAE እንቋዕ ብደሓን መጻእኩም። 🇦🇪🇪🇹\nቋንቋ ምረጹ።",
+        'en' => "Welcome to HabUAE. 🇦🇪🇪🇹\nChoose your language.",
+        'om' => "Akkam! Baga nagaan gara HabUAE dhuftan. 🇦🇪🇪🇹\nAfaan filadhaa.",
     ],
     'choose_language' => [
         'am' => 'ቋንቋ ይምረጡ።',
@@ -1964,10 +1964,10 @@ return [
     // ---- website sign-in and business owners ------------------------------------
 
     'login_prompt' => [
-        'am' => "🔐 <b>ወደ ሐበሻ ዱባይ ድረ-ገጽ ይግቡ?</b>\n\nመሣሪያ፡ {device}\n\nአሁን እርስዎ ራስዎ በ{site} ላይ “በቴሌግራም ይቀጥሉ” ከተጫኑ ብቻ ያረጋግጡ። ካረጋገጡ በኋላ በድረ-ገጹ ላይ የሚጽፉት ኮድ እዚህ ይደርስዎታል። መግባት የራስዎን ገጽ ይከፍታል፡ የዕቃ ልጥፎችዎና ስምምነቶችዎ፣ ጥያቄዎችዎ፣ ያስቀመጧቸው ሥራዎችና የንግድ ዝርዝሮችዎ። የቴሌግራም ስምዎ ብቻ ይጋራል፣ ስልክ ቁጥርዎ አይጋራም።",
-        'ti' => "🔐 <b>ናብ መርበብ ሓበሻ ዱባይ ክትኣትዉ?</b>\n\nመሳርሒ፡ {device}\n\nሕጂ ባዕልኹም ኣብ {site} “ብቴሌግራም ቀጽሉ” እንተጠዊቕኩም ጥራይ ኣረጋግጹ። ድሕሪ ምርግጋጽኩም ኣብቲ መርበብ እትጽሕፍዎ ኮድ ኣብዚ ክበጽሓኩም እዩ። ምእታው ናይ ባዕልኹም ገጽ ይኸፍት፡ ልጥፋት ኣቕሑን ስምምዓትን፣ ሕቶታትኩም፣ ዝዓቀብኩምዎም ስራሓትን ዝርዝራት ንግድን። ስም ቴሌግራምኩም ጥራይ ይካፈል፣ ቁጽሪ ስልክኹም ኣይካፈልን።",
-        'en' => "🔐 <b>Sign in to the Habesha Dubai website?</b>\n\nDevice: {device}\n\nConfirm only if you just pressed “Continue with Telegram” on {site} yourself. You will then get a code here to type on the website. Signing in opens your own page: your goods posts and deals, your questions, saved jobs and business listings. It shares your Telegram name, never your phone number.",
-        'om' => "🔐 <b>Marsariitii Habesha Dubai seenuu?</b>\n\nMeeshaa: {device}\n\nMirkaneessaa kan amma mataa keessaniin {site} irratti “Continue with Telegram” yoo tuqattan qofa. Achiis koodii marsariitii irratti barreessitan asitti ni argattu. Seenuun fuula mataa keessanii bana: maxxansaa fi waliigaltee meeshaalee keessan, gaaffilee keessan, hojiiwwan olkaa'attanii fi galmee daldalaa. Maqaa Telegram keessanii ni qooda, lakkoofsa bilbilaa keessanii gonkumaa hin qoodu.",
+        'am' => "🔐 <b>ወደ HabUAE ድረ-ገጽ ይግቡ?</b>\n\nመሣሪያ፡ {device}\n\nአሁን እርስዎ ራስዎ በ{site} ላይ “በቴሌግራም ይቀጥሉ” ከተጫኑ ብቻ ያረጋግጡ። ካረጋገጡ በኋላ በድረ-ገጹ ላይ የሚጽፉት ኮድ እዚህ ይደርስዎታል። መግባት የራስዎን ገጽ ይከፍታል፡ የዕቃ ልጥፎችዎና ስምምነቶችዎ፣ ጥያቄዎችዎ፣ ያስቀመጧቸው ሥራዎችና የንግድ ዝርዝሮችዎ። የቴሌግራም ስምዎ ብቻ ይጋራል፣ ስልክ ቁጥርዎ አይጋራም።",
+        'ti' => "🔐 <b>ናብ መርበብ HabUAE ክትኣትዉ?</b>\n\nመሳርሒ፡ {device}\n\nሕጂ ባዕልኹም ኣብ {site} “ብቴሌግራም ቀጽሉ” እንተጠዊቕኩም ጥራይ ኣረጋግጹ። ድሕሪ ምርግጋጽኩም ኣብቲ መርበብ እትጽሕፍዎ ኮድ ኣብዚ ክበጽሓኩም እዩ። ምእታው ናይ ባዕልኹም ገጽ ይኸፍት፡ ልጥፋት ኣቕሑን ስምምዓትን፣ ሕቶታትኩም፣ ዝዓቀብኩምዎም ስራሓትን ዝርዝራት ንግድን። ስም ቴሌግራምኩም ጥራይ ይካፈል፣ ቁጽሪ ስልክኹም ኣይካፈልን።",
+        'en' => "🔐 <b>Sign in to the HabUAE website?</b>\n\nDevice: {device}\n\nConfirm only if you just pressed “Continue with Telegram” on {site} yourself. You will then get a code here to type on the website. Signing in opens your own page: your goods posts and deals, your questions, saved jobs and business listings. It shares your Telegram name, never your phone number.",
+        'om' => "🔐 <b>Marsariitii HabUAE seenuu?</b>\n\nMeeshaa: {device}\n\nMirkaneessaa kan amma mataa keessaniin {site} irratti “Continue with Telegram” yoo tuqattan qofa. Achiis koodii marsariitii irratti barreessitan asitti ni argattu. Seenuun fuula mataa keessanii bana: maxxansaa fi waliigaltee meeshaalee keessan, gaaffilee keessan, hojiiwwan olkaa'attanii fi galmee daldalaa. Maqaa Telegram keessanii ni qooda, lakkoofsa bilbilaa keessanii gonkumaa hin qoodu.",
     ],
     'login_site_fallback' => [
         'am' => 'ድረ-ገጹ',
@@ -2000,10 +2000,10 @@ return [
         'om' => "✅ Seentaniittu. Gara marsariitii deebi'aa; ofumaan itti fufa.",
     ],
     'login_code' => [
-        'am' => "🔑 የመግቢያ ኮድዎ፡ <b>{code}</b>\n\nለመጨረስ በድረ-ገጹ ላይ ይጻፉት። ይህን ኮድ ለማንም አይስጡ፤ ከሐበሻ ዱባይ ነኝ ለሚል ሰውም ቢሆን። ለ10 ደቂቃ ያገለግላል።",
-        'ti' => "🔑 ናይ ምእታው ኮድኩም፡ <b>{code}</b>\n\nንምውዳእ ኣብቲ መርበብ ጸሓፍዎ። ነዚ ኮድ ንማንም ኣይትሃቡ፤ ካብ ሓበሻ ዱባይ እየ ንዝብል ሰብ እውን እንተኾነ። ን10 ደቒቕ የገልግል።",
-        'en' => "🔑 Your sign-in code: <b>{code}</b>\n\nType it on the website to finish. Never give this code to anyone, not even someone who says they are from Habesha Dubai. It works for 10 minutes.",
-        'om' => "🔑 Koodii seensaa keessan: <b>{code}</b>\n\nXumuruuf marsariitii irratti barreessaa. Koodii kana nama kamiifuu hin kenninaa, nama Habesha Dubai irraa dha jedhuuf illee. Daqiiqaa 10 hojjeta.",
+        'am' => "🔑 የመግቢያ ኮድዎ፡ <b>{code}</b>\n\nለመጨረስ በድረ-ገጹ ላይ ይጻፉት። ይህን ኮድ ለማንም አይስጡ፤ ከHabUAE ነኝ ለሚል ሰውም ቢሆን። ለ10 ደቂቃ ያገለግላል።",
+        'ti' => "🔑 ናይ ምእታው ኮድኩም፡ <b>{code}</b>\n\nንምውዳእ ኣብቲ መርበብ ጸሓፍዎ። ነዚ ኮድ ንማንም ኣይትሃቡ፤ ካብ HabUAE እየ ንዝብል ሰብ እውን እንተኾነ። ን10 ደቒቕ የገልግል።",
+        'en' => "🔑 Your sign-in code: <b>{code}</b>\n\nType it on the website to finish. Never give this code to anyone, not even someone who says they are from HabUAE. It works for 10 minutes.",
+        'om' => "🔑 Koodii seensaa keessan: <b>{code}</b>\n\nXumuruuf marsariitii irratti barreessaa. Koodii kana nama kamiifuu hin kenninaa, nama HabUAE irraa dha jedhuuf illee. Daqiiqaa 10 hojjeta.",
     ],
     'login_declined' => [
         'am' => 'እሺ፣ ማንም አልገባም። ይህን ያልጀመሩት እርስዎ ከሆኑ ሊንኩን ለማንም አያጋሩ።',
@@ -2148,10 +2148,10 @@ return [
 
     // ---- how the bot presents itself in Telegram (App\Bot\BotProfile) ----
     'bot_description' => [
-        'am' => "ሐበሻ ዱባይ፡ በኤምሬትስ ለሚኖሩ ኢትዮጵያውያንና ኤርትራውያን ነጻ ማህበረሰብ። 🇦🇪🇪🇹\n\n💼 ከማጭበርበር የተጣሩ ሥራዎች፣ በቋንቋዎ\n📍 በመላው ኤምሬትስ የሐበሻ ቦታዎች\n❓ ልምድ ካላቸው አባላት መልሶች\n📦 በኤምሬትስና በሀገር ቤት መካከል ትርፍ ኪሎ\n\nለመቀላቀል «Start» ይጫኑ። ሁለት ደቂቃ ብቻ ነው።",
-        'ti' => "ሓበሻ ዱባይ፡ ኣብ ኢማራት ንዝነብሩ ኢትዮጵያውያንን ኤርትራውያንን ናጻ ማሕበረሰብ። 🇦🇪🇪🇹\n\n💼 ካብ ምትላል ዝተጻረዩ ስራሓት፣ ብቋንቋኹም\n📍 ኣብ መላእ ኢማራት ናይ ሓበሻ ቦታታት\n❓ ካብ ተመክሮ ዘለዎም ኣባላት መልስታት\n📦 ኣብ መንጎ ኢማራትን ዓዲን ትርፊ ኪሎ\n\nንምጽንባር «Start» ጠውቑ። ክልተ ደቒቕ ጥራይ እዩ።",
-        'en' => "Habesha Dubai: the free community for Ethiopians and Eritreans in the UAE. 🇦🇪🇪🇹\n\n💼 Jobs checked for scam signs, in your language\n📍 Habesha places across the Emirates\n❓ Answers from members who have been there\n📦 Spare kilos between the UAE and home\n\nPress Start to join. It takes two minutes.",
-        'om' => "Habesha Dubai: hawaasa bilisaa Itoophiyaanotaa fi Eertiraanota Imaaraat keessa jiraataniif. 🇦🇪🇪🇹\n\n💼 Hojiiwwan gowwoomsaa irraa qulqullaa'an, afaan keessaniin\n📍 Bakkeewwan Habashaa Imaaraat guutuu keessatti\n❓ Deebiiwwan miseensota muuxannoo qaban irraa\n📦 Kiiloo hafaa Imaaraatii fi biyya gidduu\n\nMakamuuf \"Start\" tuqaa. Daqiiqaa lama qofa.",
+        'am' => "HabUAE፡ በኤምሬትስ ለሚኖሩ ኢትዮጵያውያንና ኤርትራውያን ነጻ ማህበረሰብ። 🇦🇪🇪🇹\n\n💼 ከማጭበርበር የተጣሩ ሥራዎች፣ በቋንቋዎ\n📍 በመላው ኤምሬትስ የሐበሻ ቦታዎች\n❓ ልምድ ካላቸው አባላት መልሶች\n📦 በኤምሬትስና በሀገር ቤት መካከል ትርፍ ኪሎ\n\nለመቀላቀል «Start» ይጫኑ። ሁለት ደቂቃ ብቻ ነው።",
+        'ti' => "HabUAE፡ ኣብ ኢማራት ንዝነብሩ ኢትዮጵያውያንን ኤርትራውያንን ናጻ ማሕበረሰብ። 🇦🇪🇪🇹\n\n💼 ካብ ምትላል ዝተጻረዩ ስራሓት፣ ብቋንቋኹም\n📍 ኣብ መላእ ኢማራት ናይ ሓበሻ ቦታታት\n❓ ካብ ተመክሮ ዘለዎም ኣባላት መልስታት\n📦 ኣብ መንጎ ኢማራትን ዓዲን ትርፊ ኪሎ\n\nንምጽንባር «Start» ጠውቑ። ክልተ ደቒቕ ጥራይ እዩ።",
+        'en' => "HabUAE: the free community for Ethiopians and Eritreans in the UAE. 🇦🇪🇪🇹\n\n💼 Jobs checked for scam signs, in your language\n📍 Habesha places across the Emirates\n❓ Answers from members who have been there\n📦 Spare kilos between the UAE and home\n\nPress Start to join. It takes two minutes.",
+        'om' => "HabUAE: hawaasa bilisaa Itoophiyaanotaa fi Eertiraanota Imaaraat keessa jiraataniif. 🇦🇪🇪🇹\n\n💼 Hojiiwwan gowwoomsaa irraa qulqullaa'an, afaan keessaniin\n📍 Bakkeewwan Habashaa Imaaraat guutuu keessatti\n❓ Deebiiwwan miseensota muuxannoo qaban irraa\n📦 Kiiloo hafaa Imaaraatii fi biyya gidduu\n\nMakamuuf \"Start\" tuqaa. Daqiiqaa lama qofa.",
     ],
     'bot_short_description' => [
         'am' => 'ሥራ፣ የሐበሻ ቦታዎች፣ መልሶችና ትርፍ ኪሎ፣ በኤምሬትስ ላሉ ኢትዮጵያውያንና ኤርትራውያን። ነጻ።',

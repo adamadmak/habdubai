@@ -71,7 +71,7 @@ const LogInForm = () => {
   return (
     <div className="w-full">
       <h1 className="font-display text-[32px] leading-tight font-semibold text-default-900">Sign in</h1>
-      <p className="mt-2 text-base text-default-600">To the Habesha Dubai admin.</p>
+      <p className="mt-2 text-base text-default-600">To the HabUAE admin.</p>
       {expired && !error && (
         <div role="status" className="mt-5 rounded-lg border border-primary/20 bg-primary-50/70 px-3 py-2 text-sm text-default-800">
           Your session ended. Sign in again to carry on where you were.

@@ -58,7 +58,7 @@ class CloseStaleJobs extends Command
             }
 
             try {
-                $status = Http::timeout(6)->connectTimeout(3)->withHeaders(['User-Agent' => 'HabeshaDubaiBot/1.0'])->head($job->url)->status();
+                $status = Http::timeout(6)->connectTimeout(3)->withHeaders(['User-Agent' => 'HabUAEBot/1.0'])->head($job->url)->status();
             } catch (\Throwable) {
                 $job->touch();
 

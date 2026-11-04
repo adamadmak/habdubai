@@ -8,6 +8,10 @@ the public website, Next.js 15, which also opens inside Telegram as a Mini App.
 The product spec is the "Habesha Dubai Bot: Phase One Spec" doc; phase one
 takes no money anywhere, so there is no wallet, no escrow and no payment code.
 
+## The brand is HabUAE, and the old name stays in a few strings on purpose
+
+Everything people read says HabUAE, in Latin letters in all four languages. The owner renamed it on 4 Nov 2026. The lower-case `habesha-dubai` strings in `TelegramBotService` and `StableKey` are hash salts: changing one changes the webhook secret or the keys for stored data, which cuts the bot off from Telegram. Leave them, the calendar UID, and the folder and package names alone. "Habesha" as the word for the community is not the brand and stays in the copy.
+
 ## Settings and secrets live in `platform_settings`
 
 The host builds Laravel's config cache at build time without the runtime

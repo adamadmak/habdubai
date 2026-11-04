@@ -92,7 +92,7 @@ test('continue with Telegram: the person confirms in the bot, gets a code there,
     $this->postJson('/api/owner/login/poll', ['ref' => $start['ref'], 'secret' => $start['secret']])->assertJson(['status' => 'pending']);
 
     say(9001, '/start login_'.$start['ref'], ['language_code' => 'en']);
-    expect(lastMessage()['text'])->toContain('Sign in to the Habesha Dubai website?')->toContain('habesha.example')->toContain('Device: Chrome · Windows');
+    expect(lastMessage()['text'])->toContain('Sign in to the HabUAE website?')->toContain('habesha.example')->toContain('Device: Chrome · Windows');
 
     $request = OwnerLoginRequest::query()->sole();
     pressLogin(9001, 'lg:ok:'.$request->id);

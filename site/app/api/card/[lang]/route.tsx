@@ -14,8 +14,8 @@ import { LOGO_HEIGHT, LOGO_WHITE, LOGO_WIDTH } from "@/lib/logo-images";
 const WORDS: Record<Locale, { welcome: string; line: string; labels: [string, string, string, string] | null }> = {
   en: { welcome: "Welcome to the community", line: "Free · in your language · for Habesha across the Emirates", labels: ["Jobs", "Places", "Questions", "Goods"] },
   om: { welcome: "Baga nagaan dhuftan", line: "Bilisa · afaan keessaniin · Habashaa Imaaraat keessa jiraniif", labels: ["Hojii", "Bakkeewwan", "Gaaffilee", "Meeshaa"] },
-  am: { welcome: "Habesha Dubai", line: "Dubai · Abu Dhabi · Sharjah · Ajman · Al Ain", labels: null },
-  ti: { welcome: "Habesha Dubai", line: "Dubai · Abu Dhabi · Sharjah · Ajman · Al Ain", labels: null },
+  am: { welcome: "HabUAE", line: "Dubai · Abu Dhabi · Sharjah · Ajman · Al Ain", labels: null },
+  ti: { welcome: "HabUAE", line: "Dubai · Abu Dhabi · Sharjah · Ajman · Al Ain", labels: null },
 };
 
 const GOLD = "#ffc20e";

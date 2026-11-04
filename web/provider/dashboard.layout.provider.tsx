@@ -33,11 +33,11 @@ const DashBoardLayoutProvider = ({ children, trans }: { children: React.ReactNod
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // The tab says which page this is ("Jobs · Habesha Dubai"), so several open tabs stay apart.
+  // The tab says which page this is ("Jobs · HabUAE"), so several open tabs stay apart.
   React.useEffect(() => {
     const path = getDynamicPath(location);
     const page = menusConfig.mainNav.find((item) => isLocationMatch(item.href, path));
-    document.title = page ? `${page.title} · Habesha Dubai` : "Habesha Dubai admin";
+    document.title = page ? `${page.title} · HabUAE` : "HabUAE admin";
   }, [location]);
 
   if (!mounted) {

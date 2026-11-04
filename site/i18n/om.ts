@@ -2,13 +2,11 @@ import type { Dictionary } from "./en";
 
 /**
  * Afaan Oromoo, in Qubee. Written for Oromo speakers living in the Gulf:
- * everyday words, the polite plural ("isin"), and "Habesha" only in the
- * brand name; in the copy the community is Ethiopians and Eritreans.
+ * everyday words, the polite plural ("isin"); in the copy the community is
+ * Ethiopians and Eritreans.
  */
 export const om: Dictionary = {
-  brand: "Habesha Dubai",
-  // The name in the other script, as on English pages: Oromo is written in Latin letters.
-  brandNative: "ሐበሻ ዱባይ",
+  brand: "HabUAE",
   skip: "Gara qabiyyeetti darbaa",
   nav: { home: "Fuula duraa", jobs: "Hojii", directory: "Bakkeewwan", news: "Oduu", goods: "Gabatee meeshaa", business: "Daldaltootaaf", about: "Waa'ee keenya" },
   tabs: { home: "Jalqaba", jobs: "Hojii", directory: "Bakkeewwan", news: "Oduu", goods: "Meeshaa", business: "Daldala" },
@@ -355,7 +353,7 @@ export const om: Dictionary = {
       send: { title: "Waan tokko erguu", text: "Asitti qaba, kan naaf fe'u nan barbaada." },
       request: { title: "Waan tokko naaf fidaa", text: "Namni achi jiru imaltuu tokkotti kenna." },
     },
-    money: "Maallaqni tokko illee Habesha Dubai keessa hin darbu. Kaffaltii Telegiraamii keessatti waliigaltanii kallattiin wal kaffaltu; yoo danda'ame, erga meeshaan ga'ee booda.",
+    money: "Maallaqni tokko illee HabUAE keessa hin darbu. Kaffaltii Telegiraamii keessatti waliigaltanii kallattiin wal kaffaltu; yoo danda'ame, erga meeshaan ga'ee booda.",
     filters: {
       sortLabel: "Tartiiba",
       best: "Sadarkaa olaanaa dursee",
@@ -572,7 +570,7 @@ export const om: Dictionary = {
   },
 
   about: {
-    title: "Waa'ee Habesha Dubai",
+    title: "Waa'ee HabUAE",
     lead: "Hawaasa kaffaltii hin qabne, miseensotaan geggeeffamu, Itoophiyaanotaa fi Eertiraawota Emireetota Arabaa Gamtooman keessa jiraataniif.",
     body: [
       "Kan jalqabne Telegiraamii irratti, bakka hawaasni keenya duraanuu itti haasa'u. Boottiin lakkoofsa bilbilaa miseensa hundaa al tokko mirkaneessa, kanaaf namoonni isin argattan dhugaa dha. Marsariitiin kun waan hawaasni walitti qabe agarsiisa: hojiiwwan qorannoo gowwoomsaa keenyaa darban, bakkeewwan hawaasaa Emireetota guutuu keessa jiran, akkasumas beeksisota qonsilaa, manneen kiristaanaa, masjiidotaa fi waldaalee irraa.",
@@ -654,12 +652,12 @@ export const om: Dictionary = {
 
   privacy: {
     title: "Dhuunfummaa",
-    lead: "Habesha Dubai waa'ee keessan maal akka qabatu, maaliif fi hammam akka turu. Jechoota salphaan.",
+    lead: "HabUAE waa'ee keessan maal akka qabatu, maaliif fi hammam akka turu. Jechoota salphaan.",
     sections: [
       {
         title: "Gabaabumatti",
         body: [
-          "Habesha Dubai tola. Maallaqni tokko illee keessa hin darbu, beeksisni daldalaas hin jiru. Waa'ee keessan homaa hin gurgurru.",
+          "HabUAE tola. Maallaqni tokko illee keessa hin darbu, beeksisni daldalaas hin jiru. Waa'ee keessan homaa hin gurgurru.",
           "Kan qabannu waan hawaasni ittiin hojjetu qofa: miseensi dhugaa eenyu akka ta'e, waan miseensonni maxxansan, fi galmeewwan namoonni barbaadan.",
         ],
       },
@@ -718,7 +716,7 @@ export const om: Dictionary = {
 
   terms: {
     title: "Haala itti fayyadamaa",
-    lead: "Seerota muraasa Habesha Dubai itti fayyadamuuf: marsariitii kana, boottii Telegiraamii, gareewwan isaa fi chaanaalii isaa.",
+    lead: "Seerota muraasa HabUAE itti fayyadamuuf: marsariitii kana, boottii Telegiraamii, gareewwan isaa fi chaanaalii isaa.",
     sections: [
       {
         title: "Kun maali",

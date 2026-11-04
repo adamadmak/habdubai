@@ -1,7 +1,6 @@
 /** Every word the website shows, in English. am.ts, ti.ts and om.ts have the same shape. */
 export const en = {
-  brand: "Habesha Dubai",
-  brandNative: "ሐበሻ ዱባይ",
+  brand: "HabUAE",
   skip: "Skip to content",
   nav: { home: "Home", jobs: "Jobs", directory: "Directory", news: "News & events", goods: "Goods board", business: "For businesses", about: "About" },
   tabs: { home: "Home", jobs: "Jobs", directory: "Places", news: "News", goods: "Goods", business: "Business" },
@@ -355,7 +354,7 @@ export const en = {
       send: { title: "Send something", text: "I have it here and need it carried." },
       request: { title: "Bring me something", text: "Someone over there hands it to a traveller." },
     },
-    money: "No money goes through Habesha Dubai. You agree the fee in Telegram and pay each other directly, ideally after delivery.",
+    money: "No money goes through HabUAE. You agree the fee in Telegram and pay each other directly, ideally after delivery.",
     filters: {
       sortLabel: "Order",
       best: "Best rated first",
@@ -575,7 +574,7 @@ export const en = {
   },
 
   about: {
-    title: "About Habesha Dubai",
+    title: "About HabUAE",
     lead: "A free, member-run community for Ethiopians and Eritreans living in the United Arab Emirates.",
     body: [
       "We started on Telegram, where our community already talks. The bot checks every member's phone number once, so the people you meet are real. This website shows what the community has gathered: jobs that passed our scam checks, Habesha places across the Emirates, and announcements from the consulate, churches, mosques and associations.",
@@ -659,12 +658,12 @@ export const en = {
 
   privacy: {
     title: "Privacy",
-    lead: "What Habesha Dubai keeps about you, why, and for how long. In plain words.",
+    lead: "What HabUAE keeps about you, why, and for how long. In plain words.",
     sections: [
       {
         title: "In short",
         body: [
-          "Habesha Dubai is free. No money moves through it and there are no adverts. We do not sell anything about you.",
+          "HabUAE is free. No money moves through it and there are no adverts. We do not sell anything about you.",
           "We keep only what the community needs to work: who is a real member, what members post, and the listings people search.",
         ],
       },
@@ -723,7 +722,7 @@ export const en = {
 
   terms: {
     title: "Terms of use",
-    lead: "The few rules for using Habesha Dubai: this website, the Telegram bot, its groups and its channel.",
+    lead: "The few rules for using HabUAE: this website, the Telegram bot, its groups and its channel.",
     sections: [
       {
         title: "What this is",

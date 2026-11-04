@@ -15,9 +15,9 @@ const VerticalHeader: React.FC<VerticalHeaderProps> = ({ handleOpenSearch }) => 
   return (
     <div className="flex items-center md:gap-5 gap-3 min-w-0">
       {!isDesktop && (
-        <Link href="/dashboard" className="flex items-center gap-2 rounded-lg" aria-label="Habesha Dubai admin, dashboard">
+        <Link href="/dashboard" className="flex items-center gap-2 rounded-lg" aria-label="HabUAE admin, dashboard">
           <BrandMark className="h-8 w-8" />
-          <span className="hidden sm:block font-display text-base font-semibold text-default-900">Habesha Dubai</span>
+          <span className="hidden sm:block font-display text-base font-semibold text-default-900">HabUAE</span>
         </Link>
       )}
       <button

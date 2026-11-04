@@ -15,13 +15,13 @@ const LoginPage = () => {
         <div className="relative flex items-center gap-3">
           <BrandMark className="h-11 w-11" />
           <div>
-            <div className="font-display text-xl font-semibold">Habesha Dubai</div>
+            <div className="font-display text-xl font-semibold">HabUAE</div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">Admin</div>
           </div>
         </div>
 
         <div className="relative max-w-md">
-          <div className="font-display text-[44px] leading-[1.1] font-semibold" lang="am">ሐበሻ ዱባይ</div>
+          <div className="font-display text-[44px] leading-[1.1] font-semibold">HabUAE</div>
           <p className="mt-4 text-lg leading-relaxed text-white/80">
             Verified members, jobs in four languages, questions and answers, announcements, a business directory and a trusted goods board.
           </p>
@@ -35,7 +35,7 @@ const LoginPage = () => {
         <div className="w-full max-w-[420px]">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <BrandMark className="h-10 w-10" />
-            <div className="font-display text-xl font-semibold text-default-900">Habesha Dubai</div>
+            <div className="font-display text-xl font-semibold text-default-900">HabUAE</div>
           </div>
           <Suspense>
             <LogInForm />

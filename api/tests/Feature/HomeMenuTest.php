@@ -150,7 +150,7 @@ test('a website sign-in does not disturb a flow; /cancel still says cancelled an
 
     $start = test()->postJson('/api/owner/login/start')->assertOk()->json();
     say(39, '/start login_'.$start['ref']);
-    expect(stateOf(39))->toBe('biz_name')->and(lastText())->toContain('Sign in to the Habesha Dubai website');
+    expect(stateOf(39))->toBe('biz_name')->and(lastText())->toContain('Sign in to the HabUAE website');
 
     $before = count(sentMessages());
     say(39, '/cancel');

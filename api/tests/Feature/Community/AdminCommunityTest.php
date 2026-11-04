@@ -115,7 +115,7 @@ test('a group the bot is added to shows up on the settings page with its id', fu
     $this->postJson('/api/telegram/webhook/'.webhookSecret(), [
         'update_id' => nextUpdateId(),
         'my_chat_member' => [
-            'chat' => ['id' => -1001234, 'type' => 'supergroup', 'title' => 'Habesha Dubai Q&A', 'is_forum' => true],
+            'chat' => ['id' => -1001234, 'type' => 'supergroup', 'title' => 'HabUAE Q&A', 'is_forum' => true],
             'from' => ['id' => 1, 'is_bot' => false, 'first_name' => 'Owner'],
             'date' => time(),
             'old_chat_member' => ['status' => 'left', 'user' => ['id' => 2, 'is_bot' => true, 'first_name' => 'Bot']],
@@ -125,7 +125,7 @@ test('a group the bot is added to shows up on the settings page with its id', fu
 
     expect(BotChat::query()->first()->is_forum)->toBeTrue();
     $this->getJson('/api/admin/settings')->assertOk()
-        ->assertJsonPath('chats.0.chat_id', -1001234)->assertJsonPath('chats.0.title', 'Habesha Dubai Q&A')
+        ->assertJsonPath('chats.0.chat_id', -1001234)->assertJsonPath('chats.0.title', 'HabUAE Q&A')
         ->assertJsonPath('settings.community_language', 'am')->assertJsonPath('settings.assistant_per_day', '20');
 });
 

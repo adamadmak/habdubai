@@ -50,6 +50,6 @@ class Announcement extends Model
 
     public function posterName(): string
     {
-        return $this->member?->display_name ?? 'Habesha Dubai';
+        return $this->member?->display_name ?? 'HabUAE';
     }
 }

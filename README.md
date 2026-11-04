@@ -1,4 +1,4 @@
-# Habesha Dubai
+# HabUAE
 
 A free Telegram community for Habesha in Dubai: verified members, jobs fetched
 automatically and posted in Amharic and Tigrinya, a questions group,

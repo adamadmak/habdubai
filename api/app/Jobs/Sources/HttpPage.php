@@ -20,7 +20,7 @@ final class HttpPage
 
         try {
             $response = Http::withHeaders([
-                'User-Agent' => 'HabeshaDubaiBot/1.0 (+community job alerts; summary and link only)',
+                'User-Agent' => 'HabUAEBot/1.0 (+community job alerts; summary and link only)',
                 'Accept' => 'text/html,application/xhtml+xml,application/rss+xml,application/atom+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language' => 'en',
             ])->withOptions(['allow_redirects' => [
