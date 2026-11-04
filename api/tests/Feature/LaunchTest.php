@@ -183,6 +183,19 @@ test('a bot without the rights it needs, Topics off, or a webhook elsewhere is a
         ->and($items['goods_group']['ok'])->toBeTrue();
 });
 
+test('a channel chosen as a community group is named as the problem, not as a missing right', function (): void {
+    launchReady();
+    TelegramFake::$results['getChat'] = ['id' => -1001001, 'type' => 'channel'];
+    Sanctum::actingAs(admin(), ['admin']);
+
+    $items = collect($this->getJson('/api/admin/readiness')->assertOk()->assertJsonPath('ready', false)->json('items'))->keyBy('key');
+
+    expect($items['questions_group']['ok'])->toBeFalse()
+        ->and($items['questions_group']['detail'])->toContain('channel')->not->toContain('manage topics')
+        ->and($items['questions_group']['fix'])->toContain('create a group')
+        ->and($items['jobs_channel']['ok'])->toBeTrue();
+});
+
 test('a stopped scheduler, a long queue and failed updates are reported', function (): void {
     launchReady();
     Cache::forever(SystemTickController::LAST_TICK_KEY, ['at' => now()->subMinutes(10)->toIso8601String(), 'seconds' => 1]);

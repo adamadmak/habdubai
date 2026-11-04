@@ -591,6 +591,14 @@ class Router
     private function groupPost(array $post): void
     {
         $chatId = (string) ($post['chat']['id'] ?? '');
+
+        if (isset($post['migrate_to_chat_id']) || isset($post['migrate_from_chat_id'])) {
+            \App\Models\BotChat::moved((int) ($post['migrate_from_chat_id'] ?? $chatId), (int) ($post['migrate_to_chat_id'] ?? $chatId));
+            \App\Models\BotChat::touchFromMessage($post['chat'] ?? []);
+
+            return;
+        }
+
         \App\Models\BotChat::touchFromMessage($post['chat'] ?? []);
 
         if (GroupModerator::isCommunityGroup($chatId)) {

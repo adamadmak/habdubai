@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\RuntimeEnv;
 use Illuminate\Database\Eloquent\Model;
 
 class BotChat extends Model
@@ -30,6 +31,31 @@ class BotChat extends Model
             'is_forum' => (bool) ($chat['is_forum'] ?? false),
             'bot_status' => (string) $status,
         ]);
+    }
+
+    /**
+     * Telegram upgraded a group to a supergroup (made public, Topics turned on): it has a new id
+     * and the old one stops working at once. Telegram says so in both chats, so this runs twice.
+     */
+    public static function moved(int $from, int $to): void
+    {
+        if ($from === $to) {
+            return;
+        }
+
+        $old = static::query()->where('chat_id', $from)->first();
+        if ($old && static::query()->where('chat_id', $to)->exists()) {
+            $old->delete();
+        } elseif ($old) {
+            $old->forceFill(['chat_id' => $to, 'type' => 'supergroup'])->save();
+        }
+
+        foreach (['telegram_questions_group_id', 'telegram_goods_group_id'] as $key) {
+            if (RuntimeEnv::get(null, $key, null) === (string) $from) {
+                PlatformSetting::put($key, (string) $to);
+                AuditLog::record(null, 'settings.group_moved', 'setting', null, ['key' => $key, 'chat_id' => $from], ['key' => $key, 'chat_id' => $to]);
+            }
+        }
     }
 
     /** A later message tells us the title or forum flag changed. */

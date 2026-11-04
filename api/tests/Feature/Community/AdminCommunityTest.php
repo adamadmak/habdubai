@@ -9,6 +9,7 @@ use App\Models\KnowledgeArticle;
 use App\Models\PlatformSetting;
 use App\Models\Question;
 use App\Models\QuestionReply;
+use App\Support\Community;
 use App\Support\JobSettings;
 use Laravel\Sanctum\Sanctum;
 
@@ -126,6 +127,31 @@ test('a group the bot is added to shows up on the settings page with its id', fu
     $this->getJson('/api/admin/settings')->assertOk()
         ->assertJsonPath('chats.0.chat_id', -1001234)->assertJsonPath('chats.0.title', 'Habesha Dubai Q&A')
         ->assertJsonPath('settings.community_language', 'am')->assertJsonPath('settings.assistant_per_day', '20');
+});
+
+test('a group Telegram upgrades keeps its place on the settings page and in the settings, under its new id', function (): void {
+    BotChat::query()->create(['chat_id' => -4001, 'type' => 'group', 'title' => 'Q&A', 'is_forum' => false, 'bot_status' => 'administrator']);
+    PlatformSetting::put('telegram_questions_group_id', '-4001');
+    PlatformSetting::put('telegram_goods_group_id', '-4002');
+
+    // Telegram says so in the old chat, then in the new one, which now has a public name and Topics.
+    $this->postJson('/api/telegram/webhook/'.webhookSecret(), [
+        'update_id' => nextUpdateId(),
+        'message' => ['message_id' => 9, 'date' => time(), 'chat' => ['id' => -4001, 'type' => 'group', 'title' => 'Q&A'], 'from' => ['id' => 1, 'is_bot' => false, 'first_name' => 'Owner'], 'migrate_to_chat_id' => -1009001],
+    ])->assertOk();
+    $this->postJson('/api/telegram/webhook/'.webhookSecret(), [
+        'update_id' => nextUpdateId(),
+        'message' => ['message_id' => 1, 'date' => time(), 'chat' => ['id' => -1009001, 'type' => 'supergroup', 'title' => 'Q&A', 'username' => 'habuae_qa', 'is_forum' => true], 'migrate_from_chat_id' => -4001],
+    ])->assertOk();
+
+    $chat = BotChat::query()->sole();
+    expect($chat->chat_id)->toBe(-1009001)
+        ->and($chat->type)->toBe('supergroup')
+        ->and($chat->username)->toBe('habuae_qa')
+        ->and($chat->is_forum)->toBeTrue()
+        ->and($chat->bot_status)->toBe('administrator')
+        ->and(Community::questionsGroup())->toBe('-1009001')
+        ->and(Community::goodsGroup())->toBe('-4002');
 });
 
 test('quiet questions are closed after seven days', function (): void {

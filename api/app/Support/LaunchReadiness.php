@@ -195,6 +195,10 @@ final class LaunchReadiness
             return [false, 'No '.$name.' is set.', 'Add the bot to the '.$name.' as an administrator, then pick the group on Settings.'];
         }
 
+        if ($this->isChannel($chatId)) {
+            return [false, 'The '.$name.' is set to a channel. Members cannot write in a channel, so nobody could talk there.', 'In Telegram, create a group (not a channel), add the bot as an administrator, then pick the group on Settings.'];
+        }
+
         $rights = self::GROUP_RIGHTS + ($topics ? ['can_manage_topics' => 'manage topics'] : []);
         [$ok, $detail, $fix] = $this->botIsAdmin($chatId, $name, $rights);
         if (! $ok || ! $topics) {
@@ -207,6 +211,15 @@ final class LaunchReadiness
         }
 
         return [true, $detail.' Topics are on.', ''];
+    }
+
+    private function isChannel(string $chatId): bool
+    {
+        try {
+            return ($this->telegram->getChat($chatId)['type'] ?? '') === 'channel';
+        } catch (\RuntimeException) {
+            return false; // Not found, or the bot is not in it: the next check says which, with its fix.
+        }
     }
 
     /**
