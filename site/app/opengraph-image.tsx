@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { LOGO_HEIGHT, LOGO_INK, LOGO_WIDTH } from "@/lib/logo-images";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -18,18 +19,10 @@ export default function OpenGraphImage() {
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#fffbef", position: "relative", fontFamily: "Arial, Helvetica, sans-serif", color: "#191919" }}>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 22, padding: "64px 72px 0" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 24, background: "linear-gradient(135deg, #e0101c, #a8040d)" }}>
-            <svg width="60" height="60" viewBox="0 0 32 32">
-              <path d="M16 5.5 26.5 16 16 26.5 5.5 16Z" fill="#ffc20e" />
-              <path d="M16 10 22 16 16 22 10 16Z" fill="#d40511" />
-              <path d="M16 13.6 18.4 16 16 18.4 13.6 16Z" fill="#fff" />
-            </svg>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 40, fontWeight: 700, fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: -1 }}>Habesha Dubai</div>
-            <div style={{ fontSize: 20, color: "#5b5b5b", fontFamily: "Arial, Helvetica, sans-serif" }}>Amharic · Tigrinya · Afaan Oromoo · English</div>
-          </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "56px 72px 0" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img src={LOGO_INK} width={LOGO_WIDTH * 0.75} height={LOGO_HEIGHT * 0.75} />
+          <div style={{ fontSize: 20, color: "#5b5b5b" }}>Amharic · Tigrinya · Afaan Oromoo · English</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", padding: "56px 72px 0", maxWidth: 980 }}>

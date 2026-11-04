@@ -220,7 +220,7 @@ bot never word them differently.
   tibeb, which stay as our own identity. Every other page head is a plain cream
   `Dawn` band. The footer is ink. Pale tiles take a colour from `--tint`
   (`.kind-tile`, `.tint-soft`, `.tint-solid`, `.tint-ink`), so they work in both
-  themes. Numbered steps are `Steps` in `Bits.tsx`. Numbers on the front page
+  themes. The logo is the owner's artwork, in `site/public/brand/` and `web/public/brand/`: `Logo` in the site (the word is a mask, so it takes the text colour), `BrandMark` in the admin, the round one for favicons and app icons. `site/lib/logo-images.ts` embeds it for the generated images. Numbered steps are `Steps` in `Bits.tsx`. Numbers on the front page
   are real: anything still zero is left out.
   Dark follows the device unless the reader chose a theme
   (`components/ThemeToggle.tsx`, `data-theme` on `<html>`, applied before

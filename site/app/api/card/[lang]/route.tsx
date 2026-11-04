@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { isLocale, type Locale } from "@/lib/locales";
+import { LOGO_HEIGHT, LOGO_WHITE, LOGO_WIDTH } from "@/lib/logo-images";
 
 /**
  * The welcome card the bot sends when someone has just joined: a night
@@ -59,18 +60,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ lan
         {/* The horizon: one thin line of ink, the skyline's idea rather than its picture. */}
         <div style={{ position: "absolute", left: 0, right: 0, top: 418, height: 1, background: "rgba(238,241,251,0.18)" }} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 22, padding: "56px 72px 0" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 84, height: 84, borderRadius: 24, background: "linear-gradient(135deg, #e0101c, #a8040d)" }}>
-            <svg width="60" height="60" viewBox="0 0 32 32">
-              <path d="M16 5.5 26.5 16 16 26.5 5.5 16Z" fill="#ffc20e" />
-              <path d="M16 10 22 16 16 22 10 16Z" fill="#d40511" />
-              <path d="M16 13.6 18.4 16 16 18.4 13.6 16Z" fill="#fff" />
-            </svg>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: -1 }}>Habesha Dubai</div>
-            <div style={{ fontSize: 20, color: "rgba(238,241,251,0.66)" }}>Amharic · Tigrinya · Afaan Oromoo · English</div>
-          </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "48px 72px 0" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+          <img src={LOGO_WHITE} width={LOGO_WIDTH * 0.62} height={LOGO_HEIGHT * 0.62} />
+          <div style={{ fontSize: 20, color: "rgba(238,241,251,0.66)" }}>Amharic · Tigrinya · Afaan Oromoo · English</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", padding: "48px 72px 0" }}>

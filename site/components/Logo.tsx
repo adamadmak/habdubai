@@ -1,12 +1,15 @@
-/** The mark: a tibeb diamond, yellow around our red, with a white heart. */
-export function Mark({ className = "size-8" }: { className?: string }) {
+/**
+ * The HabUAE logo: the red H beside the word. The word is a shape filled with the
+ * text colour (`.logo-word`), so it is ink on paper and white on a dark band.
+ * Its proportions are in `globals.css`; size it with `text-[…]`, 1em being the H's height.
+ */
+export function Logo({ className = "", wordClass = "" }: { className?: string; wordClass?: string }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
-      <rect width="32" height="32" rx="10" fill="#d40511" />
-      <path d="M16 5.5 26.5 16 16 26.5 5.5 16Z" fill="#ffc20e" />
-      <path d="M16 10 22 16 16 22 10 16Z" fill="#d40511" />
-      <path d="M16 13.6 18.4 16 16 18.4 13.6 16Z" fill="#fff" />
-    </svg>
+    <span role="img" aria-label="HabUAE" className={`logo ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/habuae-mark.png" alt="" className="logo-mark" width={167} height={166} />
+      <span aria-hidden="true" className={`logo-word ${wordClass}`} />
+    </span>
   );
 }
 

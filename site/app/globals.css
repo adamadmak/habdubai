@@ -79,7 +79,7 @@
     --glass-border: #ebebeb;
     --glass-highlight: rgb(255 255 255 / 0.9);
     --glass-shadow: 0 12px 28px -16px rgb(25 25 25 / 0.18);
-    --chrome-bg: rgb(255 255 255 / 0.86);
+    --chrome-bg: rgb(255 255 255 / 0.95);
     --chrome-border: #ebebeb;
     --chrome-shadow: 0 1px 0 rgb(0 0 0 / 0.04), 0 12px 28px -16px rgb(25 25 25 / 0.18);
     /* The line drawing in a dark band, and its faint outlines. */
@@ -1260,6 +1260,28 @@ html[data-reveal] .reveal:not([data-in]) {
 }
 .reveal-4 {
   transition-delay: 240ms;
+}
+
+/* The logo, in the artwork's own proportions. 1em is the H's height. The word is a mask, so it takes the text colour. */
+.logo {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.27em;
+  line-height: 0;
+  vertical-align: middle;
+}
+.logo-mark {
+  height: 1em;
+  width: auto;
+  flex: none;
+}
+.logo-word {
+  height: 0.56em;
+  width: 2.83em;
+  margin-top: 0.253em;
+  background: currentColor;
+  -webkit-mask: url("/brand/habuae-word.png") center / contain no-repeat;
+  mask: url("/brand/habuae-word.png") center / contain no-repeat;
 }
 
 /* Two full-width bands that touch meet directly: the top margin is only for white space above a band. */

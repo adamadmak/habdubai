@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Send } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
-import { isGeez, type Locale } from "@/lib/locales";
+import type { Locale } from "@/lib/locales";
 import type { Meta } from "@/lib/api";
 import { AccountChip } from "./AccountChip";
-import { Mark } from "./Logo";
+import { Logo } from "./Logo";
 import { LangSwitch, LangSwitchPlain } from "./LangSwitch";
 import { NavLinks } from "./NavLinks";
 import { ThemeToggle } from "./ThemeToggle";
@@ -18,12 +18,8 @@ export function Header({ lang, d, meta }: { lang: Locale; d: Dictionary; meta: M
     <header className="sticky top-0 z-40 px-3 pt-3 md:px-4">
       <div className="chrome mx-auto flex h-[var(--header-h)] max-w-island items-center gap-2 rounded-full pl-2 pr-2 md:gap-5 md:pl-2.5">
         <Link href={`/${lang}`} className="press flex shrink-0 items-center gap-2.5 rounded-full pr-1" aria-label={d.brand}>
-          <Mark className="size-9" />
-          <span className="hidden flex-col leading-none min-[350px]:flex md:max-lg:hidden">
-            <span className="text-[1.0625rem] font-black tracking-tight text-primary">{d.brand}</span>
-            {/* The name in the other script: Ge'ez on English and Oromo pages, Latin on Amharic and Tigrinya ones. */}
-            <span lang={isGeez(lang) ? "en" : "am"} className="mt-1 text-[0.6875rem] font-medium text-muted">{d.brandNative}</span>
-          </span>
+          {/* On a tablet the links take the room, and on the smallest phones so do the controls: the H alone there. */}
+          <Logo className="text-[2.25rem]" wordClass="hidden min-[350px]:block md:max-lg:hidden" />
         </Link>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0 md:flex-1">

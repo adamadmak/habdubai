@@ -59,7 +59,7 @@ const NavLink = ({ item, active, compact, onNavigate }: { item: MenuItemProps; a
 
 export const SidebarBrand = ({ compact = false }: { compact?: boolean }) => (
   <Link href="/dashboard" className={cn("flex items-center gap-3 rounded-lg focus-visible:outline-gold", compact && "justify-center")} aria-label="Habesha Dubai admin, dashboard">
-    <BrandMark className="h-9 w-9 shrink-0 drop-shadow-[0_4px_12px_rgba(242,183,5,0.25)]" />
+    <BrandMark className="h-9 w-9 shrink-0 " />
     {!compact && (
       <span className="min-w-0">
         <span className="block font-display text-[17px] font-semibold leading-tight text-white">Habesha Dubai</span>
