@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\TrustScore;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -36,12 +37,12 @@ class GoodsPost extends Model
 
     protected $fillable = [
         'member_id', 'kind', 'mode', 'direction', 'date', 'city_from', 'city_to', 'kilos', 'kilos_left',
-        'categories', 'description', 'price', 'currency', 'status', 'group_message_id', 'hidden_reason',
+        'categories', 'description', 'price', 'currency', 'status', 'outcome', 'closed_at', 'group_message_id', 'hidden_reason',
     ];
 
     protected function casts(): array
     {
-        return ['date' => 'date', 'categories' => 'array'];
+        return ['date' => 'date', 'categories' => 'array', 'closed_at' => 'datetime'];
     }
 
     public function member(): BelongsTo
@@ -100,7 +101,8 @@ class GoodsPost extends Model
     }
 
     /**
-     * Open posts that pair with this one, closest date first.
+     * Open posts that pair with this one: every one fits the dates, so the best rated
+     * member comes first, then the closest date.
      *
      * @return Collection<int, self>
      */
@@ -116,7 +118,7 @@ class GoodsPost extends Model
             ->whereDate('date', '<=', $this->date->copy()->addDays(self::MATCH_DAYS)->toDateString())
             ->get()
             ->filter(fn (self $p) => $p->isOpen() && $p->member?->isActive() && $this->pairsWith($p))
-            ->sortBy(fn (self $p) => [abs($p->date->diffInDays($this->date, false)), $p->id])
+            ->sortBy(fn (self $p) => [-TrustScore::of($p->member->rating_avg, $p->member->rating_count), abs($p->date->diffInDays($this->date, false)), $p->id])
             ->take($limit)
             ->values();
     }
@@ -131,6 +133,17 @@ class GoodsPost extends Model
             $q->where(fn (Builder $t) => $t->where('kind', 'traveller')->whereDate('date', '>=', $today))
                 ->orWhere(fn (Builder $s) => $s->where('kind', 'sender')->whereDate('date', '>=', $senderFrom));
         });
+    }
+
+    /** The poster's standing first, then more deals done, then the soonest date. */
+    public function scopeBestRatedFirst(Builder $query): Builder
+    {
+        $score = TrustScore::sql('poster.rating_avg', 'poster.rating_count');
+
+        return $query
+            ->orderByRaw("(select {$score} from members poster where poster.id = goods_posts.member_id) desc")
+            ->orderByRaw('(select poster.trips_completed from members poster where poster.id = goods_posts.member_id) desc')
+            ->orderBy('date')->orderBy('id');
     }
 
     /** Open posts that have passed their last day. */

@@ -163,6 +163,11 @@ export interface Business {
   phone: string | null;
   whatsapp: string | null;
   telegram: string | null;
+  /** Members' stars, out of five; null until someone rates it. */
+  rating: number | null;
+  ratings: number;
+  /** Three or more ratings averaging 4.5 or better. */
+  top?: boolean;
   about?: string | null;
   website?: string | null;
   hours?: string | null;
@@ -171,6 +176,16 @@ export interface Business {
   latitude?: number | null;
   longitude?: number | null;
   updated_at?: string | null;
+  /** How many gave each number of stars, from five down. On a place's own page. */
+  rating_breakdown?: { stars: number; count: number }[];
+}
+
+/** What a signed-in visitor may do about a place's stars. */
+export interface MyBusinessRating {
+  can_rate: boolean;
+  blocked_by: "not_member" | "own" | null;
+  stars: number | null;
+  bot_link: string | null;
 }
 
 export interface Topic {
@@ -307,6 +322,8 @@ export interface GoodsMemberBadge {
   verified_since: string | null;
   rating: number | null;
   ratings: number;
+  /** Three or more ratings averaging 4.5 or better. */
+  top?: boolean;
   deals: number;
 }
 
@@ -344,14 +361,27 @@ export interface GoodsChoices {
   max_open: number;
 }
 
+/** A deal lately delivered: the way it went and how it was rated, with no names. */
+export interface GoodsDelivered {
+  id: number;
+  from: { key: string; name: Labels };
+  to: { key: string; name: Labels };
+  kilos: number;
+  delivered_at: string | null;
+  stars: number | null;
+}
+
 export interface GoodsBoard extends Page<GoodsCard> {
   stats: { trips: number; parcels: number; deals: number; kilos: number };
+  recent?: GoodsDelivered[];
   choices: GoodsChoices;
 }
 
 export type GoodsPostStatus = "open" | "matched" | "expired" | "closed" | "hidden";
 
-export type MyGoodsPost = GoodsCard & { status: GoodsPostStatus; open: boolean; requests: number };
+export type GoodsOutcome = "delivered" | "failed" | "unconfirmed" | "cancelled" | "member";
+
+export type MyGoodsPost = GoodsCard & { status: GoodsPostStatus; outcome: GoodsOutcome | null; open: boolean; requests: number };
 
 export interface GoodsDeal {
   id: number;
@@ -361,6 +391,13 @@ export interface GoodsDeal {
   route: { from: Labels; to: Labels };
   date: string;
   kilos: number | null;
+  checkin_on: string | null;
+  said_delivered: boolean;
+  they_said_delivered: boolean;
+  /** The flight has passed and this member has not said yes or no yet. */
+  can_confirm: boolean;
+  can_rate: boolean;
+  my_stars: number | null;
 }
 
 export interface MyGoods {

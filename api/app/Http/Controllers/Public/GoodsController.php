@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GoodsMatch;
 use App\Models\GoodsPost;
 use App\Models\Member;
+use App\Support\TrustScore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -24,12 +25,13 @@ class GoodsController extends Controller
             'direction' => ['nullable', 'in:'.implode(',', GoodsPost::DIRECTIONS)],
             'kind' => ['nullable', 'in:'.implode(',', GoodsPost::KINDS)],
             'mode' => ['nullable', 'in:'.implode(',', GoodsPost::MODES)],
+            'sort' => ['nullable', 'in:rating,date'],
             'page' => ['nullable', 'integer', 'min:1', 'max:200'],
         ]);
 
         // This host migrates on deploy, but a board that is not there yet answers empty, not 500.
         if (! Schema::hasTable('goods_posts')) {
-            return response()->json(['data' => [], 'meta' => ['total' => 0, 'page' => 1, 'last_page' => 1], 'stats' => self::emptyStats(), 'choices' => self::choices()]);
+            return response()->json(['data' => [], 'meta' => ['total' => 0, 'page' => 1, 'last_page' => 1], 'stats' => self::emptyStats(), 'recent' => [], 'choices' => self::choices()]);
         }
 
         $page = self::board()
@@ -38,21 +40,31 @@ class GoodsController extends Controller
             ->when($data['mode'] ?? null, fn ($q, $mode) => $mode === 'request'
                 ? $q->where('mode', 'request')
                 : $q->where('kind', 'sender')->where(fn ($s) => $s->whereNull('mode')->orWhere('mode', 'send')))
-            ->orderBy('date')->orderBy('id')
+            ->when(($data['sort'] ?? 'rating') === 'date',
+                fn ($q) => $q->orderBy('date')->orderBy('id'),
+                fn ($q) => $q->bestRatedFirst())
             ->paginate(12);
 
         return response()->json([
             'data' => $page->getCollection()->map(fn (GoodsPost $p) => self::card($p))->values(),
             'meta' => ['total' => $page->total(), 'page' => $page->currentPage(), 'last_page' => $page->lastPage()],
             'stats' => self::stats(),
+            'recent' => $page->currentPage() === 1 ? self::recentlyDelivered() : [],
             'choices' => self::choices(),
         ])->header('Cache-Control', 'public, max-age=60');
     }
 
     public function show(int $post): JsonResponse
     {
-        $found = self::board()->whereKey($post)->first();
-        abort_if($found === null || ! $found->isOpen(), 404);
+        $found = self::ofActiveMembers()->whereKey($post)->first();
+        abort_if($found === null, 404);
+
+        // A link to a post that has found its match or closed: say so, and show nothing of it.
+        if (! $found->isOpen()) {
+            abort_if($found->status === 'hidden', 404);
+
+            return response()->json(['post' => null, 'closed' => true, 'matches' => []])->header('Cache-Control', 'public, max-age=60');
+        }
 
         return response()->json([
             'post' => self::card($found),
@@ -96,8 +108,36 @@ class GoodsController extends Controller
     /** Open posts of active members, not past their last day. */
     private static function board()
     {
-        return GoodsPost::query()->live()->with('member')
+        return self::ofActiveMembers()->live();
+    }
+
+    private static function ofActiveMembers()
+    {
+        return GoodsPost::query()->with('member')
             ->whereHas('member', fn ($m) => $m->whereNotNull('agreed_rules_at')->whereNull('banned_at')->whereNull('left_at'));
+    }
+
+    /** What a closed post leaves behind: the way it went and how it was rated, with no names. */
+    private static function recentlyDelivered(): array
+    {
+        return GoodsMatch::query()->with(['post', 'requesterPost', 'ratings'])->where('status', 'completed')
+            ->latest('closed_at')->limit(6)->get()
+            ->map(function (GoodsMatch $match): ?array {
+                $trip = $match->travellerPost();
+                if ($trip === null) {
+                    return null;
+                }
+                $shown = $match->ratings->where('visible_at', '<=', now());
+
+                return [
+                    'id' => $match->id,
+                    'from' => ['key' => $trip->city_from, 'name' => self::city($trip->city_from)],
+                    'to' => ['key' => $trip->city_to, 'name' => self::city($trip->city_to)],
+                    'kilos' => (int) $match->kilos,
+                    'delivered_at' => $match->closed_at?->toIso8601String(),
+                    'stars' => $shown->isNotEmpty() ? round((float) $shown->avg('stars'), 1) : null,
+                ];
+            })->filter()->values()->all();
     }
 
     /** One post as the website shows it to anyone. */
@@ -132,6 +172,7 @@ class GoodsController extends Controller
             'verified_since' => $member?->verified_at?->format('Y-m'),
             'rating' => (int) $member?->rating_count > 0 ? round((float) $member->rating_avg, 1) : null,
             'ratings' => (int) $member?->rating_count,
+            'top' => TrustScore::isTop($member?->rating_avg, $member?->rating_count),
             'deals' => (int) $member?->trips_completed,
         ];
     }

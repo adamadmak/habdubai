@@ -10,6 +10,7 @@ use App\Models\Business;
 use App\Models\BusinessClaim;
 use App\Directory\PhotoStore;
 use App\Models\BusinessPhoto;
+use App\Models\BusinessRating;
 use App\Models\BusinessReport;
 use App\Models\DirectoryCity;
 use App\Support\MapLocation;
@@ -81,9 +82,30 @@ class BusinessController extends Controller
             'business' => $this->payload($business) + [
                 'reports' => $business->reports->map(fn (BusinessReport $r) => ['member' => $r->member?->display_name, 'reason' => $r->reason, 'at' => $r->created_at?->toIso8601String()]),
                 'claims' => $business->claims->map(fn (BusinessClaim $c) => $this->claimPayload($c))->values(),
+                // Who gave what, newest first, so a moderator can see a run of fake stars and take them off.
+                'ratings' => $business->ratings()->with('member:id,display_name,telegram_username,banned_at')->latest('updated_at')->limit(100)->get()
+                    ->map(fn (BusinessRating $r) => [
+                        'id' => $r->id,
+                        'stars' => (int) $r->stars,
+                        'member' => $r->member ? ['id' => $r->member->id, 'name' => $r->member->display_name, 'username' => $r->member->telegram_username, 'banned' => $r->member->banned_at !== null] : null,
+                        'at' => $r->updated_at?->toIso8601String(),
+                    ])->values(),
             ],
             'audit' => AuditLog::query()->where('subject_type', 'business')->where('subject_id', $business->id)->latest('created_at')->limit(30)->get(),
         ]);
+    }
+
+    /** A moderator takes one member's stars off a listing. */
+    public function removeRating(Request $request, Business $business, BusinessRating $rating): JsonResponse
+    {
+        abort_if($rating->business_id !== $business->id, 404);
+
+        $before = ['member_id' => $rating->member_id, 'stars' => (int) $rating->stars];
+        $rating->delete();
+        BusinessRating::recount($business->id);
+        AuditLog::record($request->user()->id, 'directory.rating_removed', 'business', $business->id, $before);
+
+        return response()->json(['ok' => true]);
     }
 
     /** Added by an admin: listed at once, and posted to the channel. */
@@ -280,6 +302,7 @@ class BusinessController extends Controller
         });
 
         $claim->refresh()->load(['business', 'owner']);
+        BusinessRating::forgetOwners($claim->business);
 
         AuditLog::record($request->user()->id, 'directory.claim_approved', 'business', $claim->business_id, null, ['owner_id' => $claim->owner_id]);
         $this->publisher->claimDecided($claim);
@@ -385,6 +408,8 @@ class BusinessController extends Controller
             'review_note' => $b->review_note,
             'reports_count' => $b->reports_count,
             'views' => (int) $b->views,
+            'rating_avg' => $b->rating_avg !== null ? (float) $b->rating_avg : null,
+            'rating_count' => (int) $b->rating_count,
             'photo' => $live instanceof BusinessPhoto ? $live->url() : null,
             'pending_photo' => $pending instanceof BusinessPhoto ? $pending->url() : null,
             'pending_changes' => $b->pending_changes,

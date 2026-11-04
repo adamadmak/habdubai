@@ -46,6 +46,21 @@ class BusinessOwner extends Authenticatable
         return $this->hasMany(BusinessClaim::class, 'owner_id');
     }
 
+    /**
+     * The community member behind this website account: linked when they signed in, or found
+     * by their Telegram id if they joined the community afterwards.
+     */
+    public function communityMember(): ?Member
+    {
+        $member = $this->member ?? Member::findByTelegramUser((int) $this->telegram_user_id);
+
+        if ($member !== null && $this->member_id !== $member->id) {
+            $this->forceFill(['member_id' => $member->id])->save();
+        }
+
+        return $member;
+    }
+
     /** Banned here, or banned as a member: by the link when there is one, else by the Telegram account itself. */
     public function isBanned(): bool
     {

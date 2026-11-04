@@ -130,6 +130,8 @@ class GoodsController extends Controller
             'currency' => $post->price !== null && (int) $post->price > 0 ? $post->currency : null,
             'mode' => $post->isTraveller() ? null : ($post->mode ?? 'send'),
             'status' => $post->status,
+            'outcome' => $post->outcome,
+            'closed_at' => $post->closed_at?->toIso8601String(),
             'open' => $post->isOpen(),
             'hidden_reason' => $post->hidden_reason,
             'in_group' => $post->group_message_id !== null,

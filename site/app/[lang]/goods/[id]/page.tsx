@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Ban, ChevronLeft, HandCoins } from "lucide-react";
+import { Ban, ChevronLeft, CircleCheck, HandCoins } from "lucide-react";
 import { GEEZ } from "@/components/Bits";
 import { cityCode, GoodsCard, toneOf } from "@/components/goods/GoodsCard";
 import { apiOrNull, type GoodsCard as Post } from "@/lib/api";
@@ -10,7 +10,8 @@ import { dict, fill, isLocale, label } from "@/lib/i18n";
 import { currentOwner } from "@/lib/owner";
 
 type Params = { lang: string; id: string };
-type Detail = { post: Post; matches: Post[] };
+/** A post that has found its match or closed answers with no post at all: nothing of it stays public. */
+type Detail = { post: Post | null; closed?: boolean; matches: Post[] };
 
 async function load(id: string): Promise<Detail | null> {
   return /^\d{1,10}$/.test(id) ? apiOrNull<Detail>(`/public/goods/${id}`, { revalidate: 30 }) : null;
@@ -22,6 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const data = await load(id);
   if (!data) return {};
   const p = data.post;
+  if (!p) return { title: dict(lang).goods.detail.closedTitle, robots: { index: false } };
   // A member's trip or parcel lasts days and names them: shared by link, never indexed.
   return {
     title: `${cityCode(p.from)} → ${cityCode(p.to)} · ${shortDate(p.date, lang)}`,
@@ -39,6 +41,22 @@ export default async function GoodsPostPage({ params }: { params: Promise<Params
   const d = dict(lang);
   const g = d.goods;
   const { post, matches } = data;
+
+  if (!post) {
+    return (
+      <div className="mx-auto max-w-page px-4 pt-10 lg:px-8 md:pt-16">
+        <div className="card mx-auto max-w-xl p-8 text-center">
+          <span className="mx-auto grid size-12 place-items-center rounded-full bg-success-soft text-success">
+            <CircleCheck className="size-6" aria-hidden="true" />
+          </span>
+          <h1 className="headline mt-4 text-[1.625rem]">{g.detail.closedTitle}</h1>
+          <p className="mt-2 text-muted">{g.detail.closedText}</p>
+          <Link href={`/${lang}/goods`} className="btn btn-primary mt-5">{g.seeBoard}</Link>
+        </div>
+      </div>
+    );
+  }
+
   const tone = toneOf(post);
 
   return (

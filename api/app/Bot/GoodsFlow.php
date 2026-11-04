@@ -10,6 +10,7 @@ use App\Models\Member;
 use App\Models\Rating;
 use App\Services\TelegramBotService;
 use App\Support\Community;
+use App\Support\TrustScore;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
@@ -26,9 +27,10 @@ use Illuminate\Support\Str;
  *   post → mirrored in the goods group, matches shown, matching owners told
  *   "Interested" (needs your own post on the other side, so the traveller
  *   always sees what is in the parcel) → the owner accepts → both get a
- *   link to each other → both press "We agreed" → kilos come off the trip
- *   → the day after the flight both are asked whether it arrived → two
- *   yeses complete it and open a 1–5 rating; a "no" goes to a moderator.
+ *   link to each other → both press "We agreed" → the parcel leaves the board,
+ *   kilos come off the trip → the day after the flight each presses "Delivered
+ *   successfully" and gives stars → two yeses complete the deal and close the
+ *   posts; a "no" goes to a moderator.
  */
 class GoodsFlow
 {
@@ -36,6 +38,15 @@ class GoodsFlow
 
     /** Days between check-in reminders while an answer is missing or "not yet". */
     public const CHECKIN_EVERY_DAYS = 2;
+
+    /** Days after delivery before a member who has not rated is asked once more. */
+    public const RATING_REMINDER_DAYS = 2;
+
+    /** How long after delivery that reminder may still go out. */
+    public const RATING_REMINDER_UNTIL_DAYS = 10;
+
+    /** The states of a match that mean something was really agreed on a post. */
+    private const DEAL_STATUSES = ['agreed', 'disputed', 'completed', 'failed', 'unconfirmed'];
 
     public function __construct(
         private readonly TelegramBotService $telegram,
@@ -65,7 +76,7 @@ class GoodsFlow
         }
 
         $posts = GoodsPost::query()->live()->with('member')->where('kind', $kind)->where('direction', $direction)
-            ->where('member_id', '!=', $member->id)->orderBy('date')->orderBy('id')->limit(30)->get()
+            ->where('member_id', '!=', $member->id)->bestRatedFirst()->limit(30)->get()
             ->filter(fn (GoodsPost $p) => $p->member?->isActive())->take(6)->values();
 
         if ($posts->isEmpty()) {
@@ -710,13 +721,29 @@ class GoodsFlow
 
         $trip = $match->travellerPost();
         foreach ([$match->owner, $match->requester] as $side) {
-            $this->tell($side, 'goods_agreed', [
+            $l = $side->language;
+            $text = $this->messages->text('goods_agreed', $l, [
                 'name' => e($match->other($side)->display_name),
                 'kilos' => $match->kilos,
-                'route' => e($this->route($trip, $side->language)),
+                'route' => e($this->route($trip, $l)),
                 'date' => $trip->date->format('j M Y'),
                 'checkin' => $match->checkin_on->format('j M Y'),
             ]);
+            $keyboard = null;
+
+            // The parcel has left the board. A trip with room stays on it, and the traveller may say otherwise.
+            if ($side->id === $trip->member_id && $trip->isOpen()) {
+                $text .= "\n\n".$this->messages->text('goods_room_left', $l, ['kilos' => $trip->room()]);
+                $keyboard = ['inline_keyboard' => [[['text' => $this->messages->button('btn_goods_full', $l), 'callback_data' => 'g:z:'.$trip->id]]]];
+            }
+
+            try {
+                if ($side->chat_id) {
+                    $this->telegram->sendText($side->chat_id, $text, $keyboard);
+                }
+            } catch (\Throwable) {
+                // Someone who blocked the bot still has an agreement.
+            }
         }
 
         $this->refreshGroupCard($match->post);
@@ -749,19 +776,8 @@ class GoodsFlow
             $fresh->forceFill(['status' => 'cancelled', 'closed_at' => now()])->save();
             $match->setRawAttributes($fresh->getAttributes(), true);
 
-            if ($was !== 'agreed') {
-                return true;
-            }
-
-            // Give the kilos back, and reopen what the agreement closed if its time has not passed.
-            foreach (GoodsPost::query()->lockForUpdate()->whereIn('id', [$match->post_id, $match->requester_post_id])->get() as $post) {
-                if ($post->isTraveller()) {
-                    $post->kilos_left = min($post->kilos, $post->room() + (int) $match->kilos);
-                }
-                if ($post->status === 'matched' && $post->lastDay()->toDateString() >= GoodsPost::today()) {
-                    $post->status = 'open';
-                }
-                $post->save();
+            if ($was === 'agreed') {
+                $this->giveBack($match);
             }
 
             return true;
@@ -792,6 +808,20 @@ class GoodsFlow
         }
     }
 
+    /** A deal undone: the kilos go back, and what the agreement closed reopens if its time has not passed. In the caller's transaction. */
+    private function giveBack(GoodsMatch $match): void
+    {
+        foreach (GoodsPost::query()->lockForUpdate()->whereIn('id', [$match->post_id, $match->requester_post_id])->get() as $post) {
+            if ($post->isTraveller()) {
+                $post->kilos_left = min($post->kilos, $post->room() + (int) $match->kilos);
+            }
+            if ($post->status === 'matched' && $post->lastDay()->toDateString() >= GoodsPost::today()) {
+                $post->status = 'open';
+            }
+            $post->save();
+        }
+    }
+
     // ---- check-in, completion, rating, dispute ------------------------------------------
 
     private function checkin(Member $member, GoodsMatch $match, string $answer): void
@@ -800,20 +830,40 @@ class GoodsFlow
             return;
         }
 
-        if ($match->status !== 'agreed' || ! $match->involves($member)) {
-            $this->say($member, 'goods_match_closed');
+        match ($this->recordCheckin($member, $match, $answer)) {
+            'closed' => $this->say($member, 'goods_match_closed'),
+            'wait' => $this->say($member, 'goods_checkin_wait'),
+            'confirmed' => $this->askForStars($member, $match),
+            // A dispute or a completed deal has told both sides already.
+            default => null,
+        };
+    }
 
-            return;
+    /**
+     * "Delivered successfully", "not yet" or "there is a problem", from the bot or the website.
+     *
+     * @return string closed|wait|confirmed|completed|disputed
+     */
+    public function recordCheckin(Member $member, GoodsMatch $match, string $answer): string
+    {
+        if ($match->status !== 'agreed' || ! $match->involves($member)) {
+            return 'closed';
         }
 
         // Recorded on the locked row and read back, so two answers at the same moment
         // still see each other.
         $column = $match->isOwner($member) ? 'checkin_owner' : 'checkin_requester';
-        $open = DB::transaction(function () use ($match, $column, $answer): bool {
+        $changed = false;
+        $open = DB::transaction(function () use ($match, $column, &$answer, &$changed): bool {
             $fresh = GoodsMatch::query()->lockForUpdate()->find($match->id);
             if (! $fresh || $fresh->status !== 'agreed') {
                 return false;
             }
+            // An older reminder's "Not yet" does not take back a "Delivered".
+            if ($answer === 'wait' && $fresh->{$column} === 'yes') {
+                $answer = 'yes';
+            }
+            $changed = $fresh->{$column} !== $answer;
             $fresh->forceFill([$column => $answer])->save();
             $match->setRawAttributes($fresh->getAttributes(), true);
 
@@ -821,48 +871,154 @@ class GoodsFlow
         });
 
         if (! $open) {
-            $this->say($member, 'goods_match_closed');
-
-            return;
+            return 'closed';
         }
 
         if ($answer === 'no') {
             $this->dispute($match);
 
-            return;
+            return 'disputed';
         }
 
         if ($match->checkin_owner === 'yes' && $match->checkin_requester === 'yes') {
             $this->complete($match);
 
+            return 'completed';
+        }
+
+        if ($answer === 'wait') {
+            return 'wait';
+        }
+
+        if ($changed) {
+            $this->askTheOtherSide($match, $member);
+        }
+
+        return 'confirmed';
+    }
+
+    /** One side says it was delivered: the other hears now, not at the next reminder. */
+    private function askTheOtherSide(GoodsMatch $match, Member $from): void
+    {
+        $other = $match->other($from);
+        $trip = $match->travellerPost();
+
+        if ($other?->chat_id && $trip !== null) {
+            $l = $other->language;
+            try {
+                $this->telegram->sendText($other->chat_id, $this->messages->text('goods_checkin_other', $l, [
+                    'name' => e($from->display_name),
+                    'route' => e($this->route($trip, $l)),
+                    'date' => $trip->date->format('j M Y'),
+                ]), $this->checkinKeyboard($match, $l));
+            } catch (\Throwable) {
+                // They still get the next reminder.
+            }
+        }
+
+        // So the reminder does not follow straight behind.
+        $match->forceFill(['checkin_sent_at' => now()])->save();
+    }
+
+    /** Stars the moment someone presses "Delivered": it is when they remember how it went. */
+    private function askForStars(Member $member, GoodsMatch $match): void
+    {
+        if (Rating::query()->where('match_id', $match->id)->where('from_member_id', $member->id)->exists()) {
+            $this->say($member, 'goods_rated');
+
             return;
         }
 
-        $this->say($member, $answer === 'wait' ? 'goods_checkin_wait' : 'goods_checkin_thanks');
+        $this->say($member, 'goods_completed', ['name' => e((string) $match->other($member)?->display_name)], $this->starsKeyboard($match));
     }
 
-    /** Delivered: both get a deal on their record and a 1–5 rating to give. */
+    private function starsKeyboard(GoodsMatch $match): array
+    {
+        return ['inline_keyboard' => [array_map(fn (int $n) => ['text' => $n.' ⭐', 'callback_data' => "g:r:{$match->id}:{$n}"], range(1, 5))]];
+    }
+
+    private function checkinKeyboard(GoodsMatch $match, string $l): array
+    {
+        return ['inline_keyboard' => [
+            [['text' => $this->messages->button('btn_goods_ci_yes', $l), 'callback_data' => "g:c:{$match->id}:yes"]],
+            [['text' => $this->messages->button('btn_goods_ci_no', $l), 'callback_data' => "g:c:{$match->id}:no"]],
+            [['text' => $this->messages->button('btn_goods_ci_wait', $l), 'callback_data' => "g:c:{$match->id}:wait"]],
+        ]];
+    }
+
+    /** Delivered: both get a deal on their record, the posts close, and whoever has not rated yet is asked. */
     public function complete(GoodsMatch $match, ?int $actorUserId = null, ?string $note = null): void
     {
         $was = $match->status;
 
-        DB::transaction(function () use ($match, $actorUserId, $note): void {
-            $match->forceFill(['status' => 'completed', 'closed_at' => now(), 'moderator_note' => $note ?? $match->moderator_note, 'resolved_by' => $actorUserId])->save();
+        // Pressed in the bot and on the website together, or just as the two weeks run out: it counts once.
+        $completed = DB::transaction(function () use ($match, $actorUserId, $note): bool {
+            $fresh = GoodsMatch::query()->lockForUpdate()->find($match->id);
+            if (! $fresh || in_array($fresh->status, ['completed', 'failed', 'cancelled'], true)) {
+                return false;
+            }
+
+            $fresh->forceFill(['status' => 'completed', 'closed_at' => now(), 'moderator_note' => $note ?? $fresh->moderator_note, 'resolved_by' => $actorUserId])->save();
+            $match->setRawAttributes($fresh->getAttributes(), true);
             Member::query()->whereKey([$match->owner_id, $match->requester_id])->increment('trips_completed');
+
+            return true;
         });
+
+        if (! $completed) {
+            return;
+        }
 
         AuditLog::record($actorUserId, 'goods.completed', 'goods_match', $match->id, ['status' => $was]);
 
-        $match->load(['owner', 'requester']);
+        $match->load(['owner', 'requester', 'post', 'requesterPost']);
+        $this->settlePost($match->post);
+        $this->settlePost($match->requesterPost);
+
+        $rated = Rating::query()->where('match_id', $match->id)->pluck('from_member_id');
         foreach ([$match->owner, $match->requester] as $side) {
-            $stars = array_map(fn (int $n) => ['text' => $n.' ⭐', 'callback_data' => "g:r:{$match->id}:{$n}"], range(1, 5));
+            $name = ['name' => e($match->other($side)->display_name)];
             try {
-                $this->telegram->sendText($side->chat_id, $this->messages->text('goods_completed', $side->language, [
-                    'name' => e($match->other($side)->display_name),
-                ]), ['inline_keyboard' => [$stars]]);
+                $rated->contains($side->id)
+                    ? $this->telegram->sendText($side->chat_id, $this->messages->text('goods_closed_thanks', $side->language, $name))
+                    : $this->telegram->sendText($side->chat_id, $this->messages->text('goods_completed', $side->language, $name), $this->starsKeyboard($match));
             } catch (\Throwable) {
             }
         }
+    }
+
+    /**
+     * A post ends once nothing on it is still under way. A trip with room stays on the
+     * board until its flight; one that never led to a deal stays as it is (past its date,
+     * or closed by its member).
+     */
+    private function settlePost(?GoodsPost $post): void
+    {
+        if ($post === null || $post->status === 'hidden') {
+            return;
+        }
+
+        $deals = GoodsMatch::query()->whereIn('status', self::DEAL_STATUSES)
+            ->where(fn ($q) => $q->where('post_id', $post->id)->orWhere('requester_post_id', $post->id))
+            ->pluck('status');
+
+        if ($deals->contains('agreed') || $deals->contains('disputed') || $post->isOpen()) {
+            return;
+        }
+        if ($deals->isEmpty() && $post->status !== 'matched') {
+            return;
+        }
+
+        $outcome = match (true) {
+            $deals->contains('completed') => 'delivered',
+            $deals->contains('failed') => 'failed',
+            $deals->contains('unconfirmed') => 'unconfirmed',
+            default => 'cancelled',
+        };
+
+        $post->forceFill(['status' => 'closed', 'outcome' => $outcome, 'closed_at' => $post->closed_at ?? now()])->save();
+        AuditLog::record(null, 'goods.post_closed', 'goods_post', $post->id, null, ['outcome' => $outcome]);
+        $this->refreshGroupCard($post);
     }
 
     private function rate(Member $member, GoodsMatch $match, int $stars): void
@@ -871,10 +1027,26 @@ class GoodsFlow
             return;
         }
 
-        if ($match->status !== 'completed' || ! $match->involves($member)) {
-            $this->say($member, 'goods_match_closed');
+        $this->say($member, match ($this->recordRating($member, $match, $stars)) {
+            'already' => 'goods_already_rated',
+            'closed' => 'goods_match_closed',
+            default => 'goods_rated',
+        });
+    }
 
-            return;
+    /**
+     * One side's stars, from the bot or the website, once they have said it was delivered.
+     * Hidden until both have rated or a week has passed; counted only on a delivered deal.
+     *
+     * @return string rated|already|closed
+     */
+    public function recordRating(Member $member, GoodsMatch $match, int $stars): string
+    {
+        $mine = $match->isOwner($member) ? $match->checkin_owner : $match->checkin_requester;
+        $open = $match->status === 'completed' || ($match->status === 'agreed' && $mine === 'yes');
+
+        if (! $open || ! $match->involves($member)) {
+            return 'closed';
         }
 
         try {
@@ -887,19 +1059,17 @@ class GoodsFlow
                 'created_at' => now(),
             ]);
         } catch (UniqueConstraintViolationException) {
-            $this->say($member, 'goods_already_rated');
-
-            return;
+            return 'already';
         }
 
         // Both sides have rated: show both now.
-        if (Rating::query()->where('match_id', $match->id)->count() >= 2) {
+        if ($match->status === 'completed' && Rating::query()->where('match_id', $match->id)->count() >= 2) {
             Rating::query()->where('match_id', $match->id)->update(['visible_at' => now()]);
             Rating::recount($match->owner_id);
             Rating::recount($match->requester_id);
         }
 
-        $this->say($member, 'goods_rated');
+        return 'rated';
     }
 
     private function dispute(GoodsMatch $match): void
@@ -941,14 +1111,33 @@ class GoodsFlow
         if ($outcome === 'completed') {
             $this->complete($match, $actorUserId, $note);
         } else {
-            $match->forceFill([
-                'status' => $outcome,
-                'closed_at' => now(),
-                'failed_member_id' => $outcome === 'failed' ? $failedMemberId : null,
-                'moderator_note' => $note,
-                'resolved_by' => $actorUserId,
-            ])->save();
+            $beforeFlight = $match->travellerPost()?->date?->toDateString() >= GoodsPost::today();
+
+            DB::transaction(function () use ($match, $outcome, $failedMemberId, $note, $actorUserId, $beforeFlight): void {
+                $match->forceFill([
+                    'status' => $outcome,
+                    'closed_at' => now(),
+                    'failed_member_id' => $outcome === 'failed' ? $failedMemberId : null,
+                    'moderator_note' => $note,
+                    'resolved_by' => $actorUserId,
+                ])->save();
+
+                // Called off with the flight still ahead: as when a member drops out, nothing stays spoken for.
+                if ($beforeFlight) {
+                    $this->giveBack($match);
+                }
+
+                // Stars given when someone pressed "Delivered" go with a deal that was not delivered.
+                Rating::query()->where('match_id', $match->id)->delete();
+            });
             AuditLog::record($actorUserId, 'goods.resolved', 'goods_match', $match->id, ['status' => $was], ['status' => $outcome, 'failed_member_id' => $match->failed_member_id]);
+
+            // Read again: giving back changed them.
+            $match->load(['post.member', 'requesterPost.member']);
+            foreach ([$match->post, $match->requesterPost] as $post) {
+                $this->settlePost($post);
+                $this->refreshGroupCard($post);
+            }
         }
 
         $trip = $match->travellerPost();
@@ -1032,6 +1221,12 @@ class GoodsFlow
                 $trip = $match->travellerPost();
                 $lines[] = '• '.e($this->route($trip, $l)).' · '.$trip->date->format('j M').' · '.e($match->other($member)->display_name)
                     .': '.$this->messages->text('goods_state_'.$match->status, $l);
+
+                // The check-in's own message may be long gone by the time someone looks here.
+                $answer = $match->isOwner($member) ? $match->checkin_owner : $match->checkin_requester;
+                if ($match->status === 'agreed' && $match->checkin_on?->toDateString() <= GoodsPost::today() && in_array($answer, [null, 'wait'], true)) {
+                    $rows[] = [['text' => $this->messages->button('btn_goods_delivered_for', $l, ['name' => $match->other($member)->display_name]), 'callback_data' => "g:c:{$match->id}:yes"]];
+                }
             }
         }
 
@@ -1050,7 +1245,7 @@ class GoodsFlow
             return false;
         }
 
-        $post->forceFill(['status' => 'closed'])->save();
+        $post->forceFill(['status' => 'closed', 'outcome' => 'member', 'closed_at' => now()])->save();
         GoodsMatch::query()->whereIn('status', ['requested', 'introduced'])
             ->where(fn ($q) => $q->where('post_id', $post->id)->orWhere('requester_post_id', $post->id))
             ->update(['status' => 'cancelled', 'closed_at' => now(), 'updated_at' => now()]);
@@ -1131,8 +1326,16 @@ class GoodsFlow
         $posts = GoodsPost::query()->stale()->get();
 
         foreach ($posts as $post) {
-            $post->forceFill(['status' => 'expired'])->save();
+            // A trip that carried something waits for its deals and closes with them.
+            $carried = GoodsMatch::query()->whereIn('status', self::DEAL_STATUSES)
+                ->where(fn ($q) => $q->where('post_id', $post->id)->orWhere('requester_post_id', $post->id))->exists();
+            $post->forceFill(['status' => $carried ? 'matched' : 'expired'])->save();
             $this->refreshGroupCard($post);
+        }
+
+        // Whatever finished since the last look, including deals from before posts could close.
+        foreach (GoodsPost::query()->where('status', 'matched')->get() as $post) {
+            $this->settlePost($post);
         }
 
         $today = GoodsPost::today();
@@ -1145,6 +1348,40 @@ class GoodsFlow
         }
 
         return $posts->count();
+    }
+
+    /**
+     * Stars are what the lists are ordered by, so someone who has not given theirs a couple
+     * of days after delivery is asked once more. Once only; after that the board lets it go.
+     */
+    public function sendRatingReminders(): int
+    {
+        $sent = 0;
+
+        $due = GoodsMatch::query()->with(['owner', 'requester', 'ratings'])->where('status', 'completed')
+            ->where('closed_at', '<=', now()->subDays(self::RATING_REMINDER_DAYS))
+            ->where('closed_at', '>=', now()->subDays(self::RATING_REMINDER_UNTIL_DAYS))
+            ->get();
+
+        foreach ($due as $match) {
+            foreach ([$match->owner, $match->requester] as $side) {
+                if (! $side?->chat_id || ! $side->isActive() || $match->ratings->contains('from_member_id', $side->id)) {
+                    continue;
+                }
+                if (! Cache::add('goods-rate-reminder:'.$match->id.':'.$side->id, true, now()->addDays(self::RATING_REMINDER_UNTIL_DAYS + 1))) {
+                    continue;
+                }
+                try {
+                    $this->telegram->sendText($side->chat_id, $this->messages->text('goods_rate_reminder', $side->language, [
+                        'name' => e((string) $match->other($side)?->display_name),
+                    ]), $this->starsKeyboard($match));
+                    $sent++;
+                } catch (\Throwable) {
+                }
+            }
+        }
+
+        return $sent;
     }
 
     /** Ask both sides whether the parcel arrived, from the day after the flight; settle matches nobody answers. */
@@ -1177,11 +1414,7 @@ class GoodsFlow
                         'name' => e($match->other($side)->display_name),
                         'route' => e($this->route($trip, $l)),
                         'date' => $trip->date->format('j M Y'),
-                    ]), ['inline_keyboard' => [
-                        [['text' => $this->messages->button('btn_goods_ci_yes', $l), 'callback_data' => "g:c:{$match->id}:yes"]],
-                        [['text' => $this->messages->button('btn_goods_ci_no', $l), 'callback_data' => "g:c:{$match->id}:no"]],
-                        [['text' => $this->messages->button('btn_goods_ci_wait', $l), 'callback_data' => "g:c:{$match->id}:wait"]],
-                    ]]);
+                    ]), $this->checkinKeyboard($match, $l));
                     $sent++;
                 } catch (\Throwable) {
                 }
@@ -1204,6 +1437,8 @@ class GoodsFlow
 
         $match->forceFill(['status' => 'unconfirmed', 'closed_at' => now()])->save();
         AuditLog::record(null, 'goods.unconfirmed', 'goods_match', $match->id);
+        $this->settlePost($match->post);
+        $this->settlePost($match->requesterPost);
     }
 
     // ---- cards ---------------------------------------------------------------------------------------------
@@ -1247,7 +1482,7 @@ class GoodsFlow
             return '?';
         }
 
-        $parts = [trim(e($member->display_name).' ✅ '.($member->verified_at?->format('M Y') ?? ''))];
+        $parts = [trim((TrustScore::isTop($member->rating_avg, $member->rating_count) ? '🏅 ' : '').e($member->display_name).' ✅ '.($member->verified_at?->format('M Y') ?? ''))];
 
         if ((int) $member->rating_count > 0) {
             $parts[] = '⭐ '.number_format((float) $member->rating_avg, 1).' ('.$member->rating_count.')';
@@ -1283,7 +1518,7 @@ class GoodsFlow
         $tag = match ($post->status) {
             'matched' => $this->messages->text('goods_tag_matched', $label)."\n",
             'expired' => $this->messages->text('goods_tag_expired', $label)."\n",
-            'closed' => $this->messages->text('goods_tag_closed', $label)."\n",
+            'closed' => $this->messages->text($post->outcome === 'delivered' ? 'goods_tag_delivered' : 'goods_tag_closed', $label)."\n",
             default => '',
         };
 

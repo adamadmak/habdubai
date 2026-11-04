@@ -101,6 +101,12 @@ one stays until a moderator acts. Cities are rows in `directory_cities`
 Business kinds are fixed in `Choices::BUSINESS_CATEGORIES`, and money
 exchange or transfer is deliberately not one of them.
 
+Verified members give a place 1 to 5 stars, on the website or under its card in
+the bot (`BusinessRating::give()`, which refuses an owner on their own listing).
+They may change them. There is no text to moderate, but a moderator can take
+stars off on the Businesses page, and a banned member's stop counting.
+`BusinessRating::recount()` is the only writer of a listing's rating columns.
+
 ## Community: questions, assistant, announcements, moderation
 
 - **Every Claude call goes through `App\Ai\ClaudeJson`** (model from Job
@@ -132,8 +138,9 @@ exchange or transfer is deliberately not one of them.
 `App\Bot\GoodsFlow` (`/travel`, `/send`, `/goods`, `/mygoods`, buttons `g:…`),
 and the same rules on the website (`/[lang]/goods`, `Owner\GoodsController`,
 `Public\GoodsController`), which call `GoodsFlow::refusal()`, `create()`,
-`ask()`, `followUp()` and `closePost()` rather than re-implementing them;
-accepting, agreeing and the check-in stay in Telegram.
+`ask()`, `followUp()`, `closePost()`, `recordCheckin()` and `recordRating()`
+rather than re-implementing them; accepting and agreeing stay in Telegram,
+while "Delivered" and the stars work in both.
 
 No money moves through the platform. Since 3 Nov 2026 a post may state a
 carry fee that the members pay each other directly (`price` + `currency`,
@@ -159,8 +166,24 @@ one would pair with before it is made. Rules that are easy to break:
   answered, settles silent matches after 14 days, and reveals ratings a week
   old. Two yeses complete a match and count a deal for both; a "no" opens a
   dispute for moderators (Telegram alert plus the admin Goods page).
+- **Leaving the board and closing are two different moments.** A parcel leaves
+  the website when both agree. A trip stays while it has kilos free, until its
+  flight, and the traveller gets an "I am full" button (it closes the post, not
+  the deal). A post is `closed` with an `outcome` (delivered, failed,
+  unconfirmed, cancelled, member) only when nothing on it is still under way:
+  `GoodsFlow::settlePost()`, which `goods:chores` also sweeps. Moderators see
+  closed posts and their stars; a link to one answers `closed` with nothing of
+  it, and `/public/goods` shows delivered deals with no names (`recent`).
 - Ratings stay hidden until both sides rate or seven days pass, so nobody
-  rates in reply. `Rating::recount()` is the only writer of `rating_avg`.
+  rates in reply. `Rating::recount()` is the only writer of `rating_avg`. Stars
+  are asked for the moment someone presses "Delivered", before the other side
+  has answered, so `Rating::countable` counts only a delivered deal, and a
+  failed or cancelled one deletes them. Whoever has not rated is asked once more
+  two days after delivery.
+- **Every list is best rated first, through `App\Support\TrustScore`** (a
+  Bayesian average): one 5-star rating must not beat twenty at 4.8, and poor
+  ratings must fall below a newcomer. Goods use `GoodsPost::scopeBestRatedFirst`,
+  businesses `Business::scopeBestRatedFirst`; do not sort on the raw average.
 - Two `failed` matches within a year (`GoodsMatch::blocked()`) hide the
   member's open posts and refuse new ones.
 - Banned items are `GroupModerator::BANNED_ITEMS`, shared by the group

@@ -4,12 +4,14 @@ namespace App\Bot;
 
 use App\Models\AuditLog;
 use App\Models\Business;
+use App\Models\BusinessRating;
 use App\Models\BusinessReport;
 use App\Models\Conversation;
 use App\Models\DirectoryCity;
 use App\Models\Member;
 use App\Services\TelegramBotService;
 use App\Support\MapLocation;
+use App\Support\TrustScore;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
 
@@ -83,7 +85,7 @@ class DirectoryFlow
     {
         $l = $member->language;
         $query = Business::query()->listed()->where('city_id', $city->id)->where('category', $category)
-            ->orderByDesc('verified')->orderBy('name');
+            ->bestRatedFirst()->orderByDesc('verified')->orderBy('name');
 
         $total = (clone $query)->count();
         $pages = max(1, (int) ceil($total / self::PER_PAGE));
@@ -124,8 +126,10 @@ class DirectoryFlow
             [['text' => $this->messages->button('btn_dir_map', $l), 'url' => $business->mapLink()]],
             // The full page: photo, hours, languages and every way to reach them.
             $site !== '' ? [\App\Support\PublicUrls::siteButton($this->messages->button('btn_dir_open_site', $l), $site)] : null,
+            array_map(fn (int $n) => ['text' => $n.' ⭐', 'callback_data' => 'd:rate:'.$business->id.':'.$n], range(BusinessRating::MIN_STARS, BusinessRating::MAX_STARS)),
             [$this->btn('btn_dir_report', $l, 'd:rep:'.$business->id)],
         ]))];
+        $text = $this->cardText($business, $l)."\n\n".$this->messages->text('dir_rate_hint', $l);
 
         if ($business->hasPin()) {
             try {
@@ -139,7 +143,7 @@ class DirectoryFlow
         $cover = $business->cover();
         if ($cover && \App\Support\PublicUrls::apiIsPublic()) {
             try {
-                $this->telegram->sendPhotoById($member->chat_id, $cover->url(), $this->cardText($business, $l), $keyboard);
+                $this->telegram->sendPhotoById($member->chat_id, $cover->url(), $text, $keyboard);
 
                 return;
             } catch (\Throwable) {
@@ -147,7 +151,7 @@ class DirectoryFlow
             }
         }
 
-        $this->telegram->sendText($member->chat_id, $this->cardText($business, $l), $keyboard);
+        $this->telegram->sendText($member->chat_id, $text, $keyboard);
     }
 
     public function askSearch(Member $member, Conversation $conversation): void
@@ -171,7 +175,7 @@ class DirectoryFlow
 
         // The shared helper: the same escaping on Postgres and SQLite, % and _ taken literally.
         $businesses = \App\Support\Search::anyColumn(Business::query()->listed()->with('city'), ['name', 'area'], mb_substr($query, 0, 80))
-            ->orderByDesc('verified')->orderBy('name')->limit(self::PER_PAGE)->get();
+            ->bestRatedFirst()->orderByDesc('verified')->orderBy('name')->limit(self::PER_PAGE)->get();
 
         if ($businesses->isEmpty()) {
             $this->telegram->sendText($member->chat_id, $this->messages->text('dir_search_none', $l, ['query' => e($query)]),
@@ -220,6 +224,10 @@ class DirectoryFlow
                 $this->report($member, $cb, (int) ($p[2] ?? 0));
 
                 return;
+            case 'rate':
+                $this->rate($member, $cb, (int) ($p[2] ?? 0), (int) ($p[3] ?? 0));
+
+                return;
             case 'search':
                 $this->askSearch($member, $conversation);
                 break;
@@ -231,6 +239,22 @@ class DirectoryFlow
         }
 
         $this->telegram->answerCallback($cb->id);
+    }
+
+    /** A member's stars for a place. Pressing another number changes them. */
+    private function rate(Member $member, Callback $cb, int $businessId, int $stars): void
+    {
+        $l = $member->language;
+        $business = Business::query()->find($businessId);
+        $answer = $business && $stars >= BusinessRating::MIN_STARS && $stars <= BusinessRating::MAX_STARS
+            ? BusinessRating::give($member, $business, $stars)
+            : 'closed';
+
+        $this->telegram->answerCallback($cb->id, match ($answer) {
+            'saved' => $this->messages->text('dir_rated', $l, ['name' => $business->name, 'stars' => $stars]),
+            'own' => $this->messages->text('dir_rate_own', $l),
+            default => $this->messages->text('dir_gone', $l),
+        }, alert: true);
     }
 
     private function report(Member $member, Callback $cb, int $businessId): void
@@ -429,6 +453,9 @@ class DirectoryFlow
         $b->loadMissing('city');
 
         $lines = ['<b>'.e($b->name).'</b>'.($b->verified ? '  '.$this->messages->text('dir_verified', $l) : '')];
+        if (($stars = $this->stars($b)) !== '') {
+            $lines[] = $stars;
+        }
         $lines[] = e(Choices::label(Choices::BUSINESS_CATEGORIES, $b->category, $l));
         $lines[] = '📍 '.e($this->address($b, $l));
         if ($b->phone) {
@@ -445,6 +472,16 @@ class DirectoryFlow
         return implode("\n", $lines);
     }
 
+    /** "🏅 ⭐ 4.6 (12)", or nothing before anyone has rated it. */
+    private function stars(Business $b): string
+    {
+        if ((int) $b->rating_count < 1) {
+            return '';
+        }
+
+        return (TrustScore::isTop($b->rating_avg, $b->rating_count) ? '🏅 ' : '').'⭐ '.number_format((float) $b->rating_avg, 1).' ('.$b->rating_count.')';
+    }
+
     private function address(Business $b, string $l): string
     {
         return trim($b->area.($b->city ? ', '.$b->city->name($l) : ''));
@@ -458,7 +495,8 @@ class DirectoryFlow
 
         foreach ($businesses->values() as $i => $b) {
             $lines[] = '';
-            $lines[] = ($offset + $i + 1).'. <b>'.e($b->name).'</b>'.($b->verified ? ' ✅' : '');
+            $stars = $this->stars($b);
+            $lines[] = ($offset + $i + 1).'. <b>'.e($b->name).'</b>'.($b->verified ? ' ✅' : '').($stars !== '' ? ' · '.$stars : '');
             $lines[] = '📍 '.e($this->address($b, $l)).($b->phone ? ' · 📞 '.e($b->phone) : '');
         }
 

@@ -101,11 +101,16 @@ Route::prefix('owner')->name('owner.')->middleware('locale')->group(function ():
         Route::delete('businesses/{business}', [OwnerBusinesses::class, 'destroy'])->name('businesses.destroy');
         Route::post('businesses/{business}/photo', [OwnerBusinesses::class, 'photo'])->name('businesses.photo');
         Route::post('businesses/{business}/claim', [OwnerBusinesses::class, 'claim'])->name('businesses.claim');
-        // The goods board for members: same rules as the bot, deals finish in Telegram.
+        // Members' stars for a place.
+        Route::get('directory/{slug}/rating', [\App\Http\Controllers\Owner\BusinessRatingController::class, 'show'])->where('slug', '[a-z0-9-]{1,170}')->name('directory.rating');
+        Route::post('directory/{slug}/rating', [\App\Http\Controllers\Owner\BusinessRatingController::class, 'store'])->where('slug', '[a-z0-9-]{1,170}')->middleware('throttle:30,1')->name('directory.rate');
+        // The goods board for members: same rules as the bot. Accepting and agreeing stay in Telegram.
         Route::get('goods', [OwnerGoods::class, 'index'])->name('goods.index');
         Route::post('goods', [OwnerGoods::class, 'store'])->middleware('throttle:20,1')->name('goods.store');
         Route::post('goods/{post}/close', [OwnerGoods::class, 'close'])->name('goods.close');
         Route::post('goods/{post}/interest', [OwnerGoods::class, 'interest'])->middleware('throttle:30,1')->name('goods.interest');
+        Route::post('goods/deals/{match}/delivered', [OwnerGoods::class, 'delivered'])->middleware('throttle:30,1')->name('goods.deals.delivered');
+        Route::post('goods/deals/{match}/rate', [OwnerGoods::class, 'rate'])->middleware('throttle:30,1')->name('goods.deals.rate');
     });
 });
 
@@ -159,6 +164,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('businesses/{business}/approve', [BusinessController::class, 'approve'])->name('businesses.approve');
         Route::post('businesses/{business}/reject', [BusinessController::class, 'reject'])->name('businesses.reject');
         Route::post('businesses/{business}/hide', [BusinessController::class, 'hide'])->name('businesses.hide');
+        Route::delete('businesses/{business}/ratings/{rating}', [BusinessController::class, 'removeRating'])->name('businesses.ratings.remove');
         Route::post('businesses/{business}/changes/approve', [BusinessController::class, 'approveChanges'])->name('businesses.changes.approve');
         Route::post('businesses/{business}/changes/reject', [BusinessController::class, 'rejectChanges'])->name('businesses.changes.reject');
         Route::get('business-claims', [BusinessController::class, 'claims'])->name('business-claims.index');

@@ -188,3 +188,67 @@ export async function closeGoods(form: FormData): Promise<void> {
   revalidatePath(`/${lang}/goods`, "layout");
   redirect(`/${lang}/goods/mine`);
 }
+
+/** "Delivered successfully", "not yet" or "there is a problem" on one of the member's deals. */
+export async function answerDelivery(form: FormData): Promise<void> {
+  const lang = localeOf(form);
+  const id = Number(form.get("id"));
+  const answer = String(form.get("answer") ?? "");
+
+  let failed = false;
+  if (Number.isInteger(id) && id > 0 && ["yes", "no", "wait"].includes(answer)) {
+    try {
+      await ownerApi(`/goods/deals/${id}/delivered`, { method: "POST", body: { answer }, locale: lang });
+    } catch {
+      failed = true;
+    }
+  }
+
+  revalidatePath(`/${lang}/goods`, "layout");
+  redirect(`/${lang}/goods/mine${failed ? "?failed=1" : ""}`);
+}
+
+export type DealRatingState = { failed?: boolean };
+
+/** Stars for the other side of a deal. */
+export async function rateDeal(_previous: DealRatingState, form: FormData): Promise<DealRatingState> {
+  const lang = localeOf(form);
+  const id = Number(form.get("deal"));
+  const stars = Number(form.get("stars"));
+  if (!Number.isInteger(id) || id <= 0 || !Number.isInteger(stars)) return { failed: true };
+
+  try {
+    await ownerApi(`/goods/deals/${id}/rate`, { method: "POST", body: { stars }, locale: lang });
+  } catch {
+    return { failed: true };
+  }
+
+  revalidatePath(`/${lang}/goods`, "layout");
+  return {};
+}
+
+export type RatingState = { status?: string; rating?: number | null; ratings?: number; top?: boolean; stars?: number | null };
+
+/** A member's stars for a place. They may press again to change them. */
+export async function rateBusiness(_previous: RatingState, form: FormData): Promise<RatingState> {
+  const lang = localeOf(form);
+  const slug = String(form.get("slug") ?? "");
+  const stars = Number(form.get("stars"));
+  if (!/^[a-z0-9-]{1,170}$/.test(slug) || !Number.isInteger(stars)) return { status: "error" };
+
+  const page = `/${lang}/directory/${slug}`;
+  const login = `/${lang}/business/login?next=${page}`;
+  if (!(await ownerToken())) redirect(login);
+
+  let result: RatingState;
+  try {
+    result = await ownerApi<RatingState>(`/directory/${slug}/rating`, { method: "POST", body: { stars }, locale: lang });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) redirect(login);
+    return { status: "error" };
+  }
+
+  revalidatePath(page);
+  revalidatePath(`/${lang}/directory`);
+  return result;
+}

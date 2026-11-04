@@ -6,6 +6,7 @@ use App\Bot\Choices;
 use App\Http\Controllers\Controller;
 use App\Support\Search;
 use App\Models\AuditLog;
+use App\Models\BusinessRating;
 use App\Models\Member;
 use App\Services\TelegramBotService;
 use App\Support\RuntimeEnv;
@@ -87,6 +88,7 @@ class MemberController extends Controller
         $data = $request->validate(['reason' => ['nullable', 'string', 'max:200']]);
 
         $member->forceFill(['banned_at' => now(), 'ban_reason' => $data['reason'] ?? null])->save();
+        BusinessRating::recountFor($member);
         AuditLog::record($request->user()->id, 'member.banned', 'member', $member->id, null, ['reason' => $data['reason'] ?? null]);
 
         foreach (['telegram_questions_group_id', 'telegram_goods_group_id'] as $key) {
@@ -102,6 +104,7 @@ class MemberController extends Controller
     public function unban(Request $request, Member $member): JsonResponse
     {
         $member->forceFill(['banned_at' => null, 'ban_reason' => null])->save();
+        BusinessRating::recountFor($member);
         AuditLog::record($request->user()->id, 'member.unbanned', 'member', $member->id);
 
         return response()->json(['member' => $this->payload($member->fresh('trades'))]);

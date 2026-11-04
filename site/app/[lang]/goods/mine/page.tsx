@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CircleCheck, CircleX, Eye, EyeOff, Handshake, Hourglass, Inbox, MessagesSquare, Plus, Send, ShieldAlert, type LucideIcon } from "lucide-react";
+import { Circle, CircleCheck, CircleX, Eye, EyeOff, Handshake, Hourglass, Inbox, MessagesSquare, Plus, Send, ShieldAlert, Star, type LucideIcon } from "lucide-react";
 import { GEEZ, PageHead } from "@/components/Bits";
 import { DateLeaf } from "@/components/DateLeaf";
 import { MemberGate } from "@/components/goods/GoodsBits";
 import { cityCode, GoodsBadge, KiloGauge, PriceChip, toneOf } from "@/components/goods/GoodsCard";
+import { DealStars } from "@/components/goods/DealStars";
 import { ConfirmSubmit } from "@/components/owner/ConfirmSubmit";
-import { closeGoods } from "@/lib/actions";
+import { answerDelivery, closeGoods } from "@/lib/actions";
 import { api, type GoodsBoard, type GoodsDeal, type GoodsPostStatus, type MyGoods, type MyGoodsPost } from "@/lib/api";
 import { formatDate, number, shortDate } from "@/lib/format";
 import { dict, fill, isLocale, label, pick, type Dictionary, type Locale } from "@/lib/i18n";
@@ -29,6 +30,8 @@ const POST_STATUS: Record<GoodsPostStatus, { tone: string; icon: LucideIcon }> =
   hidden: { tone: "bg-danger-soft text-danger", icon: EyeOff },
 };
 
+const DELIVERED = { tone: "bg-success-soft text-success", icon: CircleCheck };
+
 /** Each state of a deal: its colour and icon beside the plain line that says what happens next. */
 const DEAL_STATUS: Record<string, { tone: string; icon: LucideIcon }> = {
   requested: { tone: "text-warning", icon: Hourglass },
@@ -38,10 +41,11 @@ const DEAL_STATUS: Record<string, { tone: string; icon: LucideIcon }> = {
   completed: { tone: "text-success", icon: CircleCheck },
 };
 
-export default async function MyGoodsPage({ params }: { params: Promise<{ lang: string }> }) {
+export default async function MyGoodsPage({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<{ failed?: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   if (!(await currentOwner(lang))) redirect(`/${lang}/business/login?next=/${lang}/goods/mine`);
+  const failed = Boolean((await searchParams).failed);
   const d = dict(lang);
   const g = d.goods;
   const [mine, maxKilos] = await Promise.all([
@@ -109,6 +113,7 @@ export default async function MyGoodsPage({ params }: { params: Promise<{ lang: 
                 <span className="geez-mark" aria-hidden="true">{GEEZ[1]}</span>
                 <span className="headline text-[1.5rem] md:text-[1.75rem]">{g.deals}</span>
               </h2>
+              {failed && <p role="alert" className="mt-4 rounded-[var(--radius-card)] bg-danger-soft p-3.5 text-sm font-medium text-danger">{g.card.error}</p>}
               {mine.deals.length === 0 ? (
                 <p className="card mt-4 flex items-start gap-3 p-5 text-sm text-muted">
                   <Inbox className="mt-0.5 size-5 shrink-0" aria-hidden="true" /> {g.noDeals}
@@ -145,7 +150,9 @@ export default async function MyGoodsPage({ params }: { params: Promise<{ lang: 
 /** One of the member's posts: the route like a ticket, its state, the room left, and the requests it drew. */
 function PostRow({ post, lang, d, maxKilos }: { post: MyGoodsPost; lang: Locale; d: Dictionary; maxKilos: number }) {
   const g = d.goods;
-  const status = POST_STATUS[post.status] ?? POST_STATUS.closed;
+  // A closed post says how it ended: delivered and failed read differently from simply closed.
+  const ending = post.status === "closed" && (post.outcome === "delivered" || post.outcome === "failed") ? post.outcome : post.status;
+  const status = ending === "delivered" ? DELIVERED : (POST_STATUS[post.status] ?? POST_STATUS.closed);
   const StatusIcon = status.icon;
   const from = label(post.from.name, lang);
   const to = label(post.to.name, lang);
@@ -164,7 +171,7 @@ function PostRow({ post, lang, d, maxKilos }: { post: MyGoodsPost; lang: Locale;
               {cityCode(post.from)} → {cityCode(post.to)}
             </h3>
             <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${status.tone}`}>
-              <StatusIcon className="size-3.5" aria-hidden="true" /> {g.status[post.status] ?? post.status}
+              <StatusIcon className="size-3.5" aria-hidden="true" /> {g.status[ending] ?? post.status}
             </span>
           </div>
           <p className="mt-0.5 truncate text-sm text-muted">{from} → {to} · {shortDate(post.date, lang)}</p>
@@ -194,15 +201,55 @@ function PostRow({ post, lang, d, maxKilos }: { post: MyGoodsPost; lang: Locale;
   );
 }
 
-/** One deal: who, which route, and one plain line on where it stands and what happens next. */
+/** The plain line for a deal: an agreed one reads differently as the flight passes and each side confirms. */
+function dealLine(deal: GoodsDeal, g: Dictionary["goods"]): string {
+  const lines = g.dealStatus as Record<string, string>;
+  if (deal.status === "requested") return lines[`requested_${deal.role}`] ?? lines.other;
+  if (deal.status !== "agreed") return lines[deal.status] ?? lines.other;
+  if (deal.said_delivered) return fill(lines.agreed_confirmed, { name: deal.other_name });
+  if (deal.they_said_delivered) return fill(lines.agreed_they_said, { name: deal.other_name });
+  return deal.can_confirm ? lines.agreed_due : lines.agreed;
+}
+
+/** Agreed, flight, delivered, closed: where the deal has got to, once there is one to follow. */
+function DealStages({ deal, g }: { deal: GoodsDeal; g: Dictionary["goods"] }) {
+  const closed = deal.status === "completed";
+  const flown = closed || deal.can_confirm || deal.said_delivered || deal.they_said_delivered;
+  const stages = [
+    { label: g.stages.agreed, done: true },
+    { label: g.stages.flight, done: flown },
+    { label: g.stages.delivered, done: closed || deal.said_delivered },
+    { label: g.stages.closed, done: closed },
+  ];
+
+  return (
+    <ol className="mt-3 flex items-center gap-1 text-[0.6875rem] font-semibold">
+      {stages.map((stage, i) => (
+        <li key={stage.label} className="flex min-w-0 flex-1 items-center gap-1">
+          <span className={`inline-flex min-w-0 items-center gap-1 ${stage.done ? "text-success" : "text-faint"}`}>
+            {stage.done ? <CircleCheck className="size-3.5 shrink-0" aria-hidden="true" /> : <Circle className="size-3.5 shrink-0" aria-hidden="true" />}
+            <span className="truncate">{stage.label}</span>
+          </span>
+          {i < stages.length - 1 && <span className={`h-px flex-1 ${stage.done ? "bg-success/40" : "bg-line"}`} aria-hidden="true" />}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** One deal: who, which route, where it stands, and, when it is their turn, the buttons that finish it. */
 function DealRow({ deal, lang, d }: { deal: GoodsDeal; lang: Locale; d: Dictionary }) {
   const g = d.goods;
-  const lines = g.dealStatus as Record<string, string>;
-  const line = (deal.status === "requested" ? lines[`requested_${deal.role}`] : lines[deal.status]) ?? lines.other;
   const look = DEAL_STATUS[deal.status] ?? { tone: "text-muted", icon: CircleX };
   const Icon = look.icon;
   const route = `${pick(deal.route.from, lang)} → ${pick(deal.route.to, lang)}`;
   const facts = [route, formatDate(deal.date, lang, "medium"), deal.kilos ? fill(g.form.kilos, { n: number(deal.kilos, lang) }) : null].filter(Boolean).join(" · ");
+  const hidden = (
+    <>
+      <input type="hidden" name="lang" value={lang} />
+      <input type="hidden" name="id" value={deal.id} />
+    </>
+  );
 
   return (
     <li className="card flex gap-3.5 p-4">
@@ -213,8 +260,51 @@ function DealRow({ deal, lang, d }: { deal: GoodsDeal; lang: Locale; d: Dictiona
         <p className="font-semibold">{fill(g.role[deal.role] ?? g.role.requester, { name: deal.other_name })}</p>
         <p className="mt-0.5 text-sm text-muted">{facts}</p>
         <p className={`mt-1.5 flex items-start gap-1.5 text-sm font-medium ${look.tone}`}>
-          <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {line}
+          <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {dealLine(deal, g)}
         </p>
+
+        {(deal.status === "agreed" || deal.status === "completed") && <DealStages deal={deal} g={g} />}
+
+        {deal.can_confirm && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <form action={answerDelivery}>
+              {hidden}
+              <input type="hidden" name="answer" value="yes" />
+              <button type="submit" className="btn btn-primary min-h-10 px-4 text-sm">
+                <CircleCheck className="size-4" aria-hidden="true" /> {g.delivered.yes}
+              </button>
+            </form>
+            <form action={answerDelivery}>
+              {hidden}
+              <input type="hidden" name="answer" value="wait" />
+              <button type="submit" className="btn btn-quiet min-h-10 px-3 text-sm">{g.delivered.wait}</button>
+            </form>
+            <form action={answerDelivery}>
+              {hidden}
+              <input type="hidden" name="answer" value="no" />
+              <ConfirmSubmit text={g.delivered.no} confirm={g.delivered.noConfirm} />
+            </form>
+          </div>
+        )}
+
+        {deal.can_rate && (
+          <DealStars
+            id={deal.id}
+            lang={lang}
+            title={fill(g.delivered.rate, { name: deal.other_name })}
+            note={g.delivered.rateNote}
+            group={g.delivered.group}
+            starLabels={[1, 2, 3, 4, 5].map((stars) => (stars === 1 ? g.delivered.starOne : fill(g.delivered.star, { n: stars })))}
+            error={g.card.error}
+          />
+        )}
+
+        {deal.my_stars != null && (
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-muted tabular">
+            <Star className="size-3.5 fill-accent text-accent" aria-hidden="true" />
+            {deal.my_stars === 1 ? fill(g.delivered.yourStarsOne, { name: deal.other_name }) : fill(g.delivered.yourStars, { name: deal.other_name, n: number(deal.my_stars, lang) })}
+          </p>
+        )}
       </div>
     </li>
   );

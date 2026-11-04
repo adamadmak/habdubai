@@ -6,6 +6,7 @@ import type { Announcement, Business, Job, Meta } from "@/lib/api";
 import { photoSrcSet } from "@/lib/photos";
 import { Cover, KindBadge } from "./Cover";
 import { DateLeaf } from "./DateLeaf";
+import { Score, TopRated } from "./Score";
 
 /** A job: the title leads, then who and where; the pay is set large, and the two facts that matter most sit beside it. */
 export function JobCard({ job, lang, meta, compact = false }: { job: Job; lang: Locale; meta: Meta | null; compact?: boolean }) {
@@ -79,9 +80,13 @@ export function BusinessCard({ business, lang, meta }: { business: Business; lan
             <BadgeCheck className="size-3.5" aria-hidden="true" /> {d.common.verified}
           </span>
         )}
+        {business.top && <TopRated label={d.directory.rating.top} className="absolute left-2.5 top-2.5 shadow-sm" />}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <p className="text-xs font-semibold text-accent-ink">{kind}</p>
+        <p className="flex items-center justify-between gap-2 text-xs font-semibold text-accent-ink">
+          <span className="truncate">{kind}</span>
+          <Score rating={business.rating} ratings={business.ratings} label={business.ratings === 1 ? d.directory.rating.countOne : fill(d.directory.rating.count, { n: business.ratings })} className="shrink-0 text-fg" />
+        </p>
         <h3 className="title truncate text-[1.0625rem]">{business.name}</h3>
         {business.description && <p className="line-clamp-2 text-sm text-muted">{business.description}</p>}
         <p className="mt-auto flex items-center gap-1 pt-2 text-sm text-muted">

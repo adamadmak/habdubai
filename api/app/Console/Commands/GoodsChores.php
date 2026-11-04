@@ -31,11 +31,13 @@ class GoodsChores extends Command
         $expired = $goods->expire();
 
         $hour = (int) now('Asia/Dubai')->format('G');
-        $checkins = ($this->option('any-hour') || ($hour >= 9 && $hour < 21)) ? $goods->sendCheckins() : 0;
+        $awake = $this->option('any-hour') || ($hour >= 9 && $hour < 21);
+        $checkins = $awake ? $goods->sendCheckins() : 0;
+        $reminders = $awake ? $goods->sendRatingReminders() : 0;
 
         $revealed = Rating::revealDue();
 
-        $this->info("Expired {$expired} post(s), sent {$checkins} check-in(s), revealed ratings for {$revealed} member(s).");
+        $this->info("Expired {$expired} post(s), sent {$checkins} check-in(s) and {$reminders} rating reminder(s), revealed ratings for {$revealed} member(s).");
 
         return self::SUCCESS;
     }

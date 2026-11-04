@@ -74,7 +74,10 @@ export default async function DirectoryIndex({ params, searchParams }: { params:
 
       <div className="mx-auto mt-6 max-w-page px-4 lg:px-8">
         <h2 className="sr-only">{d.common.results}</h2>
-        <p className="mb-3 text-sm text-muted" aria-live="polite">{countLabel(list.meta.total, d.directory.countOne, d.directory.count, lang)}</p>
+        <p className="mb-3 text-sm text-muted" aria-live="polite">
+          {countLabel(list.meta.total, d.directory.countOne, d.directory.count, lang)}
+          {list.meta.total > 1 && <> · {d.directory.sortedBest}</>}
+        </p>
         {list.data.length === 0 ? (
           <Empty>
             {d.directory.empty}{" "}

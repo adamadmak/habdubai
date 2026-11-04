@@ -9,6 +9,7 @@ import { label } from "@/lib/labels";
 import type { Locale } from "@/lib/locales";
 import { initials } from "../Cover";
 import { DateLeaf } from "../DateLeaf";
+import { TopRated } from "../Score";
 import { InterestButton } from "./InterestButton";
 
 /*
@@ -152,6 +153,7 @@ export function TrustBadge({ member, t, lang, className = "" }: { member: GoodsM
             </span>
           )}
           {!rating && !deals && <span className="rounded-full bg-accent-soft px-2 py-0.5 font-semibold text-accent-ink">{t.new}</span>}
+          {member.top && <TopRated label={t.top} />}
         </p>
       </div>
     </div>

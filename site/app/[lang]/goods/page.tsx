@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Ban, CalendarClock, HandCoins, ShieldCheck } from "lucide-react";
+import { ArrowRight, Ban, CalendarClock, CircleCheck, HandCoins, ShieldCheck, Star } from "lucide-react";
 import { GEEZ, Pager, Section } from "@/components/Bits";
 import { countLabel } from "@/components/Cards";
 import { FlightPath } from "@/components/goods/FlightPath";
 import { ChoiceTile, goodsStats, newPostHref } from "@/components/goods/GoodsBits";
-import { GoodsBadge, GoodsCard } from "@/components/goods/GoodsCard";
+import { cityCode, GoodsBadge, GoodsCard } from "@/components/goods/GoodsCard";
 import { ToggleRow } from "@/components/goods/ToggleRow";
 import { Night } from "@/components/Dawn";
 import { api, GOODS_DIRECTIONS, query, type GoodsBoard, type GoodsDirection } from "@/lib/api";
 import { currentClient } from "@/lib/client";
-import { number } from "@/lib/format";
-import { dict, fill, isLocale } from "@/lib/i18n";
+import { number, shortDate } from "@/lib/format";
+import { dict, fill, isLocale, label } from "@/lib/i18n";
 import { currentOwner } from "@/lib/owner";
 import { alternatesFor } from "@/lib/site";
 
-type Search = { direction?: string; kind?: string; page?: string };
+type Search = { direction?: string; kind?: string; sort?: string; page?: string };
 
 /** The board's own filter: a trip, a parcel to send, a thing to be brought (or every parcel, from an older link). */
 const SHOW = ["traveller", "send", "request", "sender"] as const;
@@ -38,12 +38,15 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
 
   const direction = (GOODS_DIRECTIONS as readonly string[]).includes(sp.direction ?? "") ? (sp.direction as GoodsDirection) : undefined;
   const show = (SHOW as readonly string[]).includes(sp.kind ?? "") ? (sp.kind as Show) : undefined;
+  // Best rated first unless someone asks for the soonest date.
+  const sort = sp.sort === "date" ? "date" : undefined;
   const page = Math.max(1, Number(sp.page) || 1);
-  const filtered = Boolean(direction || show) || page > 1;
+  const filtered = Boolean(direction || show || sort) || page > 1;
   const apiFilter = {
     direction,
     kind: show === "traveller" ? "traveller" : show ? "sender" : undefined,
     mode: show === "send" || show === "request" ? show : undefined,
+    sort,
     page: page > 1 ? page : undefined,
   };
 
@@ -54,7 +57,7 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
   ]);
 
   const base = `/${lang}/goods`;
-  const current = { direction, kind: show };
+  const current = { direction, kind: show, sort };
   const stats = goodsStats(board.stats, d);
   const pageHref = (p: number) => `${base}${query({ ...current, page: p > 1 ? p : undefined })}`;
 
@@ -121,7 +124,7 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
             name="direction"
             label={g.filters.direction}
             current={direction}
-            keep={{ kind: show }}
+            keep={{ kind: show, sort }}
             options={[{ label: g.filters.both }, { value: "to_et", label: g.filters.to_et }, { value: "to_ae", label: g.filters.to_ae }]}
             className="w-full lg:w-[29rem]"
           />
@@ -130,13 +133,26 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
             name="kind"
             label={g.filters.kind}
             current={show === "sender" ? undefined : show}
-            keep={{ direction }}
+            keep={{ direction, sort }}
             options={[{ label: g.filters.all }, { value: "traveller", label: g.filters.traveller }, { value: "send", label: g.filters.send }, { value: "request", label: g.filters.request }]}
             className="w-full lg:w-[29rem]"
           />
         </div>
 
-        <p className="mb-3 mt-5 text-sm text-muted" aria-live="polite">{countLabel(board.meta.total, g.countOne, g.count, lang)}</p>
+        <div className="mb-3 mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted" aria-live="polite">{countLabel(board.meta.total, g.countOne, g.count, lang)}</p>
+          {board.meta.total > 1 && (
+            <ToggleRow
+              action={base}
+              name="sort"
+              label={g.filters.sortLabel}
+              current={sort}
+              keep={{ direction, kind: show }}
+              options={[{ label: g.filters.best }, { value: "date", label: g.filters.soonest }]}
+              className="w-full sm:w-[22rem]"
+            />
+          )}
+        </div>
         {board.data.length === 0 ? (
           <div className="card relative overflow-hidden p-8 text-center md:p-10">
             <div className="tibeb-thin absolute inset-x-0 top-0" aria-hidden="true" />
@@ -167,6 +183,36 @@ export default async function GoodsBoardPage({ params, searchParams }: { params:
           labels={{ previous: d.common.previous, next: d.common.next, pageOf: fill(d.common.pageOf, { page: board.meta.page, pages: board.meta.last_page }) }}
         />
       </section>
+
+      {/* ---- What closed posts leave behind: proof the board works, with no names. ---- */}
+      {(board.recent?.length ?? 0) > 0 && (
+        <section className="mx-auto mt-12 max-w-page px-4 lg:px-8">
+          <h2 className="headline text-[1.5rem] md:text-[1.75rem]">{g.recentTitle}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted">{g.recentLead}</p>
+          <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {board.recent?.map((deal) => (
+              <li key={deal.id} className="card flex items-center gap-3 p-3.5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-success-soft text-success">
+                  <CircleCheck className="size-5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold" aria-label={fill(g.card.route, { from: label(deal.from.name, lang), to: label(deal.to.name, lang) })}>
+                    {cityCode(deal.from)} → {cityCode(deal.to)}
+                  </span>
+                  <span className="block truncate text-xs text-muted">
+                    {fill(g.recentLine, { kilos: number(deal.kilos, lang), date: deal.delivered_at ? shortDate(deal.delivered_at, lang) : "" })}
+                  </span>
+                </span>
+                {deal.stars != null && (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold tabular">
+                    <Star className="size-4 fill-accent text-accent" aria-hidden="true" /> {deal.stars.toFixed(1)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* ---- The rules, the bot's own. ---- */}
       <Section title={g.howTitle} lead={g.howLead}>

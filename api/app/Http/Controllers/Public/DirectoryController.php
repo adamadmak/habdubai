@@ -32,8 +32,8 @@ class DirectoryController extends Controller
             ->when($city, fn (Builder $q) => $q->where('city_id', $city->id))
             ->when($data['category'] ?? null, fn (Builder $q, $category) => $q->where('category', $category))
             ->when(trim((string) ($data['q'] ?? '')), fn (Builder $q, $term) => Search::anyColumn($q, ['name', 'area', 'description'], $term))
-            // Verified first, then listings their owners keep up to date, then by name.
-            ->orderByDesc('verified')->orderByRaw('owner_id is null')->orderBy('name');
+            // Members' stars first; among equals, verified, then listings their owners keep up to date, then by name.
+            ->bestRatedFirst()->orderByDesc('verified')->orderByRaw('owner_id is null')->orderBy('name');
 
         $page = $query->paginate(24);
 
@@ -74,7 +74,7 @@ class DirectoryController extends Controller
 
         $nearby = Business::query()->listed()->with(['city', 'photos' => $photos])
             ->whereKeyNot($business->id)->where('city_id', $business->city_id)->where('category', $business->category)
-            ->orderByDesc('verified')->orderBy('name')->limit(4)->get();
+            ->bestRatedFirst()->orderByDesc('verified')->orderBy('name')->limit(4)->get();
 
         return response()->json([
             'business' => $business->publicPayload(full: true),

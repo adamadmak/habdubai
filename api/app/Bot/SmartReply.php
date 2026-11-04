@@ -198,7 +198,7 @@ class SmartReply
         $base = fn () => Business::query()->listed()->with('city')
             ->when($u->category, fn ($q) => $q->where('category', $u->category))
             ->when($city, fn ($q) => $q->where('city_id', $city->id))
-            ->orderByDesc('verified')->orderBy('name')->limit(5);
+            ->bestRatedFirst()->orderByDesc('verified')->orderBy('name')->limit(5);
 
         // "restaurant deira": the area narrows it down when it can; a word that matches nothing does not empty the list.
         $found = $u->words !== [] ? Search::anyColumn($base(), ['name', 'area', 'description'], implode(' ', $u->words))->get() : collect();
@@ -232,7 +232,7 @@ class SmartReply
 
         $name = implode(' ', $words);
         $found = Search::anyColumn(Business::query()->listed()->with('city'), ['name'], mb_substr($name, 0, 80))
-            ->orderByDesc('verified')->orderBy('name')->limit(20)->get()
+            ->bestRatedFirst()->orderByDesc('verified')->orderBy('name')->limit(20)->get()
             // Where a word of the name starts: "book" finds Book Corner, "ore" does not find Store.
             ->filter(fn (Business $b): bool => self::startsAWord($b->name, $words))->take(5)->values();
 

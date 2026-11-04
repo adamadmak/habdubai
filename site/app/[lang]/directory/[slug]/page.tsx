@@ -3,12 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BadgeCheck, ChevronLeft, Clock, Globe, Languages, MapPin, MessageCircle, Navigation, Phone, Send, UserCheck } from "lucide-react";
 import { BusinessCard } from "@/components/Cards";
+import { BusinessRating } from "@/components/BusinessRating";
 import { Cover } from "@/components/Cover";
 import { ShareButton } from "@/components/ShareButton";
 import { ViewPing } from "@/components/ViewPing";
-import { api, apiOrNull, type Business, type Meta } from "@/lib/api";
+import { api, apiOrNull, type Business, type Meta, type MyBusinessRating } from "@/lib/api";
 import { digits, formatDate, host } from "@/lib/format";
 import { dict, fill, isLocale, label, pick } from "@/lib/i18n";
+import { currentOwner, ownerApi } from "@/lib/owner";
 import { alternatesFor, siteUrl } from "@/lib/site";
 
 type Detail = { business: Business; nearby: Business[] };
@@ -37,9 +39,10 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
   const { lang, slug } = await params;
   if (!isLocale(lang)) notFound();
   const d = dict(lang);
-  const [data, meta] = await Promise.all([load(slug), api<Meta>("/public/meta", { revalidate: 300 })]);
+  const [data, meta, owner] = await Promise.all([load(slug), api<Meta>("/public/meta", { revalidate: 300 }), currentOwner(lang).catch(() => null)]);
   if (!data) notFound();
   const { business: b, nearby } = data;
+  const mine = owner ? await ownerApi<MyBusinessRating>(`/directory/${b.slug}/rating`, { locale: lang }).catch(() => null) : null;
 
   const kind = label(meta.labels.business_categories[b.category], lang);
   const city = pick(b.city?.name, lang);
@@ -66,6 +69,7 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
     geo: b.latitude != null && b.longitude != null ? { "@type": "GeoCoordinates", latitude: b.latitude, longitude: b.longitude } : undefined,
     openingHours: b.hours ?? undefined,
     knowsLanguage: b.languages?.length ? b.languages : undefined,
+    aggregateRating: b.rating != null && b.ratings > 0 ? { "@type": "AggregateRating", ratingValue: b.rating, ratingCount: b.ratings, bestRating: 5, worstRating: 1 } : undefined,
   };
 
   return (
@@ -132,6 +136,20 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
               ))}
               <ShareButton title={b.name} url={siteUrl(`${lang}/directory/${b.slug}`)} labels={{ share: d.common.share, copied: d.common.copied }} />
             </div>
+
+            <BusinessRating
+              slug={b.slug}
+              lang={lang}
+              labels={d.directory.rating}
+              rating={b.rating}
+              ratings={b.ratings}
+              top={Boolean(b.top)}
+              breakdown={b.rating_breakdown ?? []}
+              mine={mine?.stars ?? null}
+              signedIn={Boolean(owner)}
+              blockedBy={mine?.blocked_by ?? null}
+              botLink={mine?.bot_link ?? null}
+            />
 
             {(b.description || b.about) && (
               <section className="mt-8">

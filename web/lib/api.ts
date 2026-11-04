@@ -295,6 +295,9 @@ export interface GoodsPostRow {
   categories: string[];
   description: string | null;
   status: "open" | "matched" | "expired" | "closed" | "hidden";
+  /** How a closed post ended. Older posts closed by their member have none. */
+  outcome: "delivered" | "failed" | "unconfirmed" | "cancelled" | "member" | null;
+  closed_at: string | null;
   open: boolean;
   hidden_reason: string | null;
   in_group: boolean;
@@ -453,6 +456,9 @@ export interface Business {
   review_note: string | null;
   reports_count: number;
   views: number;
+  /** Members' stars: what the directory is ordered by. */
+  rating_avg: number | null;
+  rating_count: number;
   photo: string | null;
   pending_photo: string | null;
   pending_changes: Record<string, unknown> | null;
@@ -465,6 +471,8 @@ export interface Business {
   created_at: string;
   reports?: { member: string | null; reason: string; at: string }[];
   claims?: BusinessClaimRow[];
+  /** On the open listing's own page: who gave what, newest first. */
+  ratings?: { id: number; stars: number; member: { id: number; name: string; username: string | null; banned: boolean } | null; at: string | null }[];
 }
 
 export interface BusinessClaimRow {

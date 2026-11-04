@@ -111,6 +111,7 @@ class ModerationController extends Controller
     private function ban(Member $member, string $reason, int $actor, TelegramBotService $telegram): void
     {
         $member->forceFill(['banned_at' => now(), 'ban_reason' => $reason])->save();
+        \App\Models\BusinessRating::recountFor($member);
 
         foreach (array_filter([Community::questionsGroup(), Community::goodsGroup()]) as $group) {
             $telegram->banFromChat($group, (int) $member->telegram_user_id);

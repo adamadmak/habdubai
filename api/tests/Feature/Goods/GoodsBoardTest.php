@@ -332,19 +332,28 @@ test('the day after the flight both are asked; two yeses complete it and open a 
     $this->artisan('goods:chores')->assertSuccessful();
     expect(count(sentMessages()))->toBe($before);
 
+    // "Delivered" asks for stars at once, and the other side hears right away.
     pressG(801, "g:c:{$match->id}:yes");
-    expect(lastText())->toBe('Thank you, noted.')->and($match->fresh()->status)->toBe('agreed');
-    pressG(802, "g:c:{$match->id}:yes");
-
-    expect($match->fresh()->status)->toBe('completed')
-        ->and($traveller->fresh()->trips_completed)->toBe(1)->and($sender->fresh()->trips_completed)->toBe(1);
     $rate = lastTo(801);
-    expect($rate['text'])->toContain('Delivered. How was Sara T?')->and(buttonsOf($rate))->toHaveCount(5);
+    expect($rate['text'])->toContain('Delivered. How was Sara T?')->and(buttonsOf($rate))->toHaveCount(5)
+        ->and($match->fresh()->status)->toBe('agreed')
+        ->and(lastTo(802)['text'])->toBe('📦 Abebe K says the parcel (Dubai → Addis Ababa, 20 Nov 2026) was delivered. Can you confirm?')
+        ->and(buttonsOf(lastTo(802)))->toBe(["g:c:{$match->id}:yes", "g:c:{$match->id}:no", "g:c:{$match->id}:wait"]);
 
     pressG(801, "g:r:{$match->id}:5");
     expect(lastText())->toBe('Thank you. Your rating is saved.')->and($sender->fresh()->rating_count)->toBe(0);
     pressG(801, "g:r:{$match->id}:3");
     expect(lastText())->toBe('You have already rated this match.');
+
+    pressG(802, "g:c:{$match->id}:yes");
+
+    expect($match->fresh()->status)->toBe('completed')
+        ->and($traveller->fresh()->trips_completed)->toBe(1)->and($sender->fresh()->trips_completed)->toBe(1)
+        // The one who has rated hears that it closed; the other is asked for stars.
+        ->and(lastTo(801)['text'])->toContain('Your deal with Sara T is now closed')
+        ->and(buttonsOf(lastTo(801)))->toBe([])
+        ->and(lastTo(802)['text'])->toContain('Delivered. How was Abebe K?')
+        ->and(buttonsOf(lastTo(802)))->toHaveCount(5);
 
     pressG(802, "g:r:{$match->id}:4");
     expect($sender->fresh()->rating_count)->toBe(1)->and((float) $sender->fresh()->rating_avg)->toBe(5.0)
@@ -379,6 +388,237 @@ test('one side rating alone shows after a week; "not yet" asks again two days la
         ->and(Rating::query()->sole()->counted_at)->not->toBeNull();
 });
 
+test('a parcel leaves the board on agreement; a trip with room stays and may be closed; both close on the record once delivered', function (): void {
+    $match = agreedMatch();
+    $trip = $match->travellerPost();
+    $parcel = $match->senderPost();
+    $board = fn () => collect($this->getJson('/api/public/goods')->assertOk()->json('data'))->pluck('id')->all();
+
+    // Agreed: the parcel is off the website at once, and the trip still has 5 kg to offer.
+    expect($board())->toBe([$trip->id])
+        ->and(lastTo(801)['text'])->toContain('You still have 5 kg free')
+        ->and(buttonsOf(lastTo(801)))->toBe(['g:z:'.$trip->id])
+        ->and(buttonsOf(lastTo(802)))->toBe([]);
+
+    // The day after the flight: the trip is off the board too, but its deal is not over.
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+    $this->artisan('goods:chores');
+    expect($board())->toBe([])
+        ->and($trip->fresh()->status)->toBe('matched')->and($parcel->fresh()->status)->toBe('matched');
+
+    pressG(801, "g:c:{$match->id}:yes");
+    expect($trip->fresh()->status)->toBe('matched');
+    pressG(802, "g:c:{$match->id}:yes");
+
+    foreach ([$trip->fresh(), $parcel->fresh()] as $post) {
+        expect($post->status)->toBe('closed')->and($post->outcome)->toBe('delivered')->and($post->closed_at)->not->toBeNull();
+    }
+    $edits = collect(telegramCalls('editMessageText'))->filter(fn ($c) => (string) $c['chat_id'] === GGROUP);
+    expect($edits->last()['text'])->toStartWith('✅ ደርሷል');
+
+    // Moderators still see them, as closed and delivered, with the stars given.
+    pressG(801, "g:r:{$match->id}:5");
+    pressG(802, "g:r:{$match->id}:4");
+    Sanctum::actingAs(admin(), ['admin']);
+    $this->getJson('/api/admin/goods/posts?status=closed')->assertOk()
+        ->assertJsonCount(2, 'data')->assertJsonPath('data.0.outcome', 'delivered');
+    $this->getJson('/api/admin/goods/matches?status=completed')->assertOk()
+        ->assertJsonPath('data.0.id', $match->id)->assertJsonCount(2, 'data.0.ratings');
+});
+
+test('pressing "I am full" takes a trip with room off the board, and its agreed deal carries on', function (): void {
+    $match = agreedMatch();
+    $trip = $match->travellerPost();
+
+    pressG(801, 'g:z:'.$trip->id);
+
+    expect($trip->fresh()->status)->toBe('closed')->and($trip->fresh()->outcome)->toBe('member')
+        ->and($match->fresh()->status)->toBe('agreed')
+        ->and(collect($this->getJson('/api/public/goods')->json('data'))->pluck('id')->all())->toBe([]);
+
+    // Delivered later: the record says so, instead of "closed by the member".
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+    pressG(801, "g:c:{$match->id}:yes");
+    pressG(802, "g:c:{$match->id}:yes");
+    expect($trip->fresh()->outcome)->toBe('delivered');
+});
+
+test('stars given before a dispute do not count, and go when the deal fails', function (): void {
+    $match = agreedMatch();
+    $sender = Member::findByTelegramUser(802);
+    $traveller = Member::findByTelegramUser(801);
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+    pressG(801, "g:c:{$match->id}:yes");
+    pressG(801, "g:r:{$match->id}:5");
+    pressG(802, "g:c:{$match->id}:no");
+    expect($match->fresh()->status)->toBe('disputed');
+
+    // Past the hidden week, still in dispute: not counted.
+    $this->travelTo(now()->addDays(8));
+    $this->artisan('goods:chores');
+    expect($sender->fresh()->rating_count)->toBe(0)->and(Rating::query()->sole()->counted_at)->toBeNull();
+
+    Sanctum::actingAs(admin(), ['admin']);
+    $this->postJson("/api/admin/goods/matches/{$match->id}/resolve", ['outcome' => 'failed', 'failed_member_id' => $traveller->id])->assertOk();
+
+    expect(Rating::query()->count())->toBe(0)
+        ->and($match->senderPost()->fresh()->status)->toBe('closed')
+        ->and($match->senderPost()->fresh()->outcome)->toBe('failed');
+});
+
+test('a moderator calling a deal off before the flight gives the kilos back and reopens what it closed', function (): void {
+    $match = agreedMatch();
+    $trip = $match->travellerPost();
+    $parcel = $match->senderPost();
+    expect($trip->kilos_left)->toBe(5);
+    Sanctum::actingAs(admin(), ['admin']);
+
+    $this->postJson("/api/admin/goods/matches/{$match->id}/resolve", ['outcome' => 'cancelled'])->assertOk();
+
+    expect($trip->fresh()->kilos_left)->toBe(10)->and($trip->fresh()->status)->toBe('open')->and($trip->fresh()->outcome)->toBeNull()
+        ->and($parcel->fresh()->status)->toBe('open')->and($parcel->fresh()->outcome)->toBeNull()
+        ->and(collect($this->getJson('/api/public/goods')->json('data'))->pluck('id')->sort()->values()->all())->toBe([$trip->id, $parcel->id]);
+});
+
+test('after the flight, a deal a moderator calls off closes its posts on the record instead', function (): void {
+    $match = agreedMatch();
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+    $this->artisan('goods:chores');
+    Sanctum::actingAs(admin(), ['admin']);
+
+    $this->postJson("/api/admin/goods/matches/{$match->id}/resolve", ['outcome' => 'cancelled'])->assertOk();
+
+    $trip = $match->travellerPost()->fresh();
+    expect($trip->status)->toBe('closed')->and($trip->outcome)->toBe('cancelled')->and($trip->kilos_left)->toBe(5)
+        ->and($match->senderPost()->fresh()->status)->toBe('closed');
+});
+
+test('a deal counts once, even when it is completed twice at the same moment', function (): void {
+    $match = agreedMatch();
+    $flow = app(\App\Bot\GoodsFlow::class);
+    $stale = $match->fresh();
+
+    $flow->complete($match->fresh());
+    $before = count(sentMessages());
+    $flow->complete($stale);
+
+    expect(Member::findByTelegramUser(801)->trips_completed)->toBe(1)
+        ->and(Member::findByTelegramUser(802)->trips_completed)->toBe(1)
+        ->and(count(sentMessages()))->toBe($before);
+});
+
+test('an older reminder\'s "Not yet" does not take back a "Delivered"', function (): void {
+    $match = agreedMatch();
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+
+    pressG(801, "g:c:{$match->id}:yes");
+    pressG(801, "g:r:{$match->id}:5");
+    pressG(801, "g:c:{$match->id}:wait");
+
+    expect($match->fresh()->checkin_owner)->toBe('yes')->and(lastTo(801)['text'])->toBe('Thank you. Your rating is saved.');
+
+    // Two weeks of silence from the other side: one yes still counts as delivered, and so do the stars.
+    $this->travelTo(CarbonImmutable::parse('2026-12-06 06:00:00', 'UTC'));
+    $this->artisan('goods:chores');
+    expect($match->fresh()->status)->toBe('completed')
+        ->and(implode("\n", textsTo(801)))->toContain('Your deal with Sara T is now closed')->not->toContain('confirmed it too');
+});
+
+test('someone who has not rated is asked once more a couple of days after delivery', function (): void {
+    $match = agreedMatch();
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+    pressG(801, "g:c:{$match->id}:yes");
+    pressG(801, "g:r:{$match->id}:5");
+    pressG(802, "g:c:{$match->id}:yes");
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-22 06:00:00', 'UTC'));
+    $this->artisan('goods:chores');
+    expect(collect(textsTo(802))->contains(fn ($t) => str_contains($t, 'You have not rated')))->toBeFalse();
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-23 07:00:00', 'UTC'));
+    $this->artisan('goods:chores');
+    $this->artisan('goods:chores');
+    expect(collect(textsTo(802))->filter(fn ($t) => str_contains($t, 'You have not rated Abebe K yet')))->toHaveCount(1)
+        ->and(buttonsOf(lastTo(802)))->toHaveCount(5)
+        ->and(collect(textsTo(801))->contains(fn ($t) => str_contains($t, 'You have not rated')))->toBeFalse();
+});
+
+test('/mygoods offers "Delivered" on a deal that is due, in case the check-in message is gone', function (): void {
+    $match = agreedMatch();
+
+    say(802, '/mygoods');
+    expect(buttonsOf(lastTo(802)))->not->toContain("g:c:{$match->id}:yes");
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+    say(802, '/mygoods');
+    expect(buttonsOf(lastTo(802)))->toContain("g:c:{$match->id}:yes");
+});
+
+test('the best rated come first, one five-star rating does not beat twenty at 4.8, and poor ratings fall below a newcomer', function (): void {
+    $people = [
+        'new' => [811, null, 0],
+        'one_five' => [812, 5.0, 1],
+        'proven' => [813, 4.8, 20],
+        'poor' => [814, 2.5, 6],
+    ];
+    $posts = [];
+    foreach ($people as $key => [$userId, $average, $count]) {
+        $member = goodsMember($userId, ucfirst($key));
+        $member->forceFill(['rating_avg' => $average, 'rating_count' => $count])->save();
+        $posts[$key] = postTrip($userId, sprintf('%02d/11/2026', 20 + $count % 5));
+    }
+
+    $names = fn (string $query = '') => collect($this->getJson('/api/public/goods'.$query)->assertOk()->json('data'))->pluck('member.name')->all();
+
+    expect($names())->toBe(['Proven', 'One_five', 'New', 'Poor']);
+
+    // Asked for by date, soonest first, whatever the stars.
+    expect($names('?sort=date')[0])->not->toBe('Proven');
+
+    // The bot's list and the "posts that fit" list read the same order.
+    $sender = goodsMember(815, 'Sender S');
+    pressG(815, 'g:b:traveller:to_et');
+    $list = lastTo(815)['text'];
+    expect(strpos($list, 'Proven'))->toBeLessThan(strpos($list, 'One_five'))
+        ->and(strpos($list, 'One_five'))->toBeLessThan(strpos($list, 'New'))
+        ->and(strpos($list, 'New'))->toBeLessThan(strpos($list, 'Poor'))
+        ->and($list)->toContain('🏅 Proven');
+
+    $parcel = postParcel($sender->telegram_user_id, '21/11/2026');
+    expect($parcel->candidates(5)->pluck('member.display_name')->all())->toBe(['Proven', 'One_five', 'New', 'Poor']);
+    $this->getJson('/api/public/goods/'.$posts['proven']->id)->assertOk()->assertJsonPath('post.member.top', true);
+});
+
+test('a closed post answers its link with a plain "closed", and shows nothing of it', function (): void {
+    $match = agreedMatch();
+    $parcel = $match->senderPost();
+
+    $this->getJson('/api/public/goods/'.$parcel->id)->assertOk()
+        ->assertJsonPath('closed', true)->assertJsonPath('post', null)->assertJsonMissingPath('member');
+
+    $parcel->forceFill(['status' => 'hidden'])->save();
+    $this->getJson('/api/public/goods/'.$parcel->id)->assertNotFound();
+});
+
+test('the board shows what was lately delivered, without names', function (): void {
+    $match = agreedMatch();
+    expect($this->getJson('/api/public/goods')->json('recent'))->toBe([]);
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+    pressG(801, "g:c:{$match->id}:yes");
+    pressG(802, "g:c:{$match->id}:yes");
+    pressG(801, "g:r:{$match->id}:5");
+    pressG(802, "g:r:{$match->id}:4");
+
+    $recent = $this->getJson('/api/public/goods')->assertOk()->json('recent');
+    expect($recent)->toHaveCount(1)
+        ->and($recent[0]['kilos'])->toBe(5)
+        ->and($recent[0]['from']['key'])->toBe('dubai')
+        ->and((float) $recent[0]['stars'])->toBe(4.5)
+        ->and(json_encode($recent))->not->toContain('Abebe')->not->toContain('Sara');
+});
+
 test('a match nobody answers is settled after two weeks: one yes completes it, silence leaves it unconfirmed', function (): void {
     $match = agreedMatch();
     $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
@@ -388,7 +628,46 @@ test('a match nobody answers is settled after two weeks: one yes completes it, s
     $this->artisan('goods:chores');
 
     expect($match->fresh()->status)->toBe('unconfirmed')
-        ->and(Member::findByTelegramUser(801)->trips_completed)->toBe(0);
+        ->and(Member::findByTelegramUser(801)->trips_completed)->toBe(0)
+        ->and($match->senderPost()->fresh()->status)->toBe('closed')
+        ->and($match->senderPost()->fresh()->outcome)->toBe('unconfirmed');
+});
+
+test('a member finishes a deal on the website: delivered from the day after the flight, then stars', function (): void {
+    $match = agreedMatch();
+    $token = siteAccount(802);
+    $traveller = Member::findByTelegramUser(801);
+
+    $deal = fn () => asAccount($token)->getJson('/api/owner/goods')->assertOk()->json('deals.0');
+    expect($deal()['can_confirm'])->toBeFalse()->and($deal()['can_rate'])->toBeFalse();
+
+    // Too early.
+    asAccount($token)->postJson("/api/owner/goods/deals/{$match->id}/delivered", ['answer' => 'yes'])->assertStatus(422)->assertJsonPath('status', 'not_due');
+
+    $this->travelTo(CarbonImmutable::parse('2026-11-21 06:00:00', 'UTC'));
+    expect($deal()['can_confirm'])->toBeTrue();
+
+    asAccount($token)->postJson("/api/owner/goods/deals/{$match->id}/delivered", ['answer' => 'maybe'])->assertStatus(422);
+    asAccount($token)->postJson("/api/owner/goods/deals/{$match->id}/delivered", ['answer' => 'yes'])->assertOk()->assertJsonPath('status', 'confirmed');
+
+    expect($deal()['can_confirm'])->toBeFalse()->and($deal()['said_delivered'])->toBeTrue()->and($deal()['can_rate'])->toBeTrue()
+        ->and(lastTo(801)['text'])->toContain('Sara T says the parcel');
+
+    asAccount($token)->postJson("/api/owner/goods/deals/{$match->id}/rate", ['stars' => 9])->assertStatus(422);
+    asAccount($token)->postJson("/api/owner/goods/deals/{$match->id}/rate", ['stars' => 5])->assertOk()->assertJsonPath('status', 'rated');
+    asAccount($token)->postJson("/api/owner/goods/deals/{$match->id}/rate", ['stars' => 1])->assertOk()->assertJsonPath('status', 'already');
+    expect($deal()['my_stars'])->toBe(5)->and($deal()['can_rate'])->toBeFalse();
+
+    // The other side confirms in the bot: the deal closes, and both ratings count once they have rated too.
+    pressG(801, "g:c:{$match->id}:yes");
+    expect($deal()['status'])->toBe('completed');
+    pressG(801, "g:r:{$match->id}:4");
+    expect($traveller->fresh()->rating_count)->toBe(1)->and((float) $traveller->fresh()->rating_avg)->toBe(5.0);
+
+    // Someone else's deal is not theirs to answer.
+    $stranger = siteAccount(803);
+    goodsMember(803, 'Hana G');
+    asAccount($stranger)->postJson("/api/owner/goods/deals/{$match->id}/delivered", ['answer' => 'yes'])->assertNotFound();
 });
 
 test('a "no" at check-in goes to the moderators, and two failed deals take a member off the board', function (): void {

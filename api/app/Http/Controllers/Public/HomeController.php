@@ -21,9 +21,9 @@ class HomeController extends Controller
     public function home(TelegramBotService $telegram): JsonResponse
     {
         // Plain arrays only: the cache refuses to restore objects it was not told about.
-        $home = Cache::remember('public.home.v2', 60, function (): array {
+        $home = Cache::remember('public.home.v3', 60, function (): array {
             $businesses = Business::query()->listed()->with(['city', 'photos' => fn ($q) => $q->where('approved', true)->select(['id', 'business_id', 'kind', 'approved', 'updated_at'])])
-                ->orderByDesc('reviewed_at')->limit(24)->get()
+                ->bestRatedFirst()->orderByDesc('reviewed_at')->limit(24)->get()
                 // Listings with a photo lead the row.
                 ->sortBy(fn (Business $b) => $b->cover() === null ? 1 : 0)->take(8)->values();
 

@@ -227,8 +227,10 @@ const DirectoryInner = () => {
   // The list row carries no reports; the open listing's own page does.
   const detail = useApiQuery<{ business: Business }>(["businesses", "one", current?.id], `/admin/businesses/${current?.id}`, { enabled: Boolean(current?.id) });
   const reports = detail.data?.business.reports ?? [];
+  const ratings = detail.data?.business.ratings ?? [];
 
   const invalidate = [["businesses"], ["dashboard"], ["directory-cities"]];
+  const removeRating = useApiMutation<unknown, number>((req, rating) => req(`/admin/businesses/${current?.id}/ratings/${rating}`, "DELETE"), [["businesses"]]);
   const { upload } = useApi();
   // The fields first (only the changed ones on an edit), then the photo against the saved listing's id.
   const save = useApiMutation<{ business: Business }, Form>(async (req, f) => {
@@ -397,6 +399,7 @@ const DirectoryInner = () => {
                       <div className="font-medium text-default-900">
                         <button type="button" className="text-left hover:underline focus-visible:underline" onClick={(e) => { e.stopPropagation(); open(b); }}>{b.name}</button>
                         {b.verified && <span title="Verified"> ✅</span>}
+                        {b.rating_count > 0 && <span className="ml-1.5 text-xs font-normal text-default-600 whitespace-nowrap">⭐ {b.rating_avg?.toFixed(1)} ({b.rating_count})</span>}
                       </div>
                       {b.description && <div className="text-xs text-default-500 truncate">{b.description}</div>}
                       {b.review_note && b.status !== "approved" && <div className="text-xs text-warning mt-1">{b.review_note}</div>}
@@ -621,6 +624,32 @@ const DirectoryInner = () => {
                 <div className="rounded-lg border border-destructive/20 bg-destructive/[0.03] p-3 text-sm">
                   <div className="font-medium text-default-900 mb-1">Reports of wrong information ({reports.length})</div>
                   <ul className="space-y-1">{reports.map((r, i) => <li key={i}><span className="text-default-800">{r.reason || "No reason given"}</span> <span className="text-default-500">· {r.member ?? "A member"} · {formatDateTime(r.at)}</span></li>)}</ul>
+                </div>
+              )}
+
+              {ratings.length > 0 && (
+                <div className="rounded-lg border border-default-200 p-3 text-sm">
+                  <div className="font-medium text-default-900 mb-1">
+                    Member ratings: ⭐ {detail.data?.business.rating_avg?.toFixed(1)} from {detail.data?.business.rating_count}
+                  </div>
+                  <p className="text-xs text-default-500 mb-2">The directory is ordered by these. A banned member&apos;s stars do not count. Take off any that look fake.</p>
+                  <ul className="space-y-1.5 max-h-56 overflow-y-auto">
+                    {ratings.map((r) => (
+                      <li key={r.id} className="flex items-center justify-between gap-2">
+                        <span className="min-w-0">
+                          <span className="font-medium text-default-800">{r.stars} ⭐</span>{" "}
+                          <span className={r.member?.banned ? "text-destructive" : "text-default-700"}>{r.member?.name ?? "A former member"}{r.member?.banned ? " (banned)" : ""}</span>
+                          {r.member?.username && <span className="text-default-500"> @{r.member.username}</span>}
+                          <span className="text-default-500"> · {formatDateTime(r.at)}</span>
+                        </span>
+                        <ConfirmButton size="xs" variant="ghost" color="destructive" disabled={removeRating.isPending} label="Remove"
+                          title="Remove this rating"
+                          description="The stars come off this listing and its place in the directory is worked out again. The member can rate it again."
+                          confirmLabel="Remove" tone="destructive"
+                          onConfirm={() => removeRating.mutateAsync(r.id).then(() => { toast.success("Rating removed."); }).catch((e: Error) => { toast.error(errorText(e)); throw e; })} />
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\TrustScore;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -96,6 +97,33 @@ class Business extends Model
             ?? $cover->where('approved', true)->sortByDesc('id')->first();
     }
 
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(BusinessRating::class);
+    }
+
+    /** Whether this member owns the listing, by the account that claimed it. */
+    public function isOwnedBy(Member $member): bool
+    {
+        if ($this->owner_id === null) {
+            return false;
+        }
+
+        return BusinessOwner::query()->whereKey($this->owner_id)
+            ->where(fn ($q) => $q->where('member_id', $member->id)->orWhere('telegram_user_id', $member->telegram_user_id))
+            ->exists();
+    }
+
+    /** Stars out of five, or null before anyone has rated it, and how many ratings that is. */
+    public function ratingPayload(): array
+    {
+        return [
+            'rating' => (int) $this->rating_count > 0 ? round((float) $this->rating_avg, 1) : null,
+            'ratings' => (int) $this->rating_count,
+            'top' => TrustScore::isTop($this->rating_avg, $this->rating_count),
+        ];
+    }
+
     /** What the website shows. Only ever called for a listed business. */
     public function publicPayload(bool $full = false): array
     {
@@ -116,10 +144,16 @@ class Business extends Model
             'phone' => $this->phone,
             'whatsapp' => $this->whatsapp,
             'telegram' => $this->telegram,
-        ];
+        ] + $this->ratingPayload();
 
         if ($full) {
             $payload += [
+                // How many gave each number of stars, from five down.
+                'rating_breakdown' => (function (): array {
+                    $counts = $this->ratings()->counting()->selectRaw('stars, count(*) as n')->groupBy('stars')->pluck('n', 'stars');
+
+                    return array_map(fn (int $stars) => ['stars' => $stars, 'count' => (int) ($counts[$stars] ?? 0)], range(BusinessRating::MAX_STARS, BusinessRating::MIN_STARS));
+                })(),
                 'about' => $this->about,
                 'website' => $this->website,
                 'hours' => $this->hours,
@@ -161,5 +195,11 @@ class Business extends Model
     public function scopeListed($query)
     {
         return $query->where('status', 'approved');
+    }
+
+    /** Best standing first, then the better known of two equals. The caller adds what settles a tie. */
+    public function scopeBestRatedFirst($query)
+    {
+        return $query->orderByRaw(TrustScore::sql('rating_avg', 'rating_count').' desc')->orderByDesc('rating_count');
     }
 }

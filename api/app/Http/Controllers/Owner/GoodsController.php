@@ -19,10 +19,10 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * The goods board for a signed-in member on the website: their posts and
- * deals, a new trip or parcel, closing one, and "interested". The rules are
- * the bot's own (GoodsFlow): verified members only, three open posts of a
- * kind, interest needs your own post on the other side, and accepting,
- * agreeing and the check-in happen in Telegram.
+ * deals, a new trip or parcel, closing one, "interested", and the end of a
+ * deal (delivered, stars). The rules are the bot's own (GoodsFlow): verified
+ * members only, three open posts of a kind, interest needs your own post on
+ * the other side, and accepting and agreeing happen in Telegram.
  */
 class GoodsController extends Controller
 {
@@ -41,7 +41,7 @@ class GoodsController extends Controller
             ->withCount(['matches as live_requests' => fn ($q) => $q->whereIn('status', ['requested', 'introduced', 'agreed'])])
             ->orderByDesc('date')->limit(20)->get();
 
-        $deals = GoodsMatch::query()->with(['post.member', 'requesterPost.member', 'owner', 'requester'])
+        $deals = GoodsMatch::query()->with(['post.member', 'requesterPost.member', 'owner', 'requester', 'ratings'])
             ->where(fn ($q) => $q->where('owner_id', $member->id)->orWhere('requester_id', $member->id))
             ->latest('id')->limit(20)->get();
 
@@ -146,23 +146,47 @@ class GoodsController extends Controller
         return response()->json($answer);
     }
 
+    /** "Delivered successfully", "not yet" or "there is a problem", from the day after the flight. */
+    public function delivered(Request $request, int $match): JsonResponse
+    {
+        $data = $request->validate(['answer' => ['required', Rule::in(['yes', 'no', 'wait'])]]);
+        [$member, $deal] = $this->dealOf($request, $match);
+
+        if ($deal->checkin_on === null || $deal->checkin_on->toDateString() > GoodsPost::today()) {
+            return response()->json(['status' => 'not_due'], 422);
+        }
+
+        return response()->json(['status' => $this->goods->recordCheckin($member, $deal, $data['answer'])]);
+    }
+
+    /** Stars for the other side, once this side has said it was delivered. */
+    public function rate(Request $request, int $match): JsonResponse
+    {
+        $data = $request->validate(['stars' => ['required', 'integer', 'min:1', 'max:5']]);
+        [$member, $deal] = $this->dealOf($request, $match);
+
+        return response()->json(['status' => $this->goods->recordRating($member, $deal, (int) $data['stars'])]);
+    }
+
     // ---- helpers ------------------------------------------------------------------
 
-    /**
-     * The community member behind this website account: linked when they signed in, or found
-     * by their Telegram id if they joined the community afterwards.
-     */
+    /** @return array{0: Member, 1: GoodsMatch} one of this member's own deals, or a 404 */
+    private function dealOf(Request $request, int $match): array
+    {
+        $member = $this->member($request);
+        $deal = GoodsMatch::query()->with(['post.member', 'requesterPost.member', 'owner', 'requester'])->find($match);
+
+        abort_if($member === null || ! $member->isActive() || $deal === null || ! $deal->involves($member), 404);
+
+        return [$member, $deal];
+    }
+
     private function member(Request $request): ?Member
     {
         /** @var BusinessOwner $owner */
         $owner = $request->user();
-        $member = $owner->member ?? Member::findByTelegramUser((int) $owner->telegram_user_id);
 
-        if ($member !== null && $owner->member_id !== $member->id) {
-            $owner->forceFill(['member_id' => $member->id])->save();
-        }
-
-        return $member;
+        return $owner->communityMember();
     }
 
     /** A member who may use the board, or the reason why not, as a 403 the website words. */
@@ -216,6 +240,7 @@ class GoodsController extends Controller
     {
         return PublicGoods::card($post) + [
             'status' => $post->status,
+            'outcome' => $post->outcome,
             'open' => $post->isOpen(),
             // Counted with the list when it was read (withCount), else here.
             'requests' => $post->live_requests !== null
@@ -232,17 +257,28 @@ class GoodsController extends Controller
             return null;
         }
 
-        $other = $match->owner_id === $member->id ? $match->requester : $match->owner;
+        $isOwner = $match->owner_id === $member->id;
+        $other = $isOwner ? $match->requester : $match->owner;
         $card = PublicGoods::card($trip);
+        $mine = $isOwner ? $match->checkin_owner : $match->checkin_requester;
+        $theirs = $isOwner ? $match->checkin_requester : $match->checkin_owner;
+        $stars = $match->ratings->firstWhere('from_member_id', $member->id)?->stars;
+        $due = $match->status === 'agreed' && $match->checkin_on !== null && $match->checkin_on->toDateString() <= GoodsPost::today();
 
         return [
             'id' => $match->id,
             'status' => $match->status,
-            'role' => $match->owner_id === $member->id ? 'owner' : 'requester',
+            'role' => $isOwner ? 'owner' : 'requester',
             'other_name' => (string) $other?->display_name,
             'route' => ['from' => $card['from']['name'], 'to' => $card['to']['name']],
             'date' => $trip->date->toDateString(),
             'kilos' => $match->kilos !== null ? (int) $match->kilos : null,
+            'checkin_on' => $match->checkin_on?->toDateString(),
+            'said_delivered' => $mine === 'yes',
+            'they_said_delivered' => $theirs === 'yes',
+            'can_confirm' => $due && in_array($mine, [null, 'wait'], true),
+            'can_rate' => $stars === null && ($match->status === 'completed' || ($match->status === 'agreed' && $mine === 'yes')),
+            'my_stars' => $stars !== null ? (int) $stars : null,
         ];
     }
 }

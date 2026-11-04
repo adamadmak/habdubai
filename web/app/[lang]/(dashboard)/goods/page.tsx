@@ -34,7 +34,7 @@ type Decision = { match: GoodsMatchRow; outcome: Outcome; failed_member_id: numb
 const MATCH_TABS = [
   ["live", "In progress"],
   ["agreed", "Agreed"],
-  ["completed", "Delivered"],
+  ["completed", "Delivered · closed"],
   ["failed", "Failed"],
   ["unconfirmed", "Unconfirmed"],
   ["cancelled", "Cancelled"],
@@ -43,7 +43,7 @@ const MATCH_TABS = [
 
 const POST_TABS = [
   ["open", "Open"],
-  ["matched", "Matched"],
+  ["matched", "Agreed"],
   ["expired", "Date passed"],
   ["closed", "Closed"],
   ["hidden", "Hidden"],
@@ -59,9 +59,25 @@ const POST_COLOR: Record<string, "info" | "success" | "warning" | "destructive" 
   open: "info", matched: "success", expired: "secondary", closed: "secondary", hidden: "destructive",
 };
 
-const ANSWER: Record<string, string> = { yes: "✅ arrived", no: "❌ problem", wait: "⏳ not yet" };
+const ANSWER: Record<string, string> = { yes: "✅ delivered", no: "❌ problem", wait: "⏳ not yet" };
 
 const LIVE = ["requested", "introduced", "agreed"];
+
+/** How a closed post ended, in the words the Posts list uses. */
+const ENDED: Record<string, { label: string; color: "success" | "destructive" | "warning" | "secondary" }> = {
+  delivered: { label: "Closed · delivered", color: "success" },
+  failed: { label: "Closed · failed", color: "destructive" },
+  unconfirmed: { label: "Closed · nobody confirmed", color: "warning" },
+  cancelled: { label: "Closed · called off", color: "secondary" },
+  member: { label: "Closed by the member", color: "secondary" },
+};
+
+/** Who gave whom how many stars on a match. Hidden ones wait until both have rated, or a week. */
+function starsOf(m: GoodsMatchRow): string {
+  return m.ratings
+    .map((r) => `${r.from_member_id === m.traveller?.id ? "Traveller" : "Sender"} gave ${r.stars}⭐${r.visible ? "" : " (hidden)"}`)
+    .join(", ");
+}
 
 function Chips({ tabs, value, counts, onChange }: { tabs: readonly (readonly [string, string])[]; value: string; counts?: Record<string, number>; onChange: (v: string) => void }) {
   const total = counts ? Object.values(counts).reduce((s, n) => s + n, 0) : 0;
@@ -184,7 +200,7 @@ const GoodsInner = () => {
     <div>
       <PageTitle
         title="Goods board"
-        description="Travellers with spare kilos and members who need something carried. No money goes through the platform; members agree between themselves. A “no” at the check-in after the flight opens a dispute here."
+        description="Travellers with spare kilos and members who need something carried. No money goes through the platform. A parcel leaves the website when both agree, and a trip when it is full or flown. The day after the flight both confirm delivery and give stars, and the post closes: you still see it here. A “no” opens a dispute."
       />
 
       <Tabs value={["disputes", "matches", "posts"].includes(url.tab) ? url.tab : "disputes"} onValueChange={(tab) => setUrl({ tab })}>
@@ -272,8 +288,9 @@ const GoodsInner = () => {
                       <TableCell><Person member={m.traveller} /></TableCell>
                       <TableCell><Person member={m.sender} /></TableCell>
                       <TableCell>
-                        <Badge color={MATCH_COLOR[m.status]} variant="soft" className="capitalize">{m.status}</Badge>
-                        {m.ratings.length > 0 && <div className="text-xs text-default-500 mt-1">{m.ratings.map((r) => `${r.stars}⭐${r.visible ? "" : " (hidden)"}`).join(", ")}</div>}
+                        <Badge color={MATCH_COLOR[m.status]} variant="soft" className="capitalize">{m.status === "completed" ? "Delivered · closed" : m.status}</Badge>
+                        {m.closed_at && m.status === "completed" && <div className="text-xs text-default-500 mt-1">{formatDate(m.closed_at)}</div>}
+                        {m.ratings.length > 0 && <div className="text-xs text-default-500 mt-1">{starsOf(m)}</div>}
                       </TableCell>
                       <TableCell className="text-xs text-default-600 whitespace-nowrap">
                         {m.checkin_on ? <>
@@ -341,7 +358,12 @@ const GoodsInner = () => {
                         {p.hidden_reason && <div className="text-xs text-destructive mt-1">Hidden: {p.hidden_reason}</div>}
                       </TableCell>
                       <TableCell>
-                        <Badge color={POST_COLOR[p.status]} variant="soft" className="capitalize">{p.status === "expired" ? "date passed" : p.status}</Badge>
+                        {p.status === "closed" && p.outcome && ENDED[p.outcome] ? (
+                          <Badge color={ENDED[p.outcome].color} variant="soft">{ENDED[p.outcome].label}</Badge>
+                        ) : (
+                          <Badge color={POST_COLOR[p.status]} variant="soft" className="capitalize">{p.status === "expired" ? "date passed" : p.status === "matched" ? "agreed, not delivered yet" : p.status}</Badge>
+                        )}
+                        {p.closed_at && <div className="text-xs text-default-500 mt-1">{formatDate(p.closed_at)}</div>}
                         {!p.in_group && p.status === "open" && <div className="text-xs text-default-500 mt-1">not in the group</div>}
                       </TableCell>
                       <TableCell>
