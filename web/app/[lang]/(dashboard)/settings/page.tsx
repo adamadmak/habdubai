@@ -55,10 +55,32 @@ const SettingsPage = () => {
   const telegram = data.telegram;
   const values = form ?? data.settings;
   const edit = (key: string, value: string) => setForm((current) => ({ ...(current ?? data.settings), [key]: value }));
+  const submitToken = () =>
+    saveToken
+      .mutateAsync(token)
+      .then((r) => {
+        setToken("");
+        if (r.webhook_error) {
+          toast.success(`Token saved for @${r.bot.username ?? "bot"}. Webhook not registered: ${r.webhook_error}`, { duration: 8000 });
+        } else {
+          toast.success(`Token saved for @${r.bot.username ?? "bot"} and the webhook registered.`);
+        }
+      })
+      .catch((err) => toast.error(errorText(err)));
 
   return (
     <div>
       <PageTitle title="Settings" description="Operator values live in the database, so they survive a deploy and never depend on environment variables." />
+
+      {!telegram.configured && (
+        <div role="alert" className="mb-4 rounded-xl border border-destructive/25 bg-destructive/[0.06] p-4 text-sm">
+          <p className="font-medium text-destructive">The bot is not answering anyone.</p>
+          <p className="mt-1 text-default-700">
+            {telegram.token_unreadable ? "Its saved token can no longer be read." : "No token is saved yet."} Paste the token from BotFather in the{" "}
+            <a href="#telegram-bot" className="font-medium text-primary underline underline-offset-2">Telegram bot box</a> and press Save token and register webhook.
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -70,10 +92,13 @@ const SettingsPage = () => {
               className="space-y-5"
               onSubmit={(e) => {
                 e.preventDefault();
+                // A token waiting in its own box goes too: "Settings saved" must not leave it unsaved.
+                const tokenTyped = token.trim() !== "";
+                if (tokenTyped) void submitToken();
                 // Only what this admin changed: another admin's save in the meantime is not reverted.
                 const changed = Object.fromEntries(Object.entries(values).filter(([key, value]) => value !== (data.settings[key] ?? "")));
                 if (Object.keys(changed).length === 0) {
-                  toast("Nothing changed.");
+                  if (!tokenTyped) toast("Nothing changed.");
                   return;
                 }
                 save
@@ -119,7 +144,7 @@ const SettingsPage = () => {
         </Card>
 
         <div className="space-y-4">
-          <Card>
+          <Card id="telegram-bot" className="scroll-mt-24">
             <CardHeader>
               <CardTitle className="text-base flex items-center justify-between">
                 Telegram bot
@@ -132,17 +157,7 @@ const SettingsPage = () => {
                 className="space-y-3"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  saveToken
-                    .mutateAsync(token)
-                    .then((r) => {
-                      setToken("");
-                      if (r.webhook_error) {
-                        toast.success(`Token saved for @${r.bot.username ?? "bot"}. Webhook not registered: ${r.webhook_error}`, { duration: 8000 });
-                      } else {
-                        toast.success(`Token saved for @${r.bot.username ?? "bot"} and the webhook registered.`);
-                      }
-                    })
-                    .catch((err) => toast.error(errorText(err)));
+                  void submitToken();
                 }}
               >
                 <Input type="password" aria-label="Bot token" value={token} onChange={(e) => setToken(e.target.value)} placeholder="123456789:ABC…" autoComplete="new-password" data-1p-ignore data-lpignore="true" />
