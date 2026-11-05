@@ -4,11 +4,12 @@ import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import { ArrowRight, ArrowUpRight, Briefcase, ChevronRight, Handshake, Luggage, MessageCircle, Send, ShieldCheck, Store, Users, type LucideIcon } from "lucide-react";
 import { Section, Steps } from "@/components/Bits";
-import { BusinessCard, EventCard, firstLine, JobCard, NewsCard } from "@/components/Cards";
+import { BusinessCard, EventCard, firstLine, JobCard } from "@/components/Cards";
 import { BusinessIcon } from "@/components/CategoryIcon";
 import { Clocks } from "@/components/Clocks";
 import { KindBadge, placeTint } from "@/components/Cover";
 import { HomeSearch } from "@/components/HomeSearch";
+import { NewsMarquee } from "@/components/NewsMarquee";
 import { Night } from "@/components/Dawn";
 import { GoodsTeaser } from "@/components/goods/GoodsBits";
 import { api, type GoodsBoard, type Home } from "@/lib/api";
@@ -210,23 +211,20 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       {/* ---- The goods board: spare kilos between the two homes. ---- */}
       <GoodsTeaser lang={lang} d={d} board={goods} tone="iced" />
 
-      {(home.events.length > 0 || home.announcements.length > 0) && (
-        <div className="mx-auto grid max-w-page gap-x-8 md:grid-cols-[1fr_1.6fr]">
-          {home.events.length > 0 && (
-            <Section title={d.home.eventsTitle} more={{ href: `/${lang}/news?events=1`, label: d.common.seeAll }} className="w-full md:px-0 md:pl-4">
-              <div className="flex flex-col gap-3">
-                {home.events.map((e) => <EventCard key={e.id} item={e} lang={lang} />)}
-              </div>
-            </Section>
-          )}
-          {home.announcements.length > 0 && (
-            <Section title={d.home.newsTitle} more={{ href: `/${lang}/news`, label: d.common.seeAll }} className="w-full md:px-0 md:pr-4">
-              <div className="row-scroll md:mx-0 md:grid-flow-row md:grid-cols-2 md:overflow-visible md:px-0">
-                {home.announcements.slice(0, 4).map((a) => <NewsCard key={a.id} item={a} lang={lang} />)}
-              </div>
-            </Section>
-          )}
-        </div>
+      {home.events.length > 0 && (
+        <Section title={d.home.eventsTitle} more={{ href: `/${lang}/news?events=1`, label: d.common.seeAll }}>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {home.events.map((e) => <EventCard key={e.id} item={e} lang={lang} />)}
+          </div>
+        </Section>
+      )}
+
+      {/* ---- News runs the full width of the page, so it never sits in half of it. ---- */}
+      {home.announcements.length > 0 && (
+        <>
+          <Section title={d.home.newsTitle} more={{ href: `/${lang}/news`, label: d.common.seeAll }}>{null}</Section>
+          <NewsMarquee items={home.announcements} lang={lang} />
+        </>
       )}
 
       {/* ---- How joining works, in three steps. ---- */}

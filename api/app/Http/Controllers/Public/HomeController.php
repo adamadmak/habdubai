@@ -43,7 +43,7 @@ class HomeController extends Controller
                 'events' => Announcement::query()->with('topic')->where('status', 'published')->whereNotNull('event_date')
                     ->whereDate('event_date', '>=', $today)->orderBy('event_date')->limit(4)->get()
                     ->map(fn (Announcement $a) => AnnouncementController::payload($a))->values()->all(),
-                'announcements' => Announcement::query()->with('topic')->where('status', 'published')->orderByDesc('published_at')->limit(6)->get()
+                'announcements' => Announcement::query()->with('topic')->where('status', 'published')->orderByDesc('published_at')->limit(8)->get()
                     ->map(fn (Announcement $a) => AnnouncementController::payload($a))->values()->all(),
                 'categories' => collect(Choices::BUSINESS_CATEGORIES)
                     ->map(fn (array $labels, string $key) => ['key' => $key, 'name' => $labels, 'count' => (int) ($byCategory[$key] ?? 0)])
