@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import { CalendarPlus, ChevronLeft, MapPin } from "lucide-react";
-import { DateLeaf, firstLine, NewsCard } from "@/components/Cards";
+import { DateLeaf, firstLine, NewsCard, newsParts } from "@/components/Cards";
 import { ShareButton } from "@/components/ShareButton";
 import { apiOrNull, type Announcement } from "@/lib/api";
 import { daysUntil, ethiopianDate, formatDate, weekday } from "@/lib/format";
@@ -138,7 +138,16 @@ export default async function NewsItem({ params, searchParams }: { params: Promi
             </div>
           )}
 
-          <div className="prose-plain mt-5 max-w-[70ch] text-[1.0625rem] leading-relaxed" lang={textLang}>{text}</div>
+          <div className="prose-plain mt-5 max-w-[70ch] text-[1.0625rem] leading-relaxed" lang={textLang}>
+            {/* The heading is already above. A source's address can be followed, and never widens the page. */}
+            {(newsParts(text).head === firstLine(text, 140) ? text.slice(text.indexOf("\n")).trim() : text).split(/(https?:\/\/\S+)/).map((piece, i) =>
+              i % 2 === 1 ? (
+                <a key={i} href={piece} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-sm font-semibold text-primary underline">{piece}</a>
+              ) : (
+                piece
+              ),
+            )}
+          </div>
 
           <div className="mt-8">
             <ShareButton title={firstLine(text, 80)} url={siteUrl(`${lang}/news/${a.id}`)} labels={{ share: d.common.share, copied: d.common.copied }} />

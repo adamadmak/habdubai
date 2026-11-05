@@ -2018,9 +2018,9 @@ return [
         'om' => '🏪 Galmee daldalaa keessatti haaraa',
     ],
     'btn_job_on_site' => [
-        'am' => '🌐 በሦስት ቋንቋ',
-        'ti' => '🌐 ብሰለስተ ቋንቋ',
-        'en' => '🌐 In three languages',
+        'am' => '🌐 በአራት ቋንቋ',
+        'ti' => '🌐 ብኣርባዕተ ቋንቋ',
+        'en' => '🌐 In four languages',
         'om' => '🌐 Afaanota hundaan',
     ],
     'btn_dir_open_site' => [

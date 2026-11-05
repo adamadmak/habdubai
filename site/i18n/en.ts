@@ -77,7 +77,7 @@ export const en = {
     eventsTitle: "Coming up",
     newsTitle: "From the community",
     ownerTitle: "Own a Habesha business?",
-    ownerText: "List it for free. The community finds you here and in the Telegram channel, in three languages.",
+    ownerText: "List it for free. The community finds you here and in the Telegram channel, in four languages.",
     ownerCta: "List your business",
     joinTitle: "Everything else happens in our Telegram bot",
     joinLead: "Membership is free. You share your phone number with the bot once to prove you are a real person; nobody else ever sees it.",
@@ -99,7 +99,7 @@ export const en = {
       placesTitle: "Our places",
       placesText: "Injera, cargo, salons, places of worship and more, across the Emirates.",
       eventsTitle: "Coming up",
-      eventsEmpty: "Announcements from the consulate, associations and the community, in three languages.",
+      eventsEmpty: "Announcements from the consulate, associations and the community, in four languages.",
       ownerText: "List it free, on this website and in the Telegram channel. A moderator checks it within a day.",
       // The jobs and places tiles before anything is published.
       jobsWelcome: "Jobs are on their way",
@@ -208,7 +208,7 @@ export const en = {
 
   news: {
     title: "News and events",
-    lead: "Announcements from the consulate, churches, mosques, associations and the community, in three languages.",
+    lead: "Announcements from the consulate, churches, mosques, associations and the community, in four languages.",
     all: "Everything",
     events: "Upcoming events",
     empty: "Nothing posted here yet.",

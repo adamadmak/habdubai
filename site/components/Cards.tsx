@@ -133,6 +133,7 @@ export function NewsCard({ item, lang }: { item: Announcement; lang: Locale }) {
   const d = dict(lang);
   const text = pick(item.text, lang);
   const textLang = pickLang(item.text, lang);
+  const { head, body } = newsParts(text);
   return (
     <Link href={`/${lang}/news/${item.id}`} className="card lift flex h-full flex-col overflow-hidden">
       {item.photo ? (
@@ -148,7 +149,8 @@ export function NewsCard({ item, lang }: { item: Announcement; lang: Locale }) {
           {item.topic?.emoji && <span className="grid size-7 place-items-center rounded-full bg-accent-soft text-sm" aria-hidden="true">{item.topic.emoji}</span>}
           {label(item.topic?.name, lang)}
         </p>
-        <p className="line-clamp-3 font-medium leading-snug" lang={textLang}>{text}</p>
+        {head && <p className="line-clamp-2 font-bold leading-snug" lang={textLang}>{head}</p>}
+        <p className={`font-medium leading-snug ${head ? "line-clamp-2 text-sm text-muted" : "line-clamp-3"}`} lang={textLang}>{body}</p>
         <p className="mt-auto pt-1 text-xs text-faint">
           {item.event_date ? `${d.news.event} · ${formatDate(item.event_date, lang, "medium")}` : relative(item.published_at, lang)}
         </p>
@@ -178,6 +180,17 @@ export function ListingMock({ lang, className = "" }: { lang: Locale; className?
       </div>
     </div>
   );
+}
+
+/**
+ * A post written with a headline, then a blank line: the headline apart from the rest, with the
+ * source lines left for its page. A post in one piece is all body.
+ */
+export function newsParts(text: string): { head: string | null; body: string } {
+  const parts = text.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 2) return { head: null, body: text };
+  const rest = parts.slice(1).filter((part) => !/^(Source|ምንጭ|ምንጪ|Madda)\s*[:፦]/.test(part));
+  return { head: parts[0], body: rest.join(" ") };
 }
 
 /** The first sentence or line of an announcement, as its title. */
