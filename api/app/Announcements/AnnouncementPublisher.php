@@ -64,6 +64,31 @@ class AnnouncementPublisher
         return $count;
     }
 
+    /**
+     * Something already on the website goes on the channel too, and nothing else happens: no
+     * messages to subscribers, no pin, and its date stays. A failure is logged and leaves it unposted.
+     */
+    public function postToChannelOnly(Announcement $a): bool
+    {
+        $channel = JobSettings::channel();
+
+        if ($channel === '' || $a->channel_message_id) {
+            return false;
+        }
+
+        try {
+            $message = $this->telegram->sendText($channel, $this->channelText($a));
+            $a->forceFill(['channel_message_id' => $message['message_id'] ?? null])->save();
+            AuditLog::record(null, 'announcements.posted_to_channel', 'announcement', $a->id);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('An announcement could not be posted to the channel.', ['announcement_id' => $a->id, 'error' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+
     public function delete(Announcement $a, ?int $actorUserId = null): void
     {
         $channel = JobSettings::channel();
