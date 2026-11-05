@@ -6,6 +6,7 @@ use App\Bot\BotMessages;
 use App\Bot\Choices;
 use App\Models\AuditLog;
 use App\Models\Business;
+use App\Models\Job;
 use App\Models\BusinessClaim;
 use App\Services\TelegramBotService;
 use App\Support\Community;
@@ -66,6 +67,11 @@ class BusinessPublisher
     /** Off the website; the channel post goes too. */
     public function unpost(Business $business): void
     {
+        // A place that is no longer listed is not hiring either. A refresh of the card keeps its jobs.
+        if ($business->status !== 'approved') {
+            $this->closeJobs($business);
+        }
+
         $channel = JobSettings::channel();
         if ($channel === '' || ! $business->channel_message_id) {
             return;
@@ -249,6 +255,13 @@ class BusinessPublisher
         $url = PublicUrls::site($language.'/directory/'.$business->slug);
 
         return $url !== '' ? "\n".$url : '';
+    }
+
+    public function closeJobs(Business $business): void
+    {
+        $jobs = app(\App\Jobs\Pipeline\JobPublisher::class);
+
+        Job::query()->where('business_id', $business->id)->where('status', 'published')->get()->each(fn (Job $job) => $jobs->close($job));
     }
 
     private function tellOwner(Business $business, string $key, array $vars): void

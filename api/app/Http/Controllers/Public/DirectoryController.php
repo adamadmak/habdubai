@@ -6,6 +6,7 @@ use App\Bot\Choices;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\DirectoryCity;
+use App\Models\Job;
 use App\Support\ClientIp;
 use App\Support\Search;
 use Illuminate\Database\Eloquent\Builder;
@@ -78,6 +79,9 @@ class DirectoryController extends Controller
 
         return response()->json([
             'business' => $business->publicPayload(full: true),
+            // Who this place is hiring right now.
+            'jobs' => Job::query()->where('business_id', $business->id)->where('status', 'published')->latest('published_at')->limit(6)->get()
+                ->map(fn (Job $job) => JobController::payload($job))->values(),
             'nearby' => $nearby->map(fn (Business $b) => $b->publicPayload())->values(),
         ])->header('Cache-Control', 'public, max-age=60');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Pipeline;
 
+use App\Bot\BotMessages;
 use App\Models\AuditLog;
 use App\Models\Job;
 use App\Services\TelegramBotService;
@@ -20,10 +21,13 @@ class JobPublisher
         private readonly TelegramBotService $telegram,
         private readonly JobCard $card,
         private readonly JobAlerts $alerts,
+        private readonly BotMessages $messages,
     ) {}
 
     public function publish(Job $job, ?int $reviewerId = null): void
     {
+        $first = $job->published_at === null;
+
         $job->forceFill([
             'status' => 'published',
             'published_at' => $job->published_at ?? now(),
@@ -33,6 +37,10 @@ class JobPublisher
 
         $this->post($job);
         $this->alerts->queueFor($job);
+
+        if ($first) {
+            $this->tellOwner($job, 'owner_job_live', ['title' => e($job->title), 'link' => $this->jobLink($job)]);
+        }
     }
 
     public function hold(Job $job, string $reason): void
@@ -55,6 +63,8 @@ class JobPublisher
             JobSettings::blockCompany($job->company);
             AuditLog::record($reviewerId, 'jobs.company_blocked', 'job', $job->id, null, ['company' => $job->company]);
         }
+
+        $this->tellOwner($job, 'owner_job_rejected', ['title' => e($job->title), 'reason' => $reason ? "\n\n".e($reason) : '']);
     }
 
     public function close(Job $job): void
@@ -74,6 +84,29 @@ class JobPublisher
         if ($channel !== '' && $job->channel_message_id) {
             $this->telegram->editText($channel, (int) $job->channel_message_id, $this->card->channelText($job), $this->card->channelKeyboard($job));
         }
+    }
+
+    /** The business hears the decision on its own post in the bot. It sees it on the website either way. */
+    private function tellOwner(Job $job, string $key, array $vars): void
+    {
+        $owner = $job->business_id ? $job->business?->owner : null;
+
+        if ($owner === null) {
+            return;
+        }
+
+        try {
+            $this->telegram->sendText($owner->chatId(), $this->messages->text($key, $owner->language, $vars));
+        } catch (\Throwable) {
+            // Never undoes the decision.
+        }
+    }
+
+    private function jobLink(Job $job): string
+    {
+        $url = \App\Support\PublicUrls::site('en/jobs/'.$job->id);
+
+        return $url !== '' ? "\n".$url : '';
     }
 
     private function post(Job $job): void

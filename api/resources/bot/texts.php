@@ -2029,6 +2029,18 @@ return [
         'en' => '🌐 Open on the website',
         'om' => '🌐 Marsariitii irratti bani',
     ],
+    'owner_job_live' => [
+        'am' => '✅ የሥራ ማስታወቂያዎ <b>{title}</b> አሁን በድረ-ገጹና በቻናሉ ላይ ይታያል። የሚያመለክቱ ሰዎች በቀጥታ ያገኙዎታል።{link}',
+        'ti' => '✅ መወዓውዒ ስራሕኩም <b>{title}</b> ሕጂ ኣብ መርበብን ቻነልን ይርአ። ዘመልክቱ ሰባት ብቐጥታ ክረኽቡኹም እዮም።{link}',
+        'en' => '✅ Your job <b>{title}</b> is now live on the website and the channel. Applicants will contact you directly.{link}',
+        'om' => "✅ Hojiin keessan <b>{title}</b> amma marsariitii fi chaanaala irratti mul'ataa jira. Iyyattoonni kallattiin isin qunnamu.{link}",
+    ],
+    'owner_job_rejected' => [
+        'am' => '❌ የሥራ ማስታወቂያዎ <b>{title}</b> አልተለጠፈም።{reason}',
+        'ti' => '❌ መወዓውዒ ስራሕኩም <b>{title}</b> ኣይተለጠፈን።{reason}',
+        'en' => '❌ Your job <b>{title}</b> was not posted.{reason}',
+        'om' => '❌ Hojiin keessan <b>{title}</b> hin maxxanfamne.{reason}',
+    ],
     'owner_listing_live' => [
         'am' => '✅ <b>{name}</b> ጸድቋል፤ አሁን በድረ-ገጹና በቻናሉ ላይ ይታያል።{link}',
         'ti' => '✅ <b>{name}</b> ጸዲቑ፤ ሕጂ ኣብ መርበብን ቻነልን ይርአ።{link}',

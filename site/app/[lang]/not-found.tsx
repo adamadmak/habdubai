@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { useFallbackCopy } from "@/components/FallbackCopy";
 import { Tibeb } from "@/components/Logo";
 

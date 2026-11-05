@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
-import { ArrowRight, Eye, Hourglass, Pencil, Plus, Send } from "lucide-react";
-import { GEEZ, PageHead } from "@/components/Bits";
+import { ArrowRight, Briefcase, Eye, Hourglass, Pencil, Plus, Send } from "lucide-react";
+import { GEEZ, Notice, PageHead } from "@/components/Bits";
 import { ListingMock } from "@/components/Cards";
 import { Cover } from "@/components/Cover";
 import { Night } from "@/components/Dawn";
 import { ConfirmSubmit } from "@/components/owner/ConfirmSubmit";
+import { OwnerJobsList } from "@/components/owner/OwnerJobsList";
 import { StatusPill } from "@/components/owner/StatusPill";
 import { removeListing } from "@/lib/actions";
-import type { Owner, OwnerBusiness, OwnerClaim } from "@/lib/api";
+import type { Owner, OwnerBusiness, OwnerClaim, OwnerJobs } from "@/lib/api";
 import { number } from "@/lib/format";
 import { photoSrcSet } from "@/lib/photos";
 import { dict, fill, isLocale, pick, type Dictionary, type Locale } from "@/lib/i18n";
@@ -25,13 +26,15 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return { title: d.nav.business, description: d.business.landingLead, alternates: alternatesFor(lang, `/business`) };
 }
 
-export default async function BusinessHome({ params }: { params: Promise<{ lang: string }> }) {
+export default async function BusinessHome({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<{ job?: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const d = dict(lang);
   const owner = await currentOwner(lang);
 
-  return owner ? <Dashboard lang={lang} d={d} owner={owner} /> : <Landing lang={lang} d={d} />;
+  const { job } = await searchParams;
+
+  return owner ? <Dashboard lang={lang} d={d} owner={owner} justPosted={job} /> : <Landing lang={lang} d={d} />;
 }
 
 function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
@@ -87,15 +90,20 @@ function Landing({ lang, d }: { lang: Locale; d: Dictionary }) {
   );
 }
 
-async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owner: Owner }) {
-  const data = await ownerApi<{ businesses: OwnerBusiness[]; claims: OwnerClaim[] }>("/businesses", { locale: lang });
+async function Dashboard({ lang, d, owner, justPosted }: { lang: Locale; d: Dictionary; owner: Owner; justPosted?: string }) {
+  const [data, hiring] = await Promise.all([
+    ownerApi<{ businesses: OwnerBusiness[]; claims: OwnerClaim[] }>("/businesses", { locale: lang }),
+    // The listings still show if this one answer is missing.
+    ownerApi<OwnerJobs>("/jobs", { locale: lang }).catch((): OwnerJobs => ({ jobs: [], businesses: [], waiting: false })),
+  ]);
   const b = d.business;
 
   return (
     <>
     <PageHead title={b.yourListings} lead={fill(b.hello, { name: owner.name })}>
       <div className="mt-6 flex flex-wrap gap-2">
-        <Link href={`/${lang}/business/new`} className="btn btn-gold rounded-full"><Plus className="size-4" aria-hidden="true" /> {b.add}</Link>
+        <Link href={`/${lang}/jobs/new`} className="btn btn-gold rounded-full"><Briefcase className="size-4" aria-hidden="true" /> {b.jobs.post}</Link>
+        <Link href={`/${lang}/business/new`} className="btn btn-line rounded-full"><Plus className="size-4" aria-hidden="true" /> {b.add}</Link>
         <form action="/api/auth/logout" method="post">
           <input type="hidden" name="lang" value={lang} />
           <input type="hidden" name="back" value={`/${lang}/business`} />
@@ -140,6 +148,9 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
               </div>
               <div className="flex flex-wrap gap-2 border-t border-line bg-surface/60 px-4 py-2.5">
                 <Link href={`/${lang}/business/${x.id}/edit`} className="btn btn-quiet min-h-9 px-3 text-sm"><Pencil className="size-3.5" aria-hidden="true" /> {b.edit}</Link>
+                {x.status === "approved" && (
+                  <Link href={`/${lang}/jobs/new?business=${x.id}`} className="btn btn-quiet min-h-9 px-3 text-sm"><Briefcase className="size-3.5" aria-hidden="true" /> {b.jobs.post}</Link>
+                )}
                 {x.status === "approved" && x.slug && (
                   <Link href={`/${lang}/directory/${x.slug}`} className="btn btn-quiet min-h-9 px-3 text-sm"><Eye className="size-3.5" aria-hidden="true" /> {b.view}</Link>
                 )}
@@ -154,6 +165,14 @@ async function Dashboard({ lang, d, owner }: { lang: Locale; d: Dictionary; owne
             </li>
           ))}
         </ul>
+      )}
+
+      {(hiring.jobs.length > 0 || justPosted) && (
+        <section id="jobs" className="mt-10 scroll-mt-24">
+          <h2 className="title text-xl">{b.jobs.title}</h2>
+          {justPosted && <div className="mt-3"><Notice tone="success">{justPosted === "review" ? b.jobs.postedReview : b.jobs.postedChecking}</Notice></div>}
+          <OwnerJobsList lang={lang} t={b.jobs} jobs={hiring.jobs} />
+        </section>
       )}
 
       {data.claims.length > 0 && (

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import { ChevronLeft, MapPin, Send } from "lucide-react";
 import { ClaimForm } from "@/components/owner/ClaimForm";

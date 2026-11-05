@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { useActionState } from "react";
 import { CircleAlert, CircleCheck, Info } from "lucide-react";
 import { goodsInterest, type InterestState } from "@/lib/actions";

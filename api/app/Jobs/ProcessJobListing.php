@@ -10,6 +10,7 @@ use App\Jobs\Pipeline\JobClassifier;
 use App\Jobs\Pipeline\JobPublisher;
 use App\Jobs\Pipeline\RulesJobClassifier;
 use App\Jobs\Pipeline\ScamScorer;
+use App\Models\Business;
 use App\Models\Job;
 use App\Models\JobRaw;
 use App\Support\JobSettings;
@@ -63,7 +64,8 @@ class ProcessJobListing implements ShouldQueue
             return;
         }
 
-        $original = $deduper->duplicateOf($raw);
+        // A business posting its own job is not a copy of something it found: it may fill the same post twice a month.
+        $original = $raw->posted_by ? null : $deduper->duplicateOf($raw);
 
         if ($original) {
             Job::query()->create($this->baseAttributes($raw) + [
@@ -95,7 +97,15 @@ class ProcessJobListing implements ShouldQueue
 
     public function finish(JobRaw $raw, Classification $c, ?string $holdReason, ScamScorer $scorer, JobPublisher $publisher): void
     {
-        if (! $c->isJob) {
+        $posted = $raw->posted_by;
+        $notAJob = $posted && ! $c->isJob ? 'The classifier says this is not a job listing.' : null;
+
+        if ($posted) {
+            $c = $c->withOwnerFacts($posted, (string) $raw->title, $raw->company);
+        }
+
+        // A business is told about its post: it is held for a person rather than dropped.
+        if (! $c->isJob && ! $posted) {
             Job::query()->create($this->baseAttributes($raw) + $this->classified($c, $raw) + [
                 'status' => 'rejected',
                 'review_reason' => 'Not a job listing (classifier).',
@@ -116,9 +126,11 @@ class ProcessJobListing implements ShouldQueue
         $raw->forceFill(['processed_at' => now()])->save();
 
         $reason = $holdReason
+            ?? $notAJob
             ?? ($scam['score'] >= JobSettings::reviewThreshold() ? 'Scam score '.$scam['score'].': '.($scam['reasons'][0] ?? 'high risk') : null)
             ?? (! JobSettings::autoPublish() ? 'Auto-publish is off.' : null)
-            ?? ($c->emirate === 'outside_uae' ? 'The job is outside the UAE.' : null);
+            ?? ($c->emirate === 'outside_uae' ? 'The job is outside the UAE.' : null)
+            ?? ($posted ? $this->businessHold($raw, $scam['score'], $scam['reasons']) : null);
 
         if ($reason !== null) {
             $publisher->hold($job, $reason);
@@ -134,11 +146,30 @@ class ProcessJobListing implements ShouldQueue
         Log::error('A job listing could not be processed.', ['raw_id' => $this->rawId, 'error' => $e->getMessage()]);
     }
 
+    /** Job seekers are who a false listing hurts, so a business nobody has checked in person waits for a moderator. */
+    private function businessHold(JobRaw $raw, int $score, array $reasons): ?string
+    {
+        // A listing copied from elsewhere can go up with a warning. An employer posting here does not get to ask for a fee and carry on.
+        if ($score >= JobSettings::warningThreshold()) {
+            return 'Scam score '.$score.': '.($reasons[0] ?? 'high risk');
+        }
+
+        $business = $raw->business_id ? Business::query()->find($raw->business_id) : null;
+
+        if ($business === null || $business->status !== 'approved') {
+            return 'The business is no longer listed.';
+        }
+
+        return $business->verified ? null : 'Posted by a business that is not verified yet.';
+    }
+
     private function baseAttributes(JobRaw $raw): array
     {
         return [
             'raw_id' => $raw->id,
             'source_id' => $raw->source_id,
+            'business_id' => $raw->business_id,
+            'apply_contact' => $raw->posted_by['contact'] ?? null,
             'url' => $raw->url,
             'url_key' => Deduper::urlKey($raw->url),
             'fingerprint' => Deduper::fingerprint($raw->title, $raw->company),

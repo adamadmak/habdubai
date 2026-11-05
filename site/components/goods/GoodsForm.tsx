@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { startTransition, useActionState, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { ArrowRight, Ban, CircleAlert, CircleCheck, HandCoins, Info, PlaneTakeoff } from "lucide-react";
 import type { Dictionary } from "@/i18n/en";
@@ -359,6 +359,10 @@ export function GoodsForm({ lang, g, choices, member, limits, initial, today, la
           </div>
         </Step>
 
+        {/* The fee starts as "to agree" and a traveller's note is optional, so a traveller can skip both. A parcel needs its note. */}
+        <details className="more-options" open={!trip || Boolean(err("price") || err("description"))}>
+        <summary className="pl-12">{g.moreOptions}</summary>
+        <div className="mt-4 flex flex-col gap-8">
         <Step n={7} id="price" title={f.steps.price} error={err("price")}>
           <div className="grid grid-cols-3 gap-2">
             {(["free", "set", "agree"] as const).map((p) => (
@@ -430,6 +434,8 @@ export function GoodsForm({ lang, g, choices, member, limits, initial, today, la
             </p>
           </div>
         </Step>
+        </div>
+        </details>
 
         <div className="pl-12">
           <label className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary ${err("rules") ? "border-danger" : "border-line"} bg-elevated`}>

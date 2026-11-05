@@ -12,6 +12,7 @@ export const ti: Dictionary = {
   navLabel: "ቀንዲ ዝርዝር",
 
   common: {
+    moreOptions: "ተወሳኺ ኣማራጺታት",
     step: "ደረጃ {n}",
     seeAll: "ኩሉ ርኣዩ",
     next: "ዝቕጽል",
@@ -120,6 +121,11 @@ export const ti: Dictionary = {
   },
 
   jobs: {
+    direct: "ካብ ወሃቢ ስራሕ ብቐጥታ",
+    applyWhatsapp: "ብዋትስኣፕ ኣመልክቱ",
+    applyTelegram: "ብቴሌግራም ኣመልክቱ",
+    directNote: "ምስ ወሃቢ ስራሕ ብቐጥታ ትዘራረቡ። ንስራሕ ንማንም ኣይትኽፈሉ።",
+    hiring: "ሰራሕተኛ ትደልዩ? ስራሕ ለጥፉ",
     title: "ስራሓት",
     lead: "ካብ ህዝባዊ መርበባት ስራሕን ቻነላት ማሕበረሰብን ዝተኣከቡ፣ ካብ ምትላል ዝተፈተሹ፣ ብቋንቋኹም ዝተጠቓለሉ። እትመልከቱ ኣብቲ ቀዳማይ መርበብ እዩ።",
     searchPlaceholder: "ኣርእስቲ ስራሕ፣ ትካል ወይ ከባቢ",
@@ -152,6 +158,7 @@ export const ti: Dictionary = {
   },
 
   directory: {
+    hiring: "ሕጂ ሰራሕተኛ ይደሊ",
     title: "መምርሒ ሓበሻ",
     lead: "ቤት መግቢ፣ ድኳናት፣ ሳሎናት፣ ካርጎን ካልኦትን፣ ብማሕበረሰብና ዝመርሑን ንማሕበረሰብና ዘገልግሉን፣ ኣብ መላእ ኢማራት።",
     searchPlaceholder: "ስም፣ ከባቢ ወይ እትደልይዎ",
@@ -215,6 +222,44 @@ export const ti: Dictionary = {
   },
 
   business: {
+    jobs: {
+      post: "ስራሕ ለጥፉ",
+      title: "ስራሕኩም",
+      asBusiness: "ን{name}። ሓንቲ ደቒቕ ይወስድ።",
+      business: "ኣየናይ ንግዲ",
+      title_: "ስም ስራሕ",
+      titleExample: "ንኣብነት፡ ባሪስታ",
+      kind: "ዓይነት ስራሕ",
+      kindChoose: "ሓደ ምረጹ",
+      salary: "ወርሓዊ ክፍሊት፣ ድርሃም",
+      optional: "ኣማራጺ",
+      salaryHint: "ክፍሊት ዘርእዩ ስራሕቲ ዝያዳ ኣመልከትቲ ይረኽቡ።",
+      description: "ብዛዕባ እቲ ስራሕ",
+      descriptionExample: "እቲ ስራሕ እንታይ እዩ፣ ሰዓታት፣ ከምኡ'ውን ዝደልይዎ።",
+      descriptionHint: "ውሑዳት መስመራት ይኣኽሉ። ናብ ኩለን ኣርባዕተ ቋንቋታት ንትርጉሞ።",
+      accommodation: "መንበሪ ይካተት",
+      visa: "ቪዛ ይካተት",
+      contact: "ቁጽሪ ዋትስኣፕ ወይ ስም ቴሌግራም",
+      contactHint: "ኣመልከትቲ ኣብዚ ይጽሕፉልኩም፤ ስለዚ ክርእይዎ እዮም።",
+      checkFields: "በጃኹም ኣብ ላዕሊ ዝተመልከቱ ኣረጋግጹ።",
+      signedOut: "ካብ ኣካውንትኩም ወጺእኩም። ዝጸሓፍኩሞ ተዓቂቡ ኣሎ።",
+      signIn: "እንደገና እተዉ",
+      posting: "ይልጠፍ ኣሎ…",
+      submit: "ስራሕ ለጥፉ",
+      rule: "ካብ ኣመልከትቲ ክፍሊት ምሕታት ኣይፍቀድን። ከምዚኦም ልጥፋት ይድረቱ።",
+      needListing: "ስራሕ ንምልጣፍ መጀመርታ ንግድኹም ወስኹ። ኣወሃሃዲ ምስ ኣረጋገጸ ክትለጥፉ ትኽእሉ።",
+      waiting: "ንግድኹም ምጽዳቕ ይጽበ ኣሎ፤ መብዛሕትኡ ግዜ ኣብ ሓደ መዓልቲ። ምስ ጸደቐ ስራሕ ክትለጥፉ ትኽእሉ።",
+      postedChecking: "የቐንየለይ። ስራሕኩም ሕጂ ነረጋግጽ ኣለና፤ መብዛሕትኡ ግዜ ኣብ ውሑዳት ደቓይቕ ይርአ። ቦት ክነግረኩም እዩ።",
+      postedReview: "የቐንየለይ። ኣወሃሃዲ ስራሕቲ ሓደስቲ ንግድታት የረጋግጽ፤ መብዛሕትኡ ግዜ ኣብ ሓደ መዓልቲ። ቦት ክነግረኩም እዩ።",
+      status: { review: "ይረጋገጽ ኣሎ", published: "ይርአ ኣሎ", closed: "ተዓጽዩ", rejected: "ኣይተለጠፈን" },
+      view: "ርአዩ",
+      tapOne: "1 ሰብ መመልከቲ ጠወቐ",
+      taps: "{n} ሰባት መመልከቲ ጠወቑ",
+      close: "ቦታ ተታሒዙ",
+      closeConfirm: "እዚ ስራሕ ይዕጾ?",
+      withdraw: "መልሱ",
+      withdrawConfirm: "እዚ ስራሕ ይመለስ?",
+    },
     landingTitle: "ንግድኹም ንማሕበረሰብ ኣርእዩ",
     landingLead: "ኣብዚ መርበብን ኣብ ቻነል ቴሌግራምናን ብናጻ ኣመዝግብዎ፤ ኣብ መላእ ኢማራት ዘለዉ ሓበሻ ቅድሚ ኩሉ ዝርእይዎ ኣብዚ እዩ።",
     steps: [
@@ -336,6 +381,7 @@ export const ti: Dictionary = {
   },
 
   goods: {
+    moreOptions: "ተወሳኺ ኣማራጺታት",
     title: "ሰሌዳ ኣቕሑ",
     heroTitle: "ሰሌዳ ኣቕሑ፣",
     heroAccent: "ኣብ መንጎ ክልተ ገዛውትና።",

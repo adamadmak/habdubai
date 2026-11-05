@@ -12,6 +12,7 @@ export const am: Dictionary = {
   navLabel: "ዋና ማውጫ",
 
   common: {
+    moreOptions: "ተጨማሪ አማራጮች",
     step: "ደረጃ {n}",
     seeAll: "ሁሉንም ይመልከቱ",
     next: "ቀጣይ",
@@ -120,6 +121,11 @@ export const am: Dictionary = {
   },
 
   jobs: {
+    direct: "ከቀጣሪው በቀጥታ",
+    applyWhatsapp: "በዋትስአፕ ያመልክቱ",
+    applyTelegram: "በቴሌግራም ያመልክቱ",
+    directNote: "ከቀጣሪው ጋር በቀጥታ ይነጋገራሉ። ለሥራ ለማንም አይክፈሉ።",
+    hiring: "ሠራተኛ ይፈልጋሉ? ሥራ ይለጥፉ",
     title: "ሥራዎች",
     lead: "ከሕዝባዊ የሥራ ድረ-ገጾችና ከማህበረሰብ ቻናሎች የተሰበሰቡ፣ ከማጭበርበር የተፈተሹ፣ በቋንቋዎ የተጠቃለሉ። የሚያመለክቱት በመጀመሪያው ድረ-ገጽ ላይ ነው።",
     searchPlaceholder: "የሥራ መጠሪያ፣ ድርጅት ወይም አካባቢ",
@@ -152,6 +158,7 @@ export const am: Dictionary = {
   },
 
   directory: {
+    hiring: "አሁን ሠራተኛ ይፈልጋል",
     title: "የሐበሻ ማውጫ",
     lead: "ምግብ ቤቶች፣ ሱቆች፣ ሳሎኖች፣ ካርጎና ሌሎችም፣ በማህበረሰባችን የሚመሩና ለማህበረሰባችን የሚያገለግሉ፣ በመላው ኢማራት።",
     searchPlaceholder: "ስም፣ አካባቢ ወይም የሚፈልጉት",
@@ -215,6 +222,44 @@ export const am: Dictionary = {
   },
 
   business: {
+    jobs: {
+      post: "ሥራ ይለጥፉ",
+      title: "ሥራዎችዎ",
+      asBusiness: "ለ{name}። አንድ ደቂቃ ይወስዳል።",
+      business: "የትኛው ንግድ",
+      title_: "የሥራው ስም",
+      titleExample: "ለምሳሌ፡ ባሪስታ",
+      kind: "የሥራ ዓይነት",
+      kindChoose: "አንዱን ይምረጡ",
+      salary: "ወርሃዊ ክፍያ፣ ድርሃም",
+      optional: "አማራጭ",
+      salaryHint: "ክፍያ የሚያሳዩ ሥራዎች ብዙ አመልካቾች ያገኛሉ።",
+      description: "ስለ ሥራው",
+      descriptionExample: "ሥራው ምንድን ነው፣ ሰዓቱ፣ እና የሚፈልጉት።",
+      descriptionHint: "ጥቂት መስመሮች በቂ ናቸው። ወደ አራቱም ቋንቋዎች እንተረጉመዋለን።",
+      accommodation: "መኖሪያ ይካተታል",
+      visa: "ቪዛ ይካተታል",
+      contact: "የዋትስአፕ ቁጥር ወይም የቴሌግራም ስም",
+      contactHint: "አመልካቾች እዚህ ይጽፉልዎታል፤ ስለዚህ ያዩታል።",
+      checkFields: "እባክዎ ከላይ የተመለከቱትን ያረጋግጡ።",
+      signedOut: "ከመለያዎ ወጥተዋል። የጻፉት ተቀምጧል።",
+      signIn: "እንደገና ይግቡ",
+      posting: "እየተለጠፈ ነው…",
+      submit: "ሥራውን ይለጥፉ",
+      rule: "አመልካቾችን ክፍያ መጠየቅ አይፈቀድም። እንዲህ ያሉ ልጥፎች ይቆማሉ።",
+      needListing: "ሥራ ለመለጠፍ መጀመሪያ ንግድዎን ያክሉ። አወያይ ካረጋገጠ በኋላ መለጠፍ ይችላሉ።",
+      waiting: "ንግድዎ ማረጋገጫ እየጠበቀ ነው፤ ብዙውን ጊዜ በአንድ ቀን ውስጥ። እንደጸደቀ ሥራ መለጠፍ ይችላሉ።",
+      postedChecking: "አመሰግናለሁ። ሥራዎን አሁን እያረጋገጥን ነው፤ ብዙውን ጊዜ በጥቂት ደቂቃዎች ይታያል። ቦቱ ይነግርዎታል።",
+      postedReview: "አመሰግናለሁ። አወያይ የአዳዲስ ንግዶችን ሥራዎች ያረጋግጣል፤ ብዙውን ጊዜ በአንድ ቀን ውስጥ። ቦቱ ይነግርዎታል።",
+      status: { review: "እየተረጋገጠ ነው", published: "ይታያል", closed: "ተዘግቷል", rejected: "አልተለጠፈም" },
+      view: "ይመልከቱ",
+      tapOne: "1 ሰው ማመልከቻ ተጫነ",
+      taps: "{n} ሰዎች ማመልከቻ ተጫኑ",
+      close: "ቦታው ተይዟል",
+      closeConfirm: "ይህ ሥራ ይዘጋ?",
+      withdraw: "ይመልሱ",
+      withdrawConfirm: "ይህ ሥራ ይመለስ?",
+    },
     landingTitle: "ንግድዎን ለማህበረሰቡ ያሳዩ",
     landingLead: "በዚህ ድረ-ገጽና በቴሌግራም ቻናላችን በነጻ ያስመዝግቡት፤ በመላው ኢማራት ያሉ ሐበሾች መጀመሪያ የሚመለከቱት እዚህ ነው።",
     steps: [
@@ -336,6 +381,7 @@ export const am: Dictionary = {
   },
 
   goods: {
+    moreOptions: "ተጨማሪ አማራጮች",
     title: "የዕቃ ሰሌዳ",
     heroTitle: "የዕቃ ሰሌዳ፣",
     heroAccent: "በሁለቱ ቤቶቻችን መካከል።",

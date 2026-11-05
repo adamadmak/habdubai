@@ -11,6 +11,7 @@ export const en = {
   navLabel: "Main",
 
   common: {
+    moreOptions: "More options",
     step: "Step {n}",
     seeAll: "See all",
     next: "Next",
@@ -124,6 +125,11 @@ export const en = {
   },
 
   jobs: {
+    direct: "From the employer",
+    applyWhatsapp: "Apply on WhatsApp",
+    applyTelegram: "Apply on Telegram",
+    directNote: "You talk to the employer directly. Never pay anyone for a job.",
+    hiring: "Hiring? Post a job",
     title: "Jobs",
     lead: "From public job sites and community channels, checked for scam signs, summarised in your language. You apply on the original site.",
     searchPlaceholder: "Job title, company or area",
@@ -156,6 +162,7 @@ export const en = {
   },
 
   directory: {
+    hiring: "Now hiring",
     title: "Habesha directory",
     lead: "Restaurants, shops, salons, cargo and more, run by and for our community across the Emirates.",
     searchPlaceholder: "Name, area or what you need",
@@ -219,6 +226,44 @@ export const en = {
   },
 
   business: {
+    jobs: {
+      post: "Post a job",
+      title: "Your jobs",
+      asBusiness: "For {name}. It takes a minute.",
+      business: "Which business",
+      title_: "Job title",
+      titleExample: "For example: Barista",
+      kind: "Kind of work",
+      kindChoose: "Choose one",
+      salary: "Pay per month, AED",
+      optional: "optional",
+      salaryHint: "Jobs that show the pay get more applicants.",
+      description: "About the job",
+      descriptionExample: "What the work is, the hours, and what you need.",
+      descriptionHint: "A few lines is enough. We translate it into all four languages.",
+      accommodation: "Housing included",
+      visa: "Visa included",
+      contact: "WhatsApp number or Telegram username",
+      contactHint: "Applicants message you here, so they will see it.",
+      checkFields: "Please check the fields marked above.",
+      signedOut: "You were signed out. What you typed is kept.",
+      signIn: "Sign in again",
+      posting: "Posting…",
+      submit: "Post the job",
+      rule: "Asking applicants to pay any fee is not allowed. Such posts are stopped.",
+      needListing: "To post a job, first add your business. A moderator checks it, then you can post.",
+      waiting: "Your business is waiting for approval, usually within a day. You can post jobs as soon as it is approved.",
+      postedChecking: "Thank you. We are checking your job now, and it usually goes live in a few minutes. The bot will tell you.",
+      postedReview: "Thank you. A moderator checks jobs from new businesses, usually within a day. The bot will tell you.",
+      status: { review: "Being checked", published: "Live", closed: "Closed", rejected: "Not posted" },
+      view: "View",
+      tapOne: "1 person tapped apply",
+      taps: "{n} people tapped apply",
+      close: "Position filled",
+      closeConfirm: "Close this job?",
+      withdraw: "Take back",
+      withdrawConfirm: "Take this job back?",
+    },
     landingTitle: "Put your business in front of the community",
     landingLead: "List it for free on this website and in our Telegram channel, where Habesha across the Emirates look first.",
     steps: [
@@ -342,6 +387,7 @@ export const en = {
 
   // The goods board: travellers with spare kilos, and members with something to send or to be brought.
   goods: {
+    moreOptions: "More options",
     title: "Goods board",
     // The board's heading, with its last words picked out in gold.
     heroTitle: "The goods board,",

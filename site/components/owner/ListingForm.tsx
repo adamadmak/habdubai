@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { usePathname } from "next/navigation";
 import { startTransition, useActionState, useEffect, useRef, type FormEvent, type ReactNode } from "react";
 import { CircleAlert, CircleCheck } from "lucide-react";
@@ -11,6 +11,8 @@ import { clearDraft, keepDraft, restoreDraft } from "./draft";
 import { keepPhotoHere, sendPhotoWithThisSave } from "./PhotoUpload";
 
 type Values = Partial<OwnerBusiness>;
+
+const MORE_FIELDS = ["maps_url", "telegram", "website", "about", "hours", "languages"];
 
 function label(labels: Partial<Record<Locale, string>> | undefined, lang: Locale): string {
   const text = labels?.[lang] || labels?.en || "";
@@ -55,6 +57,7 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
   const v = values ?? {};
   const f = b.fields;
   const draftKey = `listing:${v.id ?? "new"}`;
+  const moreFilled = v.maps_url || v.telegram || v.website || v.about || v.hours || (v.languages ?? []).length > 0;
 
   const err = (key: string) => errors[key]?.[0];
   const invalid = (key: string) => (errors[key] ? { "aria-invalid": true as const, "aria-describedby": `${key}-error` } : {});
@@ -119,9 +122,6 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
         <Field name="area" title={f.area} hint={f.areaHint} error={err("area")} {...common_}>
           <input id="area" name="area" className="field" defaultValue={v.area ?? ""} required maxLength={160} autoComplete="street-address" {...invalid("area")} />
         </Field>
-        <Field name="maps_url" title={f.maps} hint={f.mapsHint} optional error={err("maps_url")} {...common_}>
-          <input id="maps_url" name="maps_url" type="url" inputMode="url" className="field" defaultValue={v.maps_url ?? ""} placeholder="https://maps.app.goo.gl/…" {...invalid("maps_url")} />
-        </Field>
       </fieldset>
 
       <fieldset className="flex flex-col gap-5">
@@ -133,6 +133,18 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
           <Field name="whatsapp" title={f.whatsapp} optional error={err("whatsapp")} {...common_}>
             <input id="whatsapp" name="whatsapp" type="tel" inputMode="tel" className="field" defaultValue={v.whatsapp ?? ""} placeholder="050 123 4567" {...invalid("whatsapp")} />
           </Field>
+        </div>
+      </fieldset>
+
+      {/* Everything a place can add later. Open when editing one that has it, or when something in it needs fixing. */}
+      <details className="more-options" open={Boolean(moreFilled || MORE_FIELDS.some((key) => errors[key]))}>
+        <summary>{common.moreOptions}</summary>
+        <fieldset className="mt-3 flex flex-col gap-5">
+        <legend className="sr-only">{b.sections.details}</legend>
+        <Field name="maps_url" title={f.maps} hint={f.mapsHint} optional error={err("maps_url")} {...common_}>
+          <input id="maps_url" name="maps_url" type="url" inputMode="url" className="field" defaultValue={v.maps_url ?? ""} placeholder="https://maps.app.goo.gl/…" {...invalid("maps_url")} />
+        </Field>
+        <div className="grid gap-5 sm:grid-cols-2">
           <Field name="telegram" title={f.telegram} optional error={err("telegram")} {...common_}>
             <input id="telegram" name="telegram" className="field" defaultValue={v.telegram ? `@${v.telegram}` : ""} placeholder="@username" autoCapitalize="none" autoCorrect="off" {...invalid("telegram")} />
           </Field>
@@ -140,10 +152,6 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
             <input id="website" name="website" type="url" inputMode="url" className="field" defaultValue={v.website ?? ""} placeholder="https://" autoCapitalize="none" {...invalid("website")} />
           </Field>
         </div>
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-5">
-        <legend className="title mb-4 text-lg">{b.sections.details}</legend>
         <Field name="about" title={f.about} hint={f.aboutHint} optional error={err("about")} {...common_}>
           <textarea id="about" name="about" rows={5} className="field" defaultValue={v.about ?? ""} maxLength={1500} {...invalid("about")} />
         </Field>
@@ -162,7 +170,8 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
           </div>
           {err("languages") && <p id="languages-error" className="mt-1.5 text-sm text-danger">{err("languages")}</p>}
         </div>
-      </fieldset>
+        </fieldset>
+      </details>
 
       <div className="sticky bottom-[calc(var(--tabbar-space)+0.75rem)] z-30 md:bottom-4">
         <div className="material rounded-2xl border border-line p-3">

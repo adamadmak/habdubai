@@ -101,6 +101,10 @@ Route::prefix('owner')->name('owner.')->middleware('locale')->group(function ():
         Route::delete('businesses/{business}', [OwnerBusinesses::class, 'destroy'])->name('businesses.destroy');
         Route::post('businesses/{business}/photo', [OwnerBusinesses::class, 'photo'])->name('businesses.photo');
         Route::post('businesses/{business}/claim', [OwnerBusinesses::class, 'claim'])->name('businesses.claim');
+        // Open positions a business posts itself.
+        Route::get('jobs', [\App\Http\Controllers\Owner\JobController::class, 'index'])->name('jobs.index');
+        Route::post('jobs', [\App\Http\Controllers\Owner\JobController::class, 'store'])->middleware('throttle:10,1')->name('jobs.store');
+        Route::post('jobs/{job}/close', [\App\Http\Controllers\Owner\JobController::class, 'close'])->middleware('throttle:30,1')->name('jobs.close');
         // Members' stars for a place.
         Route::get('directory/{slug}/rating', [\App\Http\Controllers\Owner\BusinessRatingController::class, 'show'])->where('slug', '[a-z0-9-]{1,170}')->name('directory.rating');
         Route::post('directory/{slug}/rating', [\App\Http\Controllers\Owner\BusinessRatingController::class, 'store'])->where('slug', '[a-z0-9-]{1,170}')->middleware('throttle:30,1')->name('directory.rate');

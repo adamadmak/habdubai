@@ -47,7 +47,7 @@ class JobController extends Controller
     public function show(Job $job): JsonResponse
     {
         abort_unless(in_array($job->status, ['published', 'closed'], true), 404);
-        $job->loadMissing('source:id,name');
+        $job->loadMissing(['source:id,name', 'business']);
 
         $similar = Job::query()->with('source:id,name')->where('status', 'published')->whereKeyNot($job->id)
             ->where('category', $job->category)->orderByDesc('published_at')->limit(4)->get();
@@ -61,7 +61,7 @@ class JobController extends Controller
     /** Count the click and send the person to the original listing. */
     public function apply(Job $job): RedirectResponse|JsonResponse
     {
-        $url = (string) $job->url;
+        $url = (string) $job->applyLink();
 
         if ($job->status !== 'published' || ! preg_match('#^https?://#i', $url)) {
             $site = PublicUrls::site();
@@ -70,6 +70,11 @@ class JobController extends Controller
         }
 
         Job::query()->whereKey($job->id)->toBase()->increment('clicks');
+
+        // One tap to a chat that already says why they are writing.
+        if (str_starts_with($url, 'https://wa.me/')) {
+            $url .= '?text='.rawurlencode('Hello, I saw your job on HabUAE: '.$job->title);
+        }
 
         return redirect()->away($url);
     }
@@ -88,14 +93,24 @@ class JobController extends Controller
             'salary' => $job->salaryText(),
             'accommodation' => $job->accommodation === 'yes',
             'visa' => $job->visa === 'yes',
-            'source' => $host ?: $job->source?->name,
+            // Posted by the employer: nothing to credit, and applicants can say so.
+            'source' => $job->business_id ? null : ($host ?: $job->source?->name),
+            'direct' => $job->business_id !== null,
             'open' => $job->status === 'published',
             'published_at' => $job->published_at?->toIso8601String(),
             'summary' => ['am' => $job->summary('am'), 'ti' => $job->summary('ti'), 'en' => $job->summary('en'), 'om' => $job->summary('om')],
         ];
 
         if ($full) {
-            $payload['apply_url'] = $job->url ? PublicUrls::api('api/public/jobs/'.$job->id.'/apply') : null;
+            $payload['apply_url'] = $job->applyLink() ? PublicUrls::api('api/public/jobs/'.$job->id.'/apply') : null;
+            $payload['apply_via'] = match (true) {
+                str_starts_with((string) $job->apply_contact, 'https://wa.me/') => 'whatsapp',
+                str_starts_with((string) $job->apply_contact, 'https://t.me/') => 'telegram',
+                default => null,
+            };
+            $payload['business'] = $job->business?->status === 'approved'
+                ? ['name' => $job->business->name, 'slug' => $job->business->slug, 'verified' => (bool) $job->business->verified]
+                : null;
             $payload['languages'] = $job->languages ?? [];
             $payload['warning'] = $job->scam_score > 0 && ! empty($job->scam_reasons) ? array_values((array) $job->scam_reasons) : [];
         }

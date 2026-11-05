@@ -1,9 +1,8 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
-import QRCode from "qrcode";
-import { ArrowRight, ArrowUpRight, Briefcase, Check, ChevronRight, Handshake, Luggage, MessageCircle, Send, ShieldCheck, Store, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Briefcase, ChevronRight, Handshake, Luggage, MessageCircle, Send, ShieldCheck, Store, Users, type LucideIcon } from "lucide-react";
 import { Section, Steps } from "@/components/Bits";
 import { BusinessCard, EventCard, firstLine, JobCard, NewsCard } from "@/components/Cards";
 import { BusinessIcon } from "@/components/CategoryIcon";
@@ -16,6 +15,11 @@ import { api, type GoodsBoard, type Home } from "@/lib/api";
 import { dayAndMonth, ethiopianDate, number, relative, weekday } from "@/lib/format";
 import { dict, isLocale, label, pick, pickLang } from "@/lib/i18n";
 import { alternatesFor } from "@/lib/site";
+
+// Built on the first visit and kept for a minute, instead of being rebuilt for every visitor. No build ever needs the API: the list is empty.
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
@@ -53,24 +57,19 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
     { href: `/${lang}/business`, icon: Handshake, color: "#15803d", kicker: d.footer.owners, title: d.home.ownerTitle, text: d.home.bento.ownerText, cta: d.home.ownerCta },
   ];
 
-  // The bot's address as a code to scan from a computer; phones get the button.
-  const qr = meta.bot.link
-    ? await QRCode.toString(meta.bot.link, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#191919", light: "#ffffff" } }).catch(() => null)
-    : null;
-
   return (
     <>
       {/* ---- The hero: the heading, the two ways in and the search, beside the live board. ---- */}
       <Night>
         {/* grid-cols-1 on phones: one column that never grows past the screen, so a long word or label truncates instead of widening the hero. */}
-        <div className="mx-auto grid max-w-page grid-cols-1 gap-10 px-4 pb-10 pt-12 md:grid-cols-[1.15fr_0.85fr] md:items-center md:pb-16 md:pt-20 lg:gap-16 lg:px-8">
+        <div className="mx-auto grid max-w-page grid-cols-1 gap-10 px-4 pb-8 pt-8 md:grid-cols-[1.15fr_0.85fr] md:items-center md:pb-16 md:pt-20 lg:gap-16 lg:px-8">
           <div className="settle min-w-0">
             <p className="kicker">
               <span lang="am">ሰላም</span>
               <span aria-hidden="true">·</span>
               {d.home.hello}
             </p>
-            <h1 className="display mt-5 text-[2.875rem] md:text-[4.25rem] lg:text-[5.5rem]">
+            <h1 className="display mt-5 text-[2.5rem] md:text-[4.25rem] lg:text-[5.5rem]">
               {d.home.heroTitle} <span className="gild">{d.home.heroAccent}</span>
             </h1>
             <p className="mt-6 max-w-xl text-[1.0625rem] muted-on-night md:text-lg">{d.home.lead}</p>
@@ -89,7 +88,8 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
           {/* The live board: the two clocks, the newest job, the next event. */}
           <div className="settle settle-2 flex min-w-0 flex-col gap-3" role="group" aria-label={d.home.live}>
-            <Clocks lang={lang} labels={d.clock} />
+            {/* A phone's first screen is for finding things. */}
+            <div className="hidden md:block"><Clocks lang={lang} labels={d.clock} /></div>
             {job && (
               <Link href={`/${lang}/jobs/${job.id}`} className="glass-white lift press hidden items-center gap-3.5 rounded-[1.5rem] p-3.5 md:flex">
                 <KindBadge kind="trade" category={job.category} className="size-12 rounded-2xl" />
@@ -145,22 +145,26 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
       {/* ---- Who this is for: four doors. ---- */}
       <Section kicker={d.home.forYou.kicker} title={d.home.forYou.title} lead={d.home.forYou.lead}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {audiences.map((a) => {
             const Icon = a.icon;
             return (
-              <Link key={a.href} href={a.href} style={tint(a.color)} className="card lift group flex flex-col overflow-hidden">
-                <span aria-hidden="true" className="tint-soft relative block h-32 md:h-36">
+              <Link key={a.href} href={a.href} style={tint(a.color)} className="card lift group flex overflow-hidden sm:flex-col">
+                <span aria-hidden="true" className="tint-soft relative hidden h-32 sm:block md:h-36">
                   <Icon className="absolute -right-3 -top-3 size-32 opacity-15" strokeWidth={1.25} />
                   <span className="tint-solid absolute -bottom-6 left-5 grid size-12 place-items-center rounded-full ring-4 ring-[var(--color-elevated)]">
                     <Icon className="size-5" />
                   </span>
                 </span>
-                <span className="flex flex-1 flex-col px-5 pb-5 pt-9">
+                {/* A phone: one compact row each, so all four are on screen at once. */}
+                <span aria-hidden="true" className="tint-solid m-4 mr-0 grid size-11 shrink-0 place-items-center rounded-full sm:hidden">
+                  <Icon className="size-5" />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col p-4 sm:px-5 sm:pb-5 sm:pt-9">
                   <span className="tint-ink text-xs font-extrabold uppercase tracking-wide">{a.kicker}</span>
-                  <span className="headline mt-1.5 text-[1.3125rem]">{a.title}</span>
-                  <span className="mt-2 text-sm text-muted">{a.text}</span>
-                  <span className="tint-ink mt-auto flex items-center gap-1 pt-4 text-sm font-bold">
+                  <span className="headline mt-1 text-[1.125rem] sm:mt-1.5 sm:text-[1.3125rem]">{a.title}</span>
+                  <span className="mt-1 line-clamp-2 text-sm text-muted sm:mt-2 sm:line-clamp-none">{a.text}</span>
+                  <span className="tint-ink mt-auto hidden items-center gap-1 pt-4 text-sm font-bold sm:flex">
                     {a.cta} <ChevronRight className="tile-arrow size-4" aria-hidden="true" />
                   </span>
                 </span>
@@ -172,7 +176,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
       {/* ---- Kinds of place, each a pale tile in its own colour. ---- */}
       <Section tone="cream" kicker={d.nav.directory} title={d.home.kindsTitle} more={{ href: `/${lang}/directory`, label: d.common.seeAll }}>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7">
+        <div className="row-scroll row-scroll-tiles sm:mx-0 sm:grid-flow-row sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0 lg:grid-cols-5 xl:grid-cols-7">
           {home.categories.map((c) => (
             <Link key={c.key} href={`/${lang}/directory?category=${c.key}`} style={placeTint(c.key)} className="kind-tile lift min-h-[8.5rem] gap-4 p-4">
               <span className="kind-tile-icon grid size-11 place-items-center rounded-full bg-elevated shadow-sm">
@@ -236,29 +240,17 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
           <div>
             <h2 className="display max-w-3xl text-[2.25rem] md:text-[3.5rem]">{d.home.joinTitle}</h2>
             <p className="mt-4 max-w-2xl muted-on-night md:text-lg">{d.home.joinLead}</p>
-            <ul className="mt-8 grid gap-5 sm:grid-cols-2">
-              {d.home.joinItems.map((item) => (
-                <li key={item.title} className="flex gap-3.5">
-                  <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-[#d40511]">
-                    <Check className="size-5" strokeWidth={3} />
-                  </span>
-                  <span>
-                    <span className="block font-extrabold">{item.title}</span>
-                    <span className="mt-0.5 block text-sm muted-on-night">{item.text}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
             {meta.bot.link && (
-              <a href={meta.bot.link} target="_blank" rel="noopener noreferrer" className="btn btn-white mt-9 min-h-12 px-6 text-base">
+              <a href={meta.bot.link} target="_blank" rel="noopener noreferrer" className="btn btn-white mt-7 min-h-12 px-6 text-base">
                 <Send className="size-4.5" aria-hidden="true" /> {d.home.joinCta} <ArrowRight className="size-4.5" aria-hidden="true" />
               </a>
             )}
           </div>
-          {qr && (
+          {meta.bot.link && (
             <figure className="hidden flex-col items-center gap-3 lg:flex">
               <div className="rounded-[1.5rem] bg-white p-4 shadow-[0_24px_60px_-24px_rgb(0_0_0/0.6)]">
-                <div className="size-40 [&_svg]:size-full" dangerouslySetInnerHTML={{ __html: qr }} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/api/qr" alt="" width={160} height={160} loading="lazy" className="size-40" />
               </div>
               <figcaption className="max-w-[12rem] text-center text-xs muted-on-night">{d.home.scanToJoin}</figcaption>
             </figure>

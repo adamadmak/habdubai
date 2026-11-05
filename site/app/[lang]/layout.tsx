@@ -1,6 +1,6 @@
 import "../globals.css";
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_Ethiopic, Urbanist } from "next/font/google";
+import { Urbanist } from "next/font/google";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { FallbackCopyProvider } from "@/components/FallbackCopy";
@@ -16,8 +16,10 @@ import { siteUrl } from "@/lib/site";
 
 /** One heavy geometric family for everything Latin, headings and text alike. */
 const urbanist = Urbanist({ subsets: ["latin"], variable: "--font-urbanist", display: "swap" });
-/** Ge'ez script everywhere, whatever the device ships with. Variable, so it carries the heavy headings too. */
-const ethiopic = Noto_Sans_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic", display: "swap" });
+/*
+ * No web font for Ge'ez. It was 194 KB, 40% of every page, and the language menu's letters made even an
+ * English page download it. Android, iPhones, Windows and Macs all ship a Ge'ez font (see --font-sans).
+ */
 
 /**
  * Reads the theme the reader chose (ThemeToggle) and sets it on <html>; nothing stored means "follow the device".
@@ -72,7 +74,7 @@ export default async function LangLayout({ children, params }: { children: React
   const meta = await api<Meta>("/public/meta", { revalidate: 300 }).catch(() => null);
 
   return (
-    <html lang={lang} className={`${urbanist.variable} ${ethiopic.variable}`} suppressHydrationWarning>
+    <html lang={lang} className={urbanist.variable} suppressHydrationWarning>
       <body className="antialiased">
         {/* The reader's theme, applied before the first paint so a dark choice never flashes light. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />

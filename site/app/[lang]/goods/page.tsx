@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import { ArrowRight, Ban, CalendarClock, CircleCheck, HandCoins, ShieldCheck, Star } from "lucide-react";
 import { GEEZ, Pager, Section } from "@/components/Bits";

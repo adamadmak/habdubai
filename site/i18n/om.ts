@@ -16,6 +16,7 @@ export const om: Dictionary = {
   navLabel: "Baafata ijoo",
 
   common: {
+    moreOptions: "Filannoo dabalataa",
     step: "Tarkaanfii {n}",
     seeAll: "Hunda ilaalaa",
     next: "Itti aanu",
@@ -125,6 +126,11 @@ export const om: Dictionary = {
   },
 
   jobs: {
+    direct: "Hojjechiisaa irraa kallattiin",
+    applyWhatsapp: "WhatsApp irratti iyyadhaa",
+    applyTelegram: "Telegram irratti iyyadhaa",
+    directNote: "Hojjechiisaa wajjin kallattiin dubbattu. Hojiif nama kamiifuu hin kaffalinaa.",
+    hiring: "Hojjetaa barbaadduu? Hojii maxxansaa",
     title: "Hojiiwwan",
     lead: "Marsariitiiwwan hojii uummataa fi chaanaalota hawaasaa irraa kan walitti qabaman, mallattoo gowwoomsaa irraa kan qoratamanii fi afaan keessaniin kan gabaabsaman. Marsariitii jalqabaa irratti iyyattu.",
     searchPlaceholder: "Maqaa hojii, dhaabbata ykn naannoo",
@@ -158,6 +164,7 @@ export const om: Dictionary = {
   },
 
   directory: {
+    hiring: "Amma hojjetaa barbaada",
     title: "Galmee bakkeewwanii",
     lead: "Manneen nyaataa, suuqiiwwan, manneen bareedinaa, kaargoo fi kan biroo, hawaasa keenyaan fi hawaasa keenyaaf kan geggeeffaman, Emireetota hunda keessatti.",
     searchPlaceholder: "Maqaa, naannoo ykn waan barbaaddan",
@@ -221,6 +228,44 @@ export const om: Dictionary = {
   },
 
   business: {
+    jobs: {
+      post: "Hojii maxxansaa",
+      title: "Hojiiwwan keessan",
+      asBusiness: "{name}f. Daqiiqaa tokko fudhata.",
+      business: "Daldala kam",
+      title_: "Maqaa hojii",
+      titleExample: "Fakkeenyaaf: Baristaa",
+      kind: "Gosa hojii",
+      kindChoose: "Tokko filadhaa",
+      salary: "Kaffaltii ji'aa, AED",
+      optional: "dirqama miti",
+      salaryHint: "Hojiiwwan kaffaltii agarsiisan iyyattoota baay'ee argatu.",
+      description: "Waa'ee hojii",
+      descriptionExample: "Hojiin maal akka ta'e, sa'aatii, fi waan barbaaddan.",
+      descriptionHint: "Sarara muraasni gahaa dha. Afaan afraniitti ni hiikna.",
+      accommodation: "Mana jireenyaa dabalatee",
+      visa: "Viizaa dabalatee",
+      contact: "Lakkoofsa WhatsApp ykn maqaa Telegram",
+      contactHint: "Iyyattoonni as isin barreessu, kanaaf ni argu.",
+      checkFields: "Maaloo kanneen olitti mul'atan ilaalaa.",
+      signedOut: "Keessaa baatanii jirtu. Wanti barreessitan ni qabame.",
+      signIn: "Irra deebi'aa seenaa",
+      posting: "Maxxanfamaa jira…",
+      submit: "Hojii maxxansaa",
+      rule: "Iyyattoota kaffaltii gaafachuun hin hayyamamu. Maxxansoonni akkasii ni dhaabbatu.",
+      needListing: "Hojii maxxansuuf duraan daldala keessan dabalaa. Bulchaan erga mirkaneesse booda maxxansuu dandeessu.",
+      waiting: "Daldalli keessan mirkaneessa eegaa jira, yeroo baay'ee guyyaa tokko keessatti. Akkuma mirkanaa'een hojii maxxansuu dandeessu.",
+      postedChecking: "Galatoomaa. Hojii keessan amma mirkaneessaa jirra, yeroo baay'ee daqiiqaa muraasa keessatti mul'ata. Boottiin isinitti hima.",
+      postedReview: "Galatoomaa. Bulchaan hojiiwwan daldaloota haaraa ni mirkaneessa, yeroo baay'ee guyyaa tokko keessatti. Boottiin isinitti hima.",
+      status: { review: "Mirkanaa'aa jira", published: "Mul'ataa jira", closed: "Cufameera", rejected: "Hin maxxanfamne" },
+      view: "Ilaalaa",
+      tapOne: "Namni 1 iyyata tuqe",
+      taps: "Namoonni {n} iyyata tuqan",
+      close: "Bakki guutameera",
+      closeConfirm: "Hojiin kun haa cufamu?",
+      withdraw: "Deebisaa",
+      withdrawConfirm: "Hojiin kun haa deebi'u?",
+    },
     landingTitle: "Daldala keessan hawaasa duratti dhiheessaa",
     landingLead: "Marsariitii kana irrattii fi chaanaalii Telegiraamii keenyaa irratti tolaan galmeessaa: hawaasni Emireetota keessaa jalqaba kan ilaalu achi.",
     steps: [
@@ -342,6 +387,7 @@ export const om: Dictionary = {
   },
 
   goods: {
+    moreOptions: "Filannoo dabalataa",
     title: "Gabatee meeshaa",
     heroTitle: "Gabatee meeshaa,",
     heroAccent: "manneen keenya lamaan gidduutti.",

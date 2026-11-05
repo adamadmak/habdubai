@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { notFound, redirect } from "next/navigation";
 import { Circle, CircleCheck, CircleX, Eye, EyeOff, Handshake, Hourglass, Inbox, MessagesSquare, Plus, Send, ShieldAlert, Star, type LucideIcon } from "lucide-react";
 import { GEEZ, PageHead } from "@/components/Bits";

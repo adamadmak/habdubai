@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { ArrowRight, Luggage, ShieldAlert, ShieldCheck, Send } from "lucide-react";
 import { query, type GoodsBoard } from "@/lib/api";
 import { number } from "@/lib/format";

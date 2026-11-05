@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { BadgeCheck, BedDouble, MapPin, MessageCircle, Navigation, Phone, Stamp } from "lucide-react";
 import { dict, fill, label, pick, pickLang, type Locale } from "@/lib/i18n";
 import { ethiopianDate, formatDate, number, relative, weekday } from "@/lib/format";
@@ -21,6 +21,7 @@ export function JobCard({ job, lang, meta, compact = false }: { job: Job; lang: 
         <div className="min-w-0 flex-1">
           <h3 className="title line-clamp-2 text-[1.0625rem]">{job.title}</h3>
           <p className="mt-0.5 truncate text-sm text-muted">{[job.company, place].filter(Boolean).join(" · ")}</p>
+          {job.direct && <p className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-success"><BadgeCheck className="size-3.5" aria-hidden="true" /> {d.jobs.direct}</p>}
         </div>
       </div>
       {!compact && summary && <p className="mt-3 line-clamp-2 text-sm text-muted" lang={pickLang(job.summary, lang)}>{summary}</p>}

@@ -171,8 +171,18 @@ const JobPage = () => {
             </CardContent>
           </Card>
 
+          {job.business && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Posted by a business</CardTitle></CardHeader>
+              <CardContent className="space-y-1 text-sm">
+                <p className="font-semibold">{job.business.name} · {job.business.verified ? "verified" : "not verified"} · listing {job.business.status}</p>
+                {job.apply_contact && <p>Applicants reach them at <a className="text-primary underline" href={job.apply_contact} target="_blank" rel="noopener noreferrer">{job.apply_contact.replace("https://", "")}</a></p>}
+                <p className="text-default-600">Pay, kind of work and place are what the business stated.</p>
+              </CardContent>
+            </Card>
+          )}
           <Card>
-            <CardHeader><CardTitle className="text-base">As fetched</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">As {job.business ? "written by the business" : "fetched"}</CardTitle></CardHeader>
             <CardContent>
               <pre className="whitespace-pre-wrap font-sans text-sm text-default-700 max-h-96 overflow-y-auto">{job.raw_text ?? "The raw listing has been pruned."}</pre>
             </CardContent>

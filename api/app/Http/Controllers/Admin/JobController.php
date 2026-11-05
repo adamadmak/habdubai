@@ -71,6 +71,8 @@ class JobController extends Controller
                 'classified_by' => $job->classified_by,
                 'duplicate_of' => $job->duplicate_of,
                 'raw_text' => $job->raw?->raw_text,
+                'business' => $job->business ? ['name' => $job->business->name, 'slug' => $job->business->slug, 'verified' => (bool) $job->business->verified, 'status' => $job->business->status] : null,
+                'apply_contact' => $job->apply_contact,
                 'reports' => $job->reports->map(fn (JobReport $r) => ['member' => $r->member?->display_name, 'reason' => $r->reason, 'at' => $r->created_at?->toIso8601String()]),
             ],
             'audit' => AuditLog::query()->where('subject_type', 'job')->where('subject_id', $job->id)->latest('created_at')->limit(30)->get(),

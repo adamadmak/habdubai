@@ -4,8 +4,12 @@ import { LegalPage } from "@/components/Legal";
 import { dict, isLocale } from "@/lib/i18n";
 import { alternatesFor } from "@/lib/site";
 
-// The dawn band is tinted by the hour in Dubai; a page with nothing to fetch would otherwise keep its first hour until the next deploy.
 export const revalidate = 900;
+
+// Built on the first visit and kept, instead of being rebuilt for every visitor. No build ever needs the API: the list is empty.
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;

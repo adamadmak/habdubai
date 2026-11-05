@@ -40,6 +40,39 @@ final class Classification
         public readonly string $summaryOm = '',
     ) {}
 
+    /**
+     * The same reading with what a business stated about its own job in place of what the
+     * model guessed. The summaries and the scam reading stay the model's.
+     *
+     * @param  array<string, mixed>  $posted
+     */
+    public function withOwnerFacts(array $posted, string $title, ?string $company): self
+    {
+        $salary = $posted['salary'] ?? null;
+
+        return new self(
+            isJob: $this->isJob,
+            category: $posted['category'],
+            emirate: $posted['emirate'],
+            title: $title,
+            company: $company,
+            subArea: $posted['area'] ?? null,
+            salaryMin: $salary,
+            salaryMax: null,
+            salaryCurrency: $salary ? 'AED' : null,
+            accommodation: ($posted['accommodation'] ?? false) ? 'yes' : 'unknown',
+            visa: ($posted['visa'] ?? false) ? 'yes' : 'unknown',
+            languages: $this->languages,
+            summaryAm: $this->summaryAm,
+            summaryTi: $this->summaryTi,
+            summaryEn: $this->summaryEn,
+            scamRisk: $this->scamRisk,
+            scamSignals: $this->scamSignals,
+            by: $this->by,
+            summaryOm: $this->summaryOm,
+        );
+    }
+
     /** Build from the classifier's JSON, clamping anything out of range rather than trusting it. */
     public static function fromArray(array $data, string $by): self
     {

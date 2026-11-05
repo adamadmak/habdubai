@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import { ArrowRight, Bell, BellOff, Briefcase, Building2, CircleCheck, Hourglass, MessageCircleQuestion, Package, Send, ShieldCheck, Star, type LucideIcon } from "lucide-react";
 import { PageHead } from "@/components/Bits";

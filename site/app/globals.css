@@ -53,8 +53,8 @@
   --color-danger: #b42318;
   --color-danger-soft: #fdeceb;
 
-  --font-sans: var(--font-urbanist), var(--font-ethiopic), system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Ethiopic", "Kefa", sans-serif;
-  --font-display: var(--font-urbanist), var(--font-ethiopic), system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Ethiopic", "Kefa", sans-serif;
+  --font-sans: var(--font-urbanist), system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Ethiopic", "Kefa", "Ebrima", "Nyala", sans-serif;
+  --font-display: var(--font-urbanist), system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Ethiopic", "Kefa", "Ebrima", "Nyala", sans-serif;
 
   --radius-card: 1.5rem;
   --radius-tile: 1.5rem;
@@ -273,7 +273,7 @@
   :lang(am) .headline,
   :lang(ti) .headline {
     line-height: 1.25;
-    font-weight: 800;
+    font-weight: 700;
   }
   /* The marked words of a heading: red, standing on a yellow line. */
   .gild {
@@ -468,8 +468,6 @@
   .glass {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    backdrop-filter: blur(18px) saturate(160%);
     box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
   }
 
@@ -477,8 +475,6 @@
   .chrome {
     color: var(--color-fg);
     background: var(--chrome-bg);
-    -webkit-backdrop-filter: saturate(170%) blur(16px);
-    backdrop-filter: saturate(170%) blur(16px);
     border: 1px solid var(--chrome-border);
     box-shadow: var(--chrome-shadow);
   }
@@ -506,9 +502,7 @@
 
   /* The old name for floating surfaces on the page itself (the job's apply bar). */
   .material {
-    background: color-mix(in oklab, var(--color-bg) 78%, transparent);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
+    background: color-mix(in oklab, var(--color-bg) 97%, transparent);
   }
 
   .card {
@@ -562,6 +556,10 @@
   }
   .row-scroll::-webkit-scrollbar {
     display: none;
+  }
+  /* Small tiles in a row: several in view, so it is clear there are more. */
+  .row-scroll-tiles {
+    grid-auto-columns: 8.5rem;
   }
   .row-scroll > * {
     scroll-snap-align: start;
@@ -650,8 +648,6 @@
     color: inherit;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
   }
   .btn-glass:hover {
     border-color: color-mix(in oklab, var(--glass-border) 50%, currentColor);
@@ -1282,6 +1278,29 @@ html[data-reveal] .reveal:not([data-in]) {
   background: currentColor;
   -webkit-mask: url("/brand/habuae-word.png") center / contain no-repeat;
   mask: url("/brand/habuae-word.png") center / contain no-repeat;
+}
+
+/* What most people can skip, folded away and one tap from open. */
+.more-options > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--color-primary);
+  list-style: none;
+}
+.more-options > summary::-webkit-details-marker {
+  display: none;
+}
+.more-options > summary::after {
+  content: "+";
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.more-options[open] > summary::after {
+  content: "\2212";
 }
 
 /* Two full-width bands that touch meet directly: the top margin is only for white space above a band. */

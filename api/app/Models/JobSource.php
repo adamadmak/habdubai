@@ -57,6 +57,15 @@ class JobSource extends Model
             ->first(fn (self $s) => (string) $s->cfg('chat_id') === (string) $chatId);
     }
 
+    /** The built-in source for positions a business posts on the website. Never fetched: `telegram` kind sources are not run. */
+    public static function businessOwners(): self
+    {
+        return static::query()->firstOrCreate(
+            ['key' => 'business-owners'],
+            ['name' => 'Posted by a business', 'kind' => 'telegram', 'config' => ['chat_id' => null], 'interval_minutes' => 60, 'active' => true],
+        );
+    }
+
     /** The built-in source for job posts a moderator forwards to the bot. */
     public static function forwarded(): self
     {

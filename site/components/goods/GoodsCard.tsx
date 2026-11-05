@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { BadgeCheck, HandHeart, Handshake, Luggage, Package, PlaneTakeoff, Star } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { Dictionary } from "@/i18n/en";

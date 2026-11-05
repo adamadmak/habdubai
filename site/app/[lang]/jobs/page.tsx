@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Bell } from "lucide-react";
+import Link from "@/components/AppLink";
+import { Bell, Plus } from "lucide-react";
 import { Empty, PageHead, Pager } from "@/components/Bits";
 import { countLabel, JobCard } from "@/components/Cards";
 import { Chip, ChipRow, hrefWith, SearchBox } from "@/components/Filters";
@@ -41,7 +42,9 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
 
   return (
     <>
-      <PageHead title={d.jobs.title} lead={d.jobs.lead} word="ሥራ" />
+      <PageHead title={d.jobs.title} lead={d.jobs.lead} word="ሥራ">
+        <Link href={`/${lang}/jobs/new`} className="btn btn-line mt-5 rounded-full"><Plus className="size-4" aria-hidden="true" /> {d.jobs.hiring}</Link>
+      </PageHead>
 
       <div className="mx-auto mt-6 flex max-w-page flex-col gap-3 px-4 lg:px-8">
         <SearchBox action={base} q={current.q} placeholder={d.jobs.searchPlaceholder} keep={{ category: current.category, emirate: current.emirate }} labels={{ search: d.common.search, clear: d.common.clear }} />

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Dawn } from "./Dawn";
@@ -28,7 +28,7 @@ export function Section({ title, lead, more, children, id, mark, kicker, tone, c
           {mark !== undefined && !kicker && <span className="geez-mark mt-0.5 hidden sm:inline-grid" aria-hidden="true">{GEEZ[mark - 1]}</span>}
           <div className="min-w-0">
             {kicker && <p className="kicker mb-3">{kicker}</p>}
-            <h2 className="headline text-[2rem] md:text-[2.75rem] lg:text-[3.25rem]">{title}</h2>
+            <h2 className="headline text-[1.75rem] md:text-[2.75rem] lg:text-[3.25rem]">{title}</h2>
             {lead && <p className="mt-2.5 max-w-2xl text-muted md:text-[1.0625rem]">{lead}</p>}
           </div>
         </div>
@@ -45,14 +45,14 @@ export function Section({ title, lead, more, children, id, mark, kicker, tone, c
 
   if (tone) {
     return (
-      <section id={id} className={`band-${tone} mt-16 py-16 md:mt-24 md:py-24 ${className}`}>
+      <section id={id} className={`band-${tone} mt-12 py-10 md:mt-24 md:py-24 ${className}`}>
         <div className="reveal mx-auto max-w-page px-4 lg:px-8">{inner}</div>
       </section>
     );
   }
 
   return (
-    <section id={id} className={`reveal mx-auto mt-16 max-w-page px-4 lg:px-8 md:mt-24 ${className}`}>
+    <section id={id} className={`reveal mx-auto mt-12 max-w-page px-4 lg:px-8 md:mt-24 ${className}`}>
       {inner}
     </section>
   );
@@ -70,7 +70,7 @@ export function Steps({ items, stepLabel, icons }: {
       {items.map((step, i) => {
         const Icon = icons?.[i];
         return (
-          <li key={step.title} className="card relative min-h-[11rem] overflow-hidden p-6 pr-20">
+          <li key={step.title} className="card relative overflow-hidden p-5 pr-20 md:min-h-[11rem] md:p-6 md:pr-20">
             <p className="text-xs font-extrabold uppercase tracking-wide text-primary">{stepLabel.replace("{n}", String(i + 1).padStart(2, "0"))}</p>
             <h3 className="headline mt-2 text-[1.3125rem]">{step.title}</h3>
             <p className="mt-2 text-sm text-muted">{step.text}</p>

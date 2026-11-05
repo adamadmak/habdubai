@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { Search, X } from "lucide-react";
 
 /** A search box that submits as a plain GET form, keeping the other filters as hidden fields. */

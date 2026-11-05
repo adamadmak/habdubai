@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { Send } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
 import type { Locale } from "@/lib/locales";

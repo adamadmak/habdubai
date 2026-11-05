@@ -92,6 +92,23 @@ scheduler at most once per fifteen minutes per member. The scheduler only
 runs when something calls `POST /api/system/tick`; the host has no cron, and the
 website's server does it once a minute.
 
+## A business posts its own jobs
+
+`Owner\JobController`, `/{lang}/jobs/new`. Only an owner with an approved listing can post, and the form
+asks only what the listing cannot answer: title, kind, pay, a few lines, housing and visa ticks, and a
+WhatsApp number or Telegram username that starts as the listing's own. The emirate and area come from the listing.
+
+It goes through the same pipeline as every other job, through `JobIngest::storeOne` with `posted_by`. The
+differences live in `ProcessJobListing`: no deduper (a business may fill the same post twice a month, and
+`Owner\JobController` refuses the same one while it is open), what the owner stated beats what the model guessed,
+and a "not a job" verdict is held for a moderator rather than dropped. A business's job is held when the business
+is not `verified`, or at the warning threshold rather than the review threshold: an employer asking for a fee
+does not go up with a warning. The way to apply is `apply_contact`, never `url`, because the deduper reads a repeated
+URL as the same job; use `Job::applyLink()`. `BusinessPublisher::unpost` closes a business's jobs once it is no longer
+listed. The owner hears `owner_job_live` or `owner_job_rejected` in the bot. There is no edit: close and post again.
+
+Never test this by running the pipeline against a local database that has a job channel set: `JobPublisher` posts for real.
+
 ## Business directory
 
 `App\Bot\DirectoryFlow`: members browse by city → kind → a page of eight →
@@ -242,6 +259,15 @@ bot never word them differently.
   is `scale` on `:active`. Every effect has its reduced-motion,
   reduced-transparency and more-contrast fallback in `globals.css`. The tibeb
   has diamonds and no crosses: it is for everyone.
+- **Light enough for a slow phone connection.** Many readers are on weak or metered data, so page weight
+  is a feature. No web font for Ge'ez: it was 194 KB, 40% of every page, and the language menu's letters made English
+  pages download it too; phones ship their own (`--font-sans` names them). Use `@/components/AppLink`, never `next/link`:
+  it turns off fetching links ahead of a tap. No `backdrop-filter`: it is slow on cheap phones. A picture only
+  a wide screen shows is an `<img>` in a hidden box (`/api/qr`), not inline markup every phone downloads. The front
+  page, about, privacy and terms are kept for a minute by an empty `generateStaticParams`; add that only to a page
+  that reads no cookies, because a `cookies()` call inside a `.catch` on such a page is a 500 at run time. Fold
+  what most people can skip into `.more-options`, open when it holds a value or an error. Check with a throttled
+  run on a phone width before and after anything heavy.
 - **Owners sign in with Telegram** (`App\Directory\OwnerLogin`): the site
   shows a QR code / button; the bot asks the person who opened
   `/start login_<ref>` to confirm, then sends them a six-digit code that they

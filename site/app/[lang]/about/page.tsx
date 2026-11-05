@@ -6,6 +6,11 @@ import { api, type Meta } from "@/lib/api";
 import { dict, isLocale } from "@/lib/i18n";
 import { alternatesFor } from "@/lib/site";
 
+// Built on the first visit and kept, instead of being rebuilt for every visitor. No build ever needs the API: the list is empty.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};

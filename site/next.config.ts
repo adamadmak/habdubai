@@ -56,6 +56,8 @@ const config: NextConfig = {
   },
   async headers() {
     return [
+      // The logo and icons: not fetched again on every page of a visit, or every visit of the week.
+      { source: "/brand/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=604800" }] },
       {
         source: "/:path*",
         headers: [

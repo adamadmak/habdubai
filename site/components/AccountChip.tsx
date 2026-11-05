@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { useEffect, useState } from "react";
 import { telegramSignIn } from "@/lib/telegram-app";
 import { UserRound } from "lucide-react";

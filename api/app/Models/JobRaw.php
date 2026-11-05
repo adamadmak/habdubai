@@ -11,11 +11,12 @@ class JobRaw extends Model
 
     protected $table = 'job_raw';
 
-    protected $fillable = ['source_id', 'external_key', 'url', 'title', 'company', 'location', 'raw_text', 'posted_at', 'fetched_at', 'processed_at'];
+    protected $fillable = ['source_id', 'external_key', 'url', 'title', 'company', 'location', 'raw_text', 'business_id', 'posted_by', 'posted_at', 'fetched_at', 'processed_at'];
 
     protected function casts(): array
     {
         return [
+            'posted_by' => 'array',
             'posted_at' => 'datetime',
             'fetched_at' => 'datetime',
             'processed_at' => 'datetime',

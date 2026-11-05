@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, BedDouble, Bell, ChevronLeft, Stamp } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, BedDouble, Bell, ChevronLeft, Stamp } from "lucide-react";
 import { Notice } from "@/components/Bits";
 import { JobCard } from "@/components/Cards";
 import { KindBadge } from "@/components/Cover";
@@ -55,7 +55,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
         datePosted: job.published_at ?? undefined,
         hiringOrganization: job.company ? { "@type": "Organization", name: job.company } : undefined,
         jobLocation: { "@type": "Place", address: { "@type": "PostalAddress", addressRegion: emirate || undefined, addressCountry: "AE" } },
-        directApply: false,
+        directApply: Boolean(job.direct),
       }
     : null;
 
@@ -78,7 +78,15 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
             <KindBadge kind="trade" category={job.category} className="size-16 rounded-[1.25rem]" iconClass="size-7" />
             <div className="min-w-0">
               <h1 className="display text-[2rem] md:text-[2.75rem]">{job.title}</h1>
-              <p className="mt-2 text-muted">{[job.company, place].filter(Boolean).join(" · ")}</p>
+              <p className="mt-2 text-muted">
+                {job.business ? (
+                  <Link href={`/${lang}/directory/${job.business.slug}`} className="inline-flex items-center gap-1 font-semibold text-primary">
+                    {job.business.name}{job.business.verified && <BadgeCheck className="size-4" aria-label={d.common.verified} />}
+                  </Link>
+                ) : job.company}
+                {place && `${job.business || job.company ? " · " : ""}${place}`}
+              </p>
+              {job.direct && <p className="mt-1 text-sm font-bold text-success">{d.jobs.direct}</p>}
             </div>
           </header>
 
@@ -124,15 +132,21 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
               {job.open && job.apply_url ? (
                 // May shrink beside Share. On a phone the site name would cut off the word that matters, so it says only what the button does; the note under it names the site.
                 <a href={job.apply_url} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-primary min-w-0 flex-1 md:flex-none">
-                  <span className="truncate sm:hidden">{d.jobs.applyGeneric}</span>
-                  <span className="hidden truncate sm:inline">{source ? fill(d.jobs.apply, { source }) : d.jobs.applyGeneric}</span>
+                  {job.apply_via ? (
+                    <span className="truncate">{job.apply_via === "whatsapp" ? d.jobs.applyWhatsapp : d.jobs.applyTelegram}</span>
+                  ) : (
+                    <>
+                      <span className="truncate sm:hidden">{d.jobs.applyGeneric}</span>
+                      <span className="hidden truncate sm:inline">{source ? fill(d.jobs.apply, { source }) : d.jobs.applyGeneric}</span>
+                    </>
+                  )}
                   <ArrowUpRight className="size-4 shrink-0" aria-hidden="true" />
                 </a>
               ) : null}
               <ShareButton title={job.title} url={siteUrl(`${lang}/jobs/${job.id}`)} labels={{ share: d.common.share, copied: d.common.copied }} />
             </div>
           </div>
-          {job.open && job.apply_url && <p className="mt-2 text-xs text-muted lg:order-2 lg:mt-0">{d.jobs.applyNote}{source && ` ${fill(d.jobs.via, { source })}`}</p>}
+          {job.open && job.apply_url && <p className="mt-2 text-xs text-muted lg:order-2 lg:mt-0">{job.direct ? d.jobs.directNote : <>{d.jobs.applyNote}{source && ` ${fill(d.jobs.via, { source })}`}</>}</p>}
 
           {meta.bot.link && (
             <a href={`${meta.bot.link}?start=jobs`} target="_blank" rel="noopener noreferrer" className="night tile tile-link spot mt-10 flex items-center gap-4 p-5 md:p-6 lg:order-4 lg:mt-0">

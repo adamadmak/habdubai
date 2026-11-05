@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { GEEZ } from "@/components/Bits";
 import { LoginPanel } from "@/components/owner/LoginPanel";
 import type { Dictionary } from "@/lib/i18n";

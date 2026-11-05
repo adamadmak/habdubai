@@ -135,11 +135,15 @@ export interface Job {
   accommodation: boolean;
   visa: boolean;
   source: string | null;
+  /** Posted by the employer itself. */
+  direct?: boolean;
   open: boolean;
   published_at: string | null;
   // {am, ti, en} today; `om` once the API has it. Read through pick(), which falls back to English.
   summary: Labels;
   apply_url?: string | null;
+  apply_via?: "whatsapp" | "telegram" | null;
+  business?: { name: string; slug: string; verified: boolean } | null;
   languages?: string[];
   warning?: string[];
 }
@@ -285,6 +289,30 @@ export interface OwnerBusiness {
   views: number;
   submitted_at: string | null;
   updated_at: string | null;
+}
+
+export interface OwnerJob {
+  /** Null while it is still in the pipeline. */
+  id: number | null;
+  title: string;
+  company: string | null;
+  status: "review" | "published" | "closed" | "rejected";
+  reason: string | null;
+  clicks: number;
+  posted_at: string | null;
+}
+
+export interface OwnerHiringBusiness {
+  id: number;
+  name: string;
+  verified: boolean;
+  contact: string | null;
+}
+
+export interface OwnerJobs {
+  jobs: OwnerJob[];
+  businesses: OwnerHiringBusiness[];
+  waiting: boolean;
 }
 
 export interface OwnerClaim {

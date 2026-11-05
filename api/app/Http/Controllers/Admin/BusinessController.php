@@ -226,6 +226,7 @@ class BusinessController extends Controller
     public function destroy(Request $request, Business $business): JsonResponse
     {
         $before = $this->payload($business);
+        $this->publisher->closeJobs($business);
         $this->publisher->unpost($business);
 
         // Telegram refused to remove the channel post: deleting now would leave it up with

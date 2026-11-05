@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { GEEZ, PageHead } from "./Bits";
 import { formatDate } from "@/lib/format";
 import { fill, type Dictionary } from "@/lib/i18n";

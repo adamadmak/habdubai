@@ -66,7 +66,8 @@ class JobCard
 
         $lines[] = '';
         $tags = '#'.$job->category.' #'.$job->emirate;
-        $source = $job->source?->name;
+        // A business that posted its own job is already named on the card.
+        $source = $job->business_id ? null : $job->source?->name;
         $lines[] = ($source ? e($this->messages->text('job_source', $label, ['source' => $source])).' · ' : '').$tags;
 
         return \App\Support\TelegramText::clip(implode("\n", $lines), 4000);
@@ -77,8 +78,8 @@ class JobCard
         $label = JobSettings::cardLanguages()[0];
         $rows = [];
 
-        if ($job->url && $job->status !== 'closed') {
-            $row = [['text' => $this->messages->button('btn_job_open', $label), 'url' => $job->url]];
+        if ($job->applyLink() && $job->status !== 'closed') {
+            $row = [['text' => $this->messages->button('btn_job_open', $label), 'url' => $job->applyLink()]];
             // The website's page has the summary in all three languages and the safety notes.
             $site = \App\Support\PublicUrls::site($label.'/jobs/'.$job->id);
             if ($site !== '') {
@@ -117,8 +118,8 @@ class JobCard
         if ($job->scam_score >= JobSettings::warningThreshold()) {
             $lines[] = $this->messages->text('job_warning', $language, ['reason' => e($this->firstReason($job))]);
         }
-        if ($job->url && $job->status !== 'closed') {
-            $lines[] = '<a href="'.e($job->url).'">'.e($this->messages->button('btn_job_open', $language)).'</a>';
+        if ($job->applyLink() && $job->status !== 'closed') {
+            $lines[] = '<a href="'.e($job->applyLink()).'">'.e($this->messages->button('btn_job_open', $language)).'</a>';
         }
 
         return implode("\n", $lines);

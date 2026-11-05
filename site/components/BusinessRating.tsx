@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { useActionState } from "react";
 import { CircleCheck, Star } from "lucide-react";
 import type { Dictionary } from "@/i18n/en";

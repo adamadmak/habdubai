@@ -376,6 +376,8 @@ export interface JobDetail extends JobSummary {
   classified_by: string;
   duplicate_of: number | null;
   raw_text: string | null;
+  business: { name: string; slug: string | null; verified: boolean; status: string } | null;
+  apply_contact: string | null;
   reports: { member: string | null; reason: string; at: string }[];
 }
 

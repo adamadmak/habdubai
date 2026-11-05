@@ -27,8 +27,12 @@ class JobIngest
         return $new;
     }
 
-    /** The stored row when the listing is new, null when the source already gave us it. */
-    public function storeOne(JobSource $source, RawListing $listing): ?JobRaw
+    /**
+     * The stored row when the listing is new, null when the source already gave us it.
+     *
+     * @param  array<string, mixed>|null  $postedBy  what a business owner stated, when one posted it
+     */
+    public function storeOne(JobSource $source, RawListing $listing, ?int $businessId = null, ?array $postedBy = null): ?JobRaw
     {
         try {
             $raw = JobRaw::query()->create([
@@ -41,6 +45,8 @@ class JobIngest
                 'raw_text' => $listing->text,
                 'posted_at' => $listing->postedAt,
                 'fetched_at' => now(),
+                'business_id' => $businessId,
+                'posted_by' => $postedBy,
             ]);
         } catch (UniqueConstraintViolationException) {
             return null;

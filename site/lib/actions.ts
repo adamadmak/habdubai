@@ -35,6 +35,53 @@ function failed(error: unknown): FormState {
   return { ok: false, message: "error" };
 }
 
+/** A position a business posts. Then back to the dashboard, which says what happens next. */
+export async function postJob(_previous: FormState, form: FormData): Promise<FormState> {
+  const lang = localeOf(form);
+  const text = (name: string) => String(form.get(name) ?? "").trim();
+  let verified = false;
+
+  try {
+    const answer = await ownerApi<{ verified: boolean }>("/jobs", {
+      method: "POST",
+      locale: lang,
+      body: {
+        business_id: Number(form.get("business_id")) || null,
+        title: text("title"),
+        category: text("category"),
+        description: text("description"),
+        salary: Number(text("salary").replace(/\D/g, "")) || null,
+        accommodation: form.get("accommodation") === "1",
+        visa: form.get("visa") === "1",
+        contact: text("contact"),
+      },
+    });
+    verified = answer.verified;
+  } catch (error) {
+    return failed(error);
+  }
+
+  revalidatePath(`/${lang}/business`);
+  redirect(`/${lang}/business?job=${verified ? "checking" : "review"}#jobs`);
+}
+
+/** The position is filled, or a post in review is taken back. */
+export async function closeJob(form: FormData): Promise<void> {
+  const lang = localeOf(form);
+  const id = Number(form.get("job"));
+
+  if (id) {
+    try {
+      await ownerApi(`/jobs/${id}/close`, { method: "POST", locale: lang });
+    } catch {
+      // The dashboard shows the job's real state either way.
+    }
+  }
+
+  revalidatePath(`/${lang}/business`);
+  redirect(`/${lang}/business#jobs`);
+}
+
 /** Create a listing, or save changes to one. A new listing then opens its edit page so a photo can be added. */
 export async function saveListing(_previous: FormState, form: FormData): Promise<FormState> {
   const lang = localeOf(form);

@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import { BadgeCheck, ChevronLeft, Clock, Globe, Languages, MapPin, MessageCircle, Navigation, Phone, Send, UserCheck } from "lucide-react";
-import { BusinessCard } from "@/components/Cards";
+import { BusinessCard, JobCard } from "@/components/Cards";
 import { BusinessRating } from "@/components/BusinessRating";
 import { Cover } from "@/components/Cover";
 import { ShareButton } from "@/components/ShareButton";
 import { ViewPing } from "@/components/ViewPing";
-import { api, apiOrNull, type Business, type Meta, type MyBusinessRating } from "@/lib/api";
+import { api, apiOrNull, type Business, type Job, type Meta, type MyBusinessRating } from "@/lib/api";
 import { digits, formatDate, host } from "@/lib/format";
 import { dict, fill, isLocale, label, pick } from "@/lib/i18n";
 import { currentOwner, ownerApi } from "@/lib/owner";
 import { alternatesFor, siteUrl } from "@/lib/site";
 
-type Detail = { business: Business; nearby: Business[] };
+type Detail = { business: Business; nearby: Business[]; jobs?: Job[] };
 type Params = { lang: string; slug: string };
 
 async function load(slug: string): Promise<Detail | null> {
@@ -41,7 +41,7 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
   const d = dict(lang);
   const [data, meta, owner] = await Promise.all([load(slug), api<Meta>("/public/meta", { revalidate: 300 }), currentOwner(lang).catch(() => null)]);
   if (!data) notFound();
-  const { business: b, nearby } = data;
+  const { business: b, nearby, jobs = [] } = data;
   const mine = owner ? await ownerApi<MyBusinessRating>(`/directory/${b.slug}/rating`, { locale: lang }).catch(() => null) : null;
 
   const kind = label(meta.labels.business_categories[b.category], lang);
@@ -150,6 +150,15 @@ export default async function BusinessPage({ params }: { params: Promise<Params>
               blockedBy={mine?.blocked_by ?? null}
               botLink={mine?.bot_link ?? null}
             />
+
+            {jobs.length > 0 && (
+              <section className="mt-8">
+                <h2 className="headline text-2xl">{d.directory.hiring}</h2>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {jobs.map((j) => <JobCard key={j.id} job={j} lang={lang} meta={meta} compact />)}
+                </div>
+              </section>
+            )}
 
             {(b.description || b.about) && (
               <section className="mt-8">

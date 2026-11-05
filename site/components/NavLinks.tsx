@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { usePathname } from "next/navigation";
 import { Briefcase, Building2, House, Luggage, Newspaper, Store } from "lucide-react";
 import type { Locale } from "@/lib/locales";

@@ -18,6 +18,9 @@ class Job extends Model
 
     public const EMIRATES = ['dubai', 'sharjah', 'abu_dhabi', 'ajman', 'other_uae', 'outside_uae', 'unknown'];
 
+    /** The reason on a post its owner took back before anyone saw it. */
+    public const WITHDRAWN = 'Withdrawn by the owner.';
+
     /** Days a published job stays open before it is closed automatically. */
     public const OPEN_DAYS = 14;
 
@@ -25,7 +28,7 @@ class Job extends Model
         'raw_id', 'source_id', 'duplicate_of', 'url', 'url_key', 'fingerprint', 'category', 'emirate', 'sub_area',
         'title', 'company', 'salary_min', 'salary_max', 'salary_currency', 'accommodation', 'visa', 'languages',
         'summary_am', 'summary_ti', 'summary_en', 'summary_om', 'scam_score', 'scam_reasons', 'classified_by', 'status',
-        'review_reason', 'reviewed_by', 'reviewed_at', 'published_at', 'closed_at', 'channel_message_id', 'reports_count',
+        'business_id', 'apply_contact', 'review_reason', 'reviewed_by', 'reviewed_at', 'published_at', 'closed_at', 'channel_message_id', 'reports_count',
     ];
 
     protected function casts(): array
@@ -47,6 +50,18 @@ class Job extends Model
     public function source(): BelongsTo
     {
         return $this->belongsTo(JobSource::class, 'source_id');
+    }
+
+    /** The business that posted it itself, when one did. */
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class);
+    }
+
+    /** Where "Apply" goes: the listing on another site, or the chat of the business that posted it. */
+    public function applyLink(): ?string
+    {
+        return $this->url ?: $this->apply_contact;
     }
 
     public function reports(): HasMany
