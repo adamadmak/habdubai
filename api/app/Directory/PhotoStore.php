@@ -32,6 +32,30 @@ class PhotoStore
 
     public function store(Business $business, string $raw, string $kind = 'cover'): BusinessPhoto
     {
+        $image = $this->encode($raw);
+
+        // One photo waits for review at a time: a new upload replaces the last one.
+        $business->photos()->where('kind', $kind)->where('approved', false)->delete();
+
+        return BusinessPhoto::query()->create([
+            'business_id' => $business->id,
+            'kind' => $kind,
+            'approved' => false,
+            'mime' => 'image/jpeg',
+            'width' => $image['width'],
+            'height' => $image['height'],
+            'size' => strlen($image['jpeg']),
+            'data' => base64_encode($image['jpeg']),
+        ]);
+    }
+
+    /**
+     * Any picture as a clean JPEG of a sensible size.
+     *
+     * @return array{jpeg: string, width: int, height: int}
+     */
+    public function encode(string $raw, int $minWidth = self::MIN_WIDTH): array
+    {
         $size = $raw !== '' ? @getimagesizefromstring($raw) : false;
         if ($size === false || ! in_array($size[2] ?? null, [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
             throw ValidationException::withMessages(['photo' => __('owner.photo_unreadable')]);
@@ -49,10 +73,10 @@ class PhotoStore
         $width = imagesx($image);
         $height = imagesy($image);
 
-        if ($width < self::MIN_WIDTH || $height < 200) {
+        if ($width < $minWidth || $height < 200) {
             imagedestroy($image);
 
-            throw ValidationException::withMessages(['photo' => __('owner.photo_too_small', ['width' => self::MIN_WIDTH])]);
+            throw ValidationException::withMessages(['photo' => __('owner.photo_too_small', ['width' => $minWidth])]);
         }
 
         $scale = min(1, self::MAX_SIDE / max($width, $height));
@@ -70,19 +94,7 @@ class PhotoStore
         $jpeg = (string) ob_get_clean();
         imagedestroy($canvas);
 
-        // One photo waits for review at a time: a new upload replaces the last one.
-        $business->photos()->where('kind', $kind)->where('approved', false)->delete();
-
-        return BusinessPhoto::query()->create([
-            'business_id' => $business->id,
-            'kind' => $kind,
-            'approved' => false,
-            'mime' => 'image/jpeg',
-            'width' => $newWidth,
-            'height' => $newHeight,
-            'size' => strlen($jpeg),
-            'data' => base64_encode($jpeg),
-        ]);
+        return ['jpeg' => $jpeg, 'width' => $newWidth, 'height' => $newHeight];
     }
 
     /** Widths the website may ask for (`?w=`): a card needs far less than the stored 1600. */

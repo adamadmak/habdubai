@@ -1353,6 +1353,53 @@ html[data-reveal] .reveal:not([data-in]) {
   }
 }
 
+/* The WhatsApp button. On a phone it floats above the tab bar, and above a page's apply or save bar. */
+.whatsapp-fab {
+  position: fixed;
+  z-index: 30;
+  right: 1rem;
+  bottom: calc(var(--tabbar-space) + 0.75rem);
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.25);
+  transition: scale 120ms ease-out;
+}
+.whatsapp-fab:hover {
+  scale: 1.06;
+}
+.whatsapp-fab:active {
+  scale: 0.94;
+}
+.whatsapp-fab:focus-visible {
+  outline: 3px solid var(--color-fg);
+  outline-offset: 2px;
+}
+body:has(.phone-action-bar) .whatsapp-fab {
+  bottom: calc(var(--tabbar-space) + 6rem);
+}
+@media (min-width: 768px) {
+  .whatsapp-fab,
+  body:has(.phone-action-bar) .whatsapp-fab {
+    right: 1.5rem;
+    bottom: 1.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-fab {
+    transition: none;
+  }
+}
+@media print {
+  .whatsapp-fab {
+    display: none;
+  }
+}
+
 /* Two full-width bands that touch meet directly: the top margin is only for white space above a band. */
 [class*="band-"] + [class*="band-"] {
   margin-top: 0;

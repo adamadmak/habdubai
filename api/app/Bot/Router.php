@@ -3,13 +3,16 @@
 namespace App\Bot;
 
 use App\Jobs\Pipeline\JobIngest;
+use App\Jobs\Pipeline\JobPhotos;
 use App\Jobs\Sources\TelegramSource;
 use App\Models\AuditLog;
 use App\Models\Conversation;
+use App\Models\JobRaw;
 use App\Models\JobSource;
 use App\Models\Member;
 use App\Models\TelegramUpdate;
 use App\Services\TelegramBotService;
+use App\Support\JobSettings;
 use App\Support\RuntimeEnv;
 
 /**
@@ -617,8 +620,38 @@ class Router
         $this->sourcePost($post);
     }
 
+    /** A post an admin made by hand on our job channel. The bot's own cards never arrive here: Telegram does not send a bot its own posts. */
+    private function ownChannelPost(array $post): void
+    {
+        $album = isset($post['media_group_id']) && ! isset($post['caption'])
+            ? JobRaw::query()->where('media_group', mb_substr((string) $post['media_group_id'], 0, 64))->where('raw_text', '!=', '')->first()
+            : null;
+        $photo = TelegramSource::photoFileId($post);
+
+        // Words on an album make it one job. An album with none is several flyers, each its own job.
+        if ($album !== null) {
+            if ($photo !== null) {
+                app(JobPhotos::class)->addToAlbum($album, $photo);
+            }
+
+            return;
+        }
+
+        $listing = TelegramSource::trustedPost($post, 'own'.($post['chat']['id'] ?? ''));
+
+        if ($listing !== null) {
+            $this->ingest->storeOne(JobSource::ownChannel(), $listing);
+        }
+    }
+
     private function sourcePost(array $post): void
     {
+        if (JobSettings::isJobChannel($post['chat'] ?? [])) {
+            $this->ownChannelPost($post);
+
+            return;
+        }
+
         $chatId = $post['chat']['id'] ?? null;
         $source = $chatId !== null ? JobSource::forTelegramChat($chatId) : null;
 
@@ -636,7 +669,12 @@ class Router
 
     private function forwarded(Conversation $conversation, Incoming $in): void
     {
-        $listing = TelegramSource::listing($in->message, 'fwd');
+        $origin = $in->message['forward_origin']['chat'] ?? $in->message['forward_from_chat'] ?? [];
+
+        // From our own channel it is already there; a flyer from elsewhere has no words for a channel card.
+        $listing = JobSettings::isJobChannel($origin)
+            ? TelegramSource::trustedPost($in->message, 'fwd')
+            : (TelegramSource::listing($in->message, 'fwd') ?? (TelegramSource::photoFileId($in->message) ? TelegramSource::trustedPost($in->message, 'fwd') : null));
 
         if ($listing === null) {
             $this->reply($conversation, 'job_forward_too_short');

@@ -72,6 +72,7 @@ Route::prefix('public')->name('public.')->middleware('throttle:public')->group(f
     Route::get('announcements/{announcement}', [PublicAnnouncements::class, 'show'])->name('announcements.show');
     Route::get('announcements/{announcement}/photo', [PublicMedia::class, 'announcement'])->name('announcements.photo');
     Route::get('photos/{photo}', [PublicMedia::class, 'photo'])->name('photo');
+    Route::get('job-photos/{photo}', [PublicMedia::class, 'jobPhoto'])->name('job-photo');
     Route::get('photos/{photo}/preview', [PublicMedia::class, 'preview'])->middleware('signed:relative')->name('photo.preview');
     // The goods board: open trips and parcels, and what a post would match before it is made.
     Route::get('goods', [PublicGoods::class, 'index'])->name('goods');

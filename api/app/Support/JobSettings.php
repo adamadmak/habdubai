@@ -21,6 +21,19 @@ final class JobSettings
         return RuntimeEnv::get(null, 'job_channel_id', null);
     }
 
+    /** Whether a Telegram chat is the channel above, however the setting names it. */
+    public static function isJobChannel(array $chat): bool
+    {
+        $channel = self::channel();
+
+        if ($channel === '') {
+            return false;
+        }
+
+        return (string) ($chat['id'] ?? '') === $channel
+            || (isset($chat['username']) && strcasecmp('@'.$chat['username'], '@'.ltrim($channel, '@')) === 0);
+    }
+
     /** At or above this scam score a job waits for a moderator. */
     public static function reviewThreshold(): int
     {

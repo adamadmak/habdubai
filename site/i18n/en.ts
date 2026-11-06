@@ -149,6 +149,8 @@ export const en = {
     closed: "This job is closed. It stays here for reference.",
     summary: "In short",
     noSummary: "There is no summary for this job. Open the listing for the details.",
+    flyerTitle: "Job vacancy",
+    flyerNote: "The details are in the picture.",
     safetyTitle: "Before you apply",
     safetyText: "A real employer never asks you to pay for a job, a visa or a medical. If anyone asks for money, stop and report it in the bot.",
     warningTitle: "Read this one carefully",

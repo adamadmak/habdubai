@@ -356,6 +356,7 @@ export interface JobSummary {
   source: string | null;
   source_id: number | null;
   on_channel: boolean;
+  photo: string | null;
   created_at: string;
   published_at: string | null;
 }

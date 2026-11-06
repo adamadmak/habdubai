@@ -113,7 +113,7 @@ class JobPublisher
     {
         $channel = JobSettings::channel();
 
-        if ($channel === '' || $job->channel_message_id) {
+        if ($channel === '' || $job->channel_message_id || $job->website_only) {
             return;
         }
 

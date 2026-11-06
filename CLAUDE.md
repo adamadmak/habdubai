@@ -108,6 +108,21 @@ URL as the same job; use `Job::applyLink()`. `BusinessPublisher::unpost` closes 
 listed. The owner hears `owner_job_live` or `owner_job_rejected` in the bot. There is no edit: close and post again.
 
 Never test this by running the pipeline against a local database that has a job channel set: `JobPublisher` posts for real.
+The same goes for `php artisan migrate` locally: `000082` posts news through the same setting.
+
+## Jobs posted by hand on our own channel
+
+An admin's post on the job channel (`JobSettings::channel()`) becomes a job by itself, through `Router::ownChannelPost` and
+`TelegramSource::trustedPost`, under the built-in `own-channel` source. Telegram never sends a bot its own posts, so our cards do
+not loop back. A photo needs no words. A link takes its title and picture from the page's preview (`LinkPreview`). Plain text must
+mention work (`JOB_WORDS`), and `#nojob` opts any post out. An album with no words is one job per photo, because each flyer is a
+different employer; words on an album make it one job with all its pictures.
+
+These jobs are `website_only`: `JobPublisher` never posts, edits or deletes a channel message for them, so the owner's post is left
+alone whatever happens to the job. `image_only` means nobody read the flyer: the title is the placeholder `FLYER_TITLE`, the website
+shows its own translated title, it has no kind, emirate or scam score, and it stays out of the search-engine job markup. The scam
+score still applies to anything with words. Pictures live in `job_photos` (`JobPhotos`, which cuts a phone screenshot's status bar
+and black bands), are served only for a published or closed job, and go 30 days after the job ends.
 
 ## Business directory
 

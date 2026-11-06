@@ -6,6 +6,7 @@ use App\Directory\PhotoStore;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\BusinessPhoto;
+use App\Models\JobPhoto;
 use App\Services\TelegramBotService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -28,6 +29,23 @@ class MediaController extends Controller
 
         if (in_array($width, PhotoStore::THUMB_WIDTHS, true)) {
             $key = 'public.photo-thumb.'.$photo->id.'.'.($photo->updated_at?->timestamp ?? 0).'.'.$width;
+            $thumb = Cache::remember($key, now()->addDays(30), fn () => base64_encode(PhotoStore::thumbnail($bytes, $width)));
+            $bytes = base64_decode($thumb, true) ?: $bytes;
+        }
+
+        return $this->image($bytes, $photo->mime, 'public, max-age=31536000, immutable');
+    }
+
+    /** A picture of a job people can see. Same rules for size and caching as a listing photo. */
+    public function jobPhoto(Request $request, JobPhoto $photo): Response
+    {
+        abort_unless(in_array($photo->job?->status, ['published', 'closed'], true), 404);
+
+        $bytes = $photo->bytes();
+        $width = (int) $request->query('w', 0);
+
+        if (in_array($width, PhotoStore::THUMB_WIDTHS, true)) {
+            $key = 'public.job-photo-thumb.'.$photo->id.'.'.$width;
             $thumb = Cache::remember($key, now()->addDays(30), fn () => base64_encode(PhotoStore::thumbnail($bytes, $width)));
             $bytes = base64_decode($thumb, true) ?: $bytes;
         }

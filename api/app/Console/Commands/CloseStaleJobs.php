@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\Pipeline\JobPublisher;
 use App\Models\Job;
 use App\Models\JobAlert;
+use App\Models\JobPhoto;
 use App\Models\JobRaw;
 use App\Support\PublicAddress;
 use Illuminate\Console\Command;
@@ -76,6 +77,9 @@ class CloseStaleJobs extends Command
         $pruned = JobRaw::query()->where('fetched_at', '<', now()->subDays(30))
             ->whereNotIn('id', Job::query()->whereIn('status', ['published', 'review'])->whereNotNull('raw_id')->select('raw_id'))
             ->delete();
+        // Pictures are the heavy part of a job, and nobody needs them a month after it closed.
+        JobPhoto::query()->whereIn('job_id', Job::query()->whereIn('status', ['closed', 'rejected', 'duplicate'])
+            ->where('updated_at', '<', now()->subDays(30))->select('id'))->delete();
         JobAlert::query()->whereNotNull('sent_at')->where('sent_at', '<', now()->subDays(30))->delete();
 
         $this->info("Closed {$old->count()} old and {$gone} removed listing(s); pruned {$pruned} raw row(s).");

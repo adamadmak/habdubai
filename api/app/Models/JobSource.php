@@ -66,6 +66,15 @@ class JobSource extends Model
         );
     }
 
+    /** The built-in source for what admins post by hand on our own job channel. */
+    public static function ownChannel(): self
+    {
+        return static::query()->firstOrCreate(
+            ['key' => 'own-channel'],
+            ['name' => 'HabUAE channel', 'kind' => 'telegram', 'config' => ['chat_id' => null], 'interval_minutes' => 0, 'active' => true],
+        );
+    }
+
     /** The built-in source for job posts a moderator forwards to the bot. */
     public static function forwarded(): self
     {

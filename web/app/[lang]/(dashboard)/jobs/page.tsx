@@ -114,6 +114,7 @@ const JobsPageInner = () => {
               {data?.data.map((job) => (
                 <TableRow key={job.id} className="cursor-pointer" onClick={() => router.push(`/jobs/${job.id}`)}>
                   <TableCell className="max-w-xs">
+                    {job.photo && <img src={job.photo} alt="" loading="lazy" className="mb-1 h-16 w-16 rounded object-cover object-top" />}
                     <Link href={`/jobs/${job.id}`} className="font-medium text-default-900 hover:text-primary" onClick={(e) => e.stopPropagation()}>{job.title}</Link>
                     <div className="text-xs text-default-500 truncate">{job.company ?? "—"}</div>
                     {job.status === "review" && job.review_reason && <div className="text-xs text-warning mt-1 line-clamp-2">{job.review_reason}</div>}

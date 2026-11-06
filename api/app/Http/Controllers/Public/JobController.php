@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Job;
+use App\Models\JobPhoto;
 use App\Support\PublicUrls;
 use App\Support\Search;
 use Illuminate\Http\JsonResponse;
@@ -27,7 +28,7 @@ class JobController extends Controller
             'page' => ['nullable', 'integer', 'min:1', 'max:500'],
         ]);
 
-        $page = Job::query()->with('source:id,name')->where('status', 'published')
+        $page = Job::query()->with(['source:id,name', 'photos'])->where('status', 'published')
             ->when($data['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
             ->when($data['emirate'] ?? null, fn ($q, $emirate) => $q->where('emirate', $emirate))
             ->when(trim((string) ($data['q'] ?? '')), fn ($q, $term) => Search::anyColumn($q, ['title', 'company', 'sub_area'], $term))
@@ -47,9 +48,9 @@ class JobController extends Controller
     public function show(Job $job): JsonResponse
     {
         abort_unless(in_array($job->status, ['published', 'closed'], true), 404);
-        $job->loadMissing(['source:id,name', 'business']);
+        $job->loadMissing(['source:id,name', 'business', 'photos']);
 
-        $similar = Job::query()->with('source:id,name')->where('status', 'published')->whereKeyNot($job->id)
+        $similar = Job::query()->with(['source:id,name', 'photos'])->where('status', 'published')->whereKeyNot($job->id)
             ->where('category', $job->category)->orderByDesc('published_at')->limit(4)->get();
 
         return response()->json([
@@ -94,7 +95,10 @@ class JobController extends Controller
             'accommodation' => $job->accommodation === 'yes',
             'visa' => $job->visa === 'yes',
             // Posted by the employer: nothing to credit, and applicants can say so.
-            'source' => $job->business_id ? null : ($host ?: $job->source?->name),
+            'source' => $job->business_id ? null : ($host && $host !== 't.me' ? $host : $job->source?->name),
+            // A flyer nobody has read: the picture is the listing.
+            'image_only' => (bool) $job->image_only,
+            'photo' => $job->photos->first()?->url(480),
             'direct' => $job->business_id !== null,
             'open' => $job->status === 'published',
             'published_at' => $job->published_at?->toIso8601String(),
@@ -111,6 +115,7 @@ class JobController extends Controller
             $payload['business'] = $job->business?->status === 'approved'
                 ? ['name' => $job->business->name, 'slug' => $job->business->slug, 'verified' => (bool) $job->business->verified]
                 : null;
+            $payload['photos'] = $job->photos->map(fn (JobPhoto $p) => ['url' => $p->url(), 'preview' => $p->url(960), 'width' => $p->width, 'height' => $p->height])->values()->all();
             $payload['languages'] = $job->languages ?? [];
             $payload['warning'] = $job->scam_score > 0 && ! empty($job->scam_reasons) ? array_values((array) $job->scam_reasons) : [];
         }

@@ -145,6 +145,8 @@ export const ti: Dictionary = {
     closed: "እዚ ስራሕ ተዓጽዩ። ንመወከሲ ኣብዚ ይጸንሕ።",
     summary: "ብሓጺሩ",
     noSummary: "ነዚ ስራሕ ጽማቕ የብሉን። ንዝርዝሩ ነቲ መወዓውዒ ክፈቱ።",
+    flyerTitle: "ናይ ስራሕ መወዓውዒ",
+    flyerNote: "ዝርዝሩ ኣብቲ ስእሊ ኣሎ።",
     safetyTitle: "ቅድሚ ምምልካትኩም",
     safetyText: "ሓቀኛ ኣስራሒ ንስራሕ፣ ንቪዛ ወይ ንሕክምና ምርመራ ገንዘብ ኣይሓትትን። ዝኾነ ሰብ ገንዘብ እንተሓተተ ደው ኢልኩም ኣብ ቦት ሓብሩ።",
     warningTitle: "ነዚ ብጥንቃቐ ኣንብብዎ",

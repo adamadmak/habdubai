@@ -16,10 +16,11 @@ export function JobCard({ job, lang, meta, compact = false }: { job: Job; lang: 
 
   return (
     <Link href={`/${lang}/jobs/${job.id}`} className="card lift flex h-full flex-col p-4 md:p-5">
+      {job.photo && <img src={job.photo} alt="" loading="lazy" decoding="async" className="mb-3 aspect-[4/3] w-full rounded-xl bg-line object-cover object-top" />}
       <div className="flex items-start gap-3.5">
         <KindBadge kind="trade" category={job.category} />
         <div className="min-w-0 flex-1">
-          <h3 className="title line-clamp-2 text-[1.0625rem]">{job.title}</h3>
+          <h3 className="title line-clamp-2 text-[1.0625rem]">{job.image_only ? d.jobs.flyerTitle : job.title}</h3>
           <p className="mt-0.5 truncate text-sm text-muted">{[job.company, place].filter(Boolean).join(" · ")}</p>
           {job.direct && <p className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-success"><BadgeCheck className="size-3.5" aria-hidden="true" /> {d.jobs.direct}</p>}
         </div>

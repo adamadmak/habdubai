@@ -10,6 +10,7 @@ import { Motion } from "@/components/Motion";
 import { TabBar } from "@/components/NavLinks";
 import { PageViews } from "@/components/PageViews";
 import { TelegramEntry } from "@/components/TelegramEntry";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { api, type Meta } from "@/lib/api";
 import { dict, isLocale, LOCALES } from "@/lib/i18n";
 import { siteUrl } from "@/lib/site";
@@ -97,6 +98,7 @@ export default async function LangLayout({ children, params }: { children: React
         </FallbackCopyProvider>
         <Footer lang={lang} d={d} meta={meta} />
         <TabBar lang={lang} labels={d.tabs} label={d.navLabel} />
+        {meta?.whatsapp && <WhatsAppButton number={meta.whatsapp} label={`${d.brand} · ${d.common.whatsapp}`} />}
         <Motion />
         <PageViews />
         <TelegramEntry lang={lang} />

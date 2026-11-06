@@ -47,6 +47,10 @@ class JobIngest
                 'fetched_at' => now(),
                 'business_id' => $businessId,
                 'posted_by' => $postedBy,
+                'photo_file_ids' => $listing->photoFileIds ?: null,
+                'photo_url' => $listing->photoUrl ? mb_substr($listing->photoUrl, 0, 1000) : null,
+                'media_group' => $listing->mediaGroup,
+                'website_only' => $listing->websiteOnly,
             ]);
         } catch (UniqueConstraintViolationException) {
             return null;

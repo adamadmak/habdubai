@@ -116,6 +116,8 @@ export interface Meta {
   questions_group: string | null;
   goods_group: string | null;
   support: string | null;
+  /** Digits only, ready for wa.me. Null when no number is set on the admin's Settings. */
+  whatsapp: string | null;
   labels: { trades: LabelList; emirates: LabelList; business_categories: LabelList; languages: LabelList };
 }
 
@@ -141,6 +143,11 @@ export interface Job {
   published_at: string | null;
   // {am, ti, en} today; `om` once the API has it. Read through pick(), which falls back to English.
   summary: Labels;
+  /** A flyer nobody has read: the picture is the listing, and the title is only a placeholder. */
+  image_only?: boolean;
+  /** The first picture, narrow enough for a card. */
+  photo?: string | null;
+  photos?: { url: string; preview: string; width: number; height: number }[];
   apply_url?: string | null;
   apply_via?: "whatsapp" | "telegram" | null;
   business?: { name: string; slug: string; verified: boolean } | null;

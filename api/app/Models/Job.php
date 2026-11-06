@@ -28,13 +28,15 @@ class Job extends Model
         'raw_id', 'source_id', 'duplicate_of', 'url', 'url_key', 'fingerprint', 'category', 'emirate', 'sub_area',
         'title', 'company', 'salary_min', 'salary_max', 'salary_currency', 'accommodation', 'visa', 'languages',
         'summary_am', 'summary_ti', 'summary_en', 'summary_om', 'scam_score', 'scam_reasons', 'classified_by', 'status',
-        'business_id', 'apply_contact', 'review_reason', 'reviewed_by', 'reviewed_at', 'published_at', 'closed_at', 'channel_message_id', 'reports_count',
+        'business_id', 'apply_contact', 'review_reason', 'reviewed_by', 'reviewed_at', 'published_at', 'closed_at', 'channel_message_id', 'reports_count', 'website_only', 'image_only',
     ];
 
     protected function casts(): array
     {
         return [
             'languages' => 'array',
+            'website_only' => 'boolean',
+            'image_only' => 'boolean',
             'scam_reasons' => 'array',
             'reviewed_at' => 'datetime',
             'published_at' => 'datetime',
@@ -62,6 +64,12 @@ class Job extends Model
     public function applyLink(): ?string
     {
         return $this->url ?: $this->apply_contact;
+    }
+
+    /** In order, without the image data: lists read this for every job on the page. */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(JobPhoto::class, 'job_id')->select(['id', 'job_id', 'position', 'width', 'height', 'updated_at'])->orderBy('position');
     }
 
     public function reports(): HasMany

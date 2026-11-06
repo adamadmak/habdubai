@@ -18,7 +18,7 @@ class JobController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Job::query()->with('source:id,name')->latest('id');
+        $query = Job::query()->with(['source:id,name', 'photos'])->latest('id');
 
         $status = $request->query('status', 'review');
         if ($status !== 'all') {
@@ -171,6 +171,8 @@ class JobController extends Controller
             'source' => $j->source?->name,
             'source_id' => $j->source_id,
             'on_channel' => (bool) $j->channel_message_id,
+            // The flyer is how a moderator recognises a job with no words. Only people can see it once it is up.
+            'photo' => in_array($j->status, ['published', 'closed'], true) ? $j->photos->first()?->url(480) : null,
             'created_at' => $j->created_at?->toIso8601String(),
             'published_at' => $j->published_at?->toIso8601String(),
         ];

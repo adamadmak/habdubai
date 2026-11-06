@@ -151,6 +151,8 @@ export const om: Dictionary = {
     closed: "Hojiin kun cufameera. Wabiif asitti tura.",
     summary: "Gabaabumatti",
     noSummary: "Hojii kanaaf gabaabbiin hin jiru. Bal'ina isaa argachuuf beeksisa banaa.",
+    flyerTitle: "Beeksisa hojii",
+    flyerNote: "Bal'inni isaa suuraa irra jira.",
     safetyTitle: "Utuu hin iyyatin dura",
     safetyText: "Qacaraan dhugaa hojii, viizaa ykn qorannoo fayyaatiif akka kaffaltan gonkumaa isin hin gaafatu. Namni kamiyyuu maallaqa yoo isin gaafate, dhaabaatii boottii keessatti gabaasaa.",
     warningTitle: "Kana of eeggannoon dubbisaa",

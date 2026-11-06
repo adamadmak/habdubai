@@ -495,7 +495,7 @@ export function GoodsForm({ lang, g, choices, member, limits, initial, today, la
       </aside>
 
       {/* ---- Post it. ---- */}
-      <div className="sticky bottom-[calc(var(--tabbar-space)+0.75rem)] z-30 lg:col-start-1 md:bottom-4">
+      <div className="phone-action-bar sticky bottom-[calc(var(--tabbar-space)+0.75rem)] z-30 lg:col-start-1 md:bottom-4">
         {initial.interest && (
           <p className="mb-2 flex items-center gap-2 rounded-2xl bg-primary-soft px-4 py-2.5 text-sm font-medium">
             <Info className="size-4 shrink-0 text-primary" aria-hidden="true" /> {f.interestNote}

@@ -15,6 +15,11 @@ final class RawListing
         public readonly ?string $company = null,
         public readonly ?string $location = null,
         public readonly ?CarbonImmutable $postedAt = null,
+        /** @var array<int, string> */
+        public readonly array $photoFileIds = [],
+        public readonly ?string $photoUrl = null,
+        public readonly ?string $mediaGroup = null,
+        public readonly bool $websiteOnly = false,
     ) {}
 
     public static function clean(?string $value, int $limit): ?string

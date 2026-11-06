@@ -145,6 +145,8 @@ export const am: Dictionary = {
     closed: "ይህ ሥራ ተዘግቷል። ለማጣቀሻ እዚህ ይቆያል።",
     summary: "በአጭሩ",
     noSummary: "ለዚህ ሥራ ማጠቃለያ የለም። ዝርዝሩን ለማየት ማስታወቂያውን ይክፈቱ።",
+    flyerTitle: "የሥራ ማስታወቂያ",
+    flyerNote: "ዝርዝሩ በምስሉ ላይ ነው።",
     safetyTitle: "ከማመልከትዎ በፊት",
     safetyText: "እውነተኛ አሠሪ ለሥራ፣ ለቪዛ ወይም ለሕክምና ምርመራ ገንዘብ አይጠይቅም። ማንም ገንዘብ ከጠየቀ ያቁሙና በቦቱ ሪፖርት ያድርጉ።",
     warningTitle: "ይህን በጥንቃቄ ያንብቡ",

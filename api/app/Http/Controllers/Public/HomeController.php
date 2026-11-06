@@ -37,7 +37,7 @@ class HomeController extends Controller
                     'businesses' => Business::query()->listed()->count(),
                     'goods' => Schema::hasTable('goods_posts') ? GoodsPost::query()->live()->count() : 0,
                 ],
-                'jobs' => Job::query()->with('source:id,name')->where('status', 'published')->orderByDesc('published_at')->limit(8)->get()
+                'jobs' => Job::query()->with(['source:id,name', 'photos'])->where('status', 'published')->orderByDesc('published_at')->limit(8)->get()
                     ->map(fn (Job $j) => JobController::payload($j))->values()->all(),
                 'businesses' => $businesses->map(fn (Business $b) => $b->publicPayload())->values()->all(),
                 'events' => Announcement::query()->with('topic')->where('status', 'published')->whereNotNull('event_date')
@@ -70,6 +70,8 @@ class HomeController extends Controller
             'questions_group' => RuntimeEnv::get(null, 'telegram_questions_group_link', null) ?: null,
             'goods_group' => RuntimeEnv::get(null, 'telegram_goods_group_link', null) ?: null,
             'support' => $support !== '' ? 'https://t.me/'.$support : null,
+            // Digits only, ready for wa.me. Null hides the website's chat button.
+            'whatsapp' => preg_replace('/\D/', '', RuntimeEnv::get(null, 'whatsapp_contact_number', null)) ?: null,
             // The bot's own wording for every fixed list, so the website never drifts from it.
             'labels' => [
                 'trades' => Choices::TRADES,

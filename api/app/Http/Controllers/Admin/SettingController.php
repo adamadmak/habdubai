@@ -26,6 +26,8 @@ class SettingController extends Controller
         'site_url' => ['nullable', 'url:http,https', 'max:200'],
         // A Telegram username (it becomes https://t.me/<name> on the website).
         'support_telegram_username' => ['nullable', 'string', 'max:40', 'regex:/^@?[A-Za-z][A-Za-z0-9_]{3,31}$/'],
+        // The site's chat button. With the country code: wa.me cannot open 050 123 4567.
+        'whatsapp_contact_number' => ['nullable', 'string', 'max:24', 'regex:/^\+?[1-9](?:[\s\-]?\d){6,14}$/'],
         // Country calling codes, comma separated: 971,251.
         'allowed_phone_countries' => ['nullable', 'string', 'max:100', 'regex:/^\s*\d{1,4}(\s*,\s*\d{1,4})*\s*$/'],
         'telegram_channel_link' => ['nullable', 'url:http,https', 'max:200'],
@@ -85,6 +87,7 @@ class SettingController extends Controller
             'telegram_goods_group_id.regex' => 'Use the group\'s numeric id (-100…); pick it from the list of chats the bot is in.',
             'support_telegram_username.regex' => 'Use a Telegram username, like @habesha_support.',
             'allowed_phone_countries.regex' => 'Use country calling codes separated by commas, like 971,251.',
+            'whatsapp_contact_number.regex' => 'Use the full number with its country code, like +971 50 123 4567.',
         ]);
 
         $before = [];

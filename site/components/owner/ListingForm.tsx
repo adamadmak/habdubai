@@ -173,7 +173,7 @@ export function ListingForm({ lang, b, common, choices, values, live }: {
         </fieldset>
       </details>
 
-      <div className="sticky bottom-[calc(var(--tabbar-space)+0.75rem)] z-30 md:bottom-4">
+      <div className="phone-action-bar sticky bottom-[calc(var(--tabbar-space)+0.75rem)] z-30 md:bottom-4">
         <div className="material rounded-2xl border border-line p-3">
           <div className="flex flex-wrap items-center gap-3">
             <button type="submit" className="btn btn-primary" disabled={pending}>{pending ? b.saving : v.id ? b.save : b.submitNew}</button>

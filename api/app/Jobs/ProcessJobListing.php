@@ -7,6 +7,7 @@ use App\Jobs\Pipeline\ClassifierDeclined;
 use App\Jobs\Pipeline\ClassifierUnavailable;
 use App\Jobs\Pipeline\Deduper;
 use App\Jobs\Pipeline\JobClassifier;
+use App\Jobs\Pipeline\JobPhotos;
 use App\Jobs\Pipeline\JobPublisher;
 use App\Jobs\Pipeline\RulesJobClassifier;
 use App\Jobs\Pipeline\ScamScorer;
@@ -28,6 +29,8 @@ use Illuminate\Support\Facades\Log;
 class ProcessJobListing implements ShouldQueue
 {
     use Queueable;
+
+    public const FLYER_TITLE = 'Job vacancy';
 
     public int $tries = 3;
 
@@ -74,6 +77,13 @@ class ProcessJobListing implements ShouldQueue
                 'duplicate_of' => $original->id,
             ]);
             $raw->forceFill(['processed_at' => now()])->save();
+
+            return;
+        }
+
+        // A flyer with no words: there is nothing to classify, and the picture is the listing.
+        if (trim((string) $raw->raw_text) === '') {
+            $this->finish($raw, Classification::fromArray(['is_job' => true, 'title' => (string) ($raw->title ?: self::FLYER_TITLE)], 'image'), null, $scorer, $publisher);
 
             return;
         }
@@ -125,7 +135,15 @@ class ProcessJobListing implements ShouldQueue
 
         $raw->forceFill(['processed_at' => now()])->save();
 
-        $reason = $holdReason
+        $pictures = app(JobPhotos::class)->attach($job, $raw);
+
+        // A trusted post goes up on its own even if the model had a bad moment; the rules below still apply.
+        if ($raw->website_only) {
+            $holdReason = null;
+        }
+
+        $reason = ($job->image_only && $pictures === 0 ? 'Nothing could be read from this post, and it has no picture. Give it a title, or post it again.' : null)
+            ?? $holdReason
             ?? $notAJob
             ?? ($scam['score'] >= JobSettings::reviewThreshold() ? 'Scam score '.$scam['score'].': '.($scam['reasons'][0] ?? 'high risk') : null)
             ?? (! JobSettings::autoPublish() ? 'Auto-publish is off.' : null)
@@ -170,6 +188,8 @@ class ProcessJobListing implements ShouldQueue
             'source_id' => $raw->source_id,
             'business_id' => $raw->business_id,
             'apply_contact' => $raw->posted_by['contact'] ?? null,
+            'website_only' => (bool) $raw->website_only,
+            'image_only' => trim((string) $raw->raw_text) === '',
             'url' => $raw->url,
             'url_key' => Deduper::urlKey($raw->url),
             'fingerprint' => Deduper::fingerprint($raw->title, $raw->company),
