@@ -74,7 +74,7 @@ export default async function JobsIndex({ params, searchParams }: { params: Prom
         {jobs.data.length === 0 ? (
           <Empty>{d.jobs.empty}</Empty>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {jobs.data.map((job) => <JobCard key={job.id} job={job} lang={lang} meta={meta} />)}
           </div>
         )}

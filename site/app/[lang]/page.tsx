@@ -194,8 +194,8 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
       {home.jobs.length > 0 && (
         <Section kicker={d.nav.jobs} title={d.home.jobsTitle} lead={d.home.jobsLead} more={{ href: `/${lang}/jobs`, label: d.common.seeAll }}>
-          <div className="row-scroll md:mx-0 md:grid-flow-row md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-3">
-            {home.jobs.slice(0, 6).map((j) => <JobCard key={j.id} job={j} lang={lang} meta={meta} compact />)}
+          <div className="row-scroll md:mx-0 md:grid-flow-row md:grid-cols-2 md:overflow-visible md:px-0 lg:grid-cols-4">
+            {home.jobs.slice(0, 8).map((j) => <JobCard key={j.id} job={j} lang={lang} meta={meta} compact />)}
           </div>
         </Section>
       )}
